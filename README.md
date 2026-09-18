@@ -1,10 +1,11 @@
 # Deckfall Endless
 
-A turn-based, endless deck-building roguelike. Runs in any browser and as a native macOS app. No installation, no dependencies.
+A turn-based, endless deck-building roguelike. Runs in any browser and as a native macOS or Windows app. No installation, no dependencies.
 
 ## Play
 
 - **macOS app:** double-click `dist/Deckfall Endless.app` (rebuild any time with `./mac/build.sh`).
+- **Windows app:** double-click `dist/Deckfall Endless.exe` (rebuild any time with `win\build.cmd`; needs nothing but Windows). It opens the game in its own window through the Edge (or Chrome) engine that is already on the machine, with a private profile under `%LOCALAPPDATA%\Deckfall Endless` so saves persist and nothing signs in or syncs.
 - **Any browser:** double-click `Play.command`, or open `index.html` directly.
 - Keyboard: in a fight A / D move the highlight along your hand, W goes up to the enemies (A / D pick the target, S comes back), Space plays the highlighted card, Tab ends the turn, E toggles the passives drawer, 1–9 play a card directly. On every other screen W A S D move the highlight over the choices and Space picks it.
 - Saves happen automatically after every step. Death deletes the save: permadeath.
@@ -42,6 +43,10 @@ js/ui/screens.js        main menu, battle, spoils, interlude, merchant, card lib
 js/main.js              click and keyboard handling, boot
 mac/main.swift          native wrapper (WebKit window + save bridge)
 mac/build.sh            builds the .app into ./dist
+win/Program.cs          Windows launcher: unpacks the embedded game and opens it in an Edge/Chrome app window with its own profile
+win/build.ps1           builds the .exe into ./dist with the C# compiler that ships with Windows (win/build.cmd is the double-click wrapper)
+win/makeicon.ps1        draws AppIcon.ico (same design as the macOS icon)
+tools/balance-sim.js    bot that plays whole runs through the real engine, for measuring balance (usage in the file header)
 ```
 
 ## Adding a card
@@ -58,7 +63,7 @@ Types: attack, spell, shield, skill, potion, mecha, summon, trap. Tier is 0 (bas
 
 ## Balance knobs
 
-- Enemy scaling: `hpMult` / `atkMult` in `state.js`.
+- Enemy scaling: `hpMult` / `atkMult` in `state.js`. Bosses: `BOSSES` in `enemies.js` and their moves in `foecards.js`; the first boss is tuned for a round-10 deck (about a 40% win rate for the greedy bot in `tools/balance-sim.js`, which loses one ordinary round-9 fight in six).
 - Tier drop curve: `tierWeights` in `state.js`. Tier multipliers and unlock rounds: `TIER` in `elements.js`.
 - Rewards and prices: `goldReward`, `xpReward`, `evolvePrice`. Campfire values: `CAMP` in `state.js`.
 - Interlude odds: `INTERLUDES` in `interludes.js`.

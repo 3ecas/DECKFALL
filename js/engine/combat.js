@@ -168,7 +168,7 @@ function damageEnemy(e,amount,o){
   e.hp-=dmg;
   if(dmg>0&&e.st.shock>0){ const x=e.st.shock; e.hp-=x; dmg+=x; e.st.shock--; if(e.st.shock<=0) delete e.st.shock; log(`Shock adds ${x} damage`); }
   const f=fx(); if(f) f.hit(e,o.el||'phys');
-  if(e.hp<=0){ e.hp=0; e.alive=false; G.kills++; log(`${e.name} is slain!`,'good'); if(f) f.death(e); sfx('death'); if(e.el==='fire'&&G.p.hp>0){ const c=Math.max(1,e.lvl||1); dmgPlayerRaw(c,`${e.name}'s cinders`); if(f) f.player('fire',2); } }
+  if(e.hp<=0){ e.hp=0; e.alive=false; G.kills++; log(`${e.name} is slain!`,'good'); if(f) f.death(e); sfx('death'); if(e.el==='fire'&&G.p.hp>0){ const c=Math.min(Math.max(1,e.lvl||1),G.p.hp-1); if(c>0){ dmgPlayerRaw(c,`${e.name}'s cinders`); if(f) f.player('fire',2); } } }   // Cinder: the burst hurts but never kills; it leaves you at 1 HP at worst
   return dmg;
 }
 function damageEnemyRaw(e,amount,el,src){ if(!e.alive) return; const d=Math.max(0,Math.round(amount)); e.hp-=d; floatE(e,`${d}`,'dmg'); log(`${src} deals ${d} to ${e.name}`); const f=fx(); if(f) f.hit(e,el); sfx('tick',{el}); if(e.hp<=0){ e.hp=0; e.alive=false; G.kills++; log(`${e.name} is slain!`,'good'); if(f) f.death(e); sfx('death'); } }

@@ -116,9 +116,9 @@ fc('chimera','f_lion_maul','Lion Maul','attack','beast',0,6,'🦁',{dmg:8,hits:2
 fc('demon','f_hellfire','Hellfire','spell','shadow',3,6,'😈',{dmg:14,v:5},[['dmg','dmg',{aoe:1}],['se','burn','v',{aoe:1}]]);
 fc('demon','f_dark_pact','Dark Pact','skill','shadow',0,6,'🩸',{v:4,s:3},[['ss','str','v'],['selfDmg','s']]);
 // ---- bosses ----
-fc('inferno_drake','f_dragon_breath','Dragon Breath','spell','fire',3,7,'🐲',{dmg:12,v:5},[['dmg','dmg',{aoe:1}],['se','burn','v',{aoe:1}]]);
-fc('inferno_drake','f_wing_buffet','Wing Buffet','attack','fire',0,7,'🪽',{dmg:6,hits:3},[['dmg','dmg',{hits:'hits'}]]);
-fc('inferno_drake','f_molten_scales','Molten Scales','shield','fire',0,7,'🔥',{b:12,t:4},[['block','b'],['ss','thornsT','t']]);
+fc('inferno_drake','f_dragon_breath','Dragon Breath','spell','fire',3,7,'🐲',{dmg:8,v:3},[['dmg','dmg',{aoe:1}],['se','burn','v',{aoe:1}]]);
+fc('inferno_drake','f_wing_buffet','Wing Buffet','attack','fire',0,7,'🪽',{dmg:3,hits:3},[['dmg','dmg',{hits:'hits'}]]);
+fc('inferno_drake','f_molten_scales','Molten Scales','shield','fire',0,7,'🔥',{b:8,t:2},[['block','b'],['ss','thornsT','t']]);
 fc('lich_king','f_soul_reap','Soul Reap','spell','shadow',3,7,'💀',{dmg:14},[['dmg','dmg',{ls:100}]]);
 fc('lich_king','f_raise_horde','Raise Horde','summon','shadow',2,7,'☠️',{v:3,hits:3},[['passive','skeleton_horde']]);
 fc('lich_king','f_curse_of_doom','Curse of Doom','skill','shadow',0,7,'🕯️',{v:2,k:2},[['se','vuln','v'],['se','weak','k']]);

@@ -8,7 +8,7 @@ const A=(m,hits)=>({t:'atk',m:m||1,hits:hits||1}), D=v=>({t:'def',v}), B=v=>({t:
 const NATURE = {
   phys:  {name:'Precision', icon:'🎯', text:'Its attacks have a 20% chance to crit for +50% damage.'},
   beast: {name:'Frenzy',    icon:'🩸', text:'Below half HP its attacks deal +40%.'},
-  fire:  {name:'Cinder',    icon:'🔥', text:'When slain it bursts into flame, dealing its level in damage to you.'},
+  fire:  {name:'Cinder',    icon:'🔥', text:'When slain it bursts into flame, dealing its level in damage to you. The burst cannot kill you.'},
   water: {name:'Tide',      icon:'💧', text:'While you are Wet it regains 6% of its Max HP every turn.'},
   ice:   {name:'Frost Armor', icon:'❄️', text:'Gains Block equal to its level at the start of every turn.'},
   light: {name:'Surge',     icon:'⚡', text:'Every third turn it acts twice.'},
@@ -73,8 +73,11 @@ e('golemancer','Golemancer','🧱','earth',52,7,14,null,{passives:['clay_golem']
 e('war_engineer','War Engineer','🤖','light',56,9,19,null,{passives:['overclock','repair_drone']});
 e('mimic','Mimic','🧰','phys',40,7,1,null,{special:true});
 const ENEMY = Object.fromEntries(ENEMIES.map(x=>[x.id,x]));
+// Bosses ride the same curve as enemies (hp × hpMult(round), atk × atkMult(round)) and on top of that get +1 armor, +5 levels, ×1.2 basic attacks
+// and their own tier-7 moves (foecards.js), so their base numbers stay close to the ordinary foes of their round. The first boss (round 10) is tuned
+// for a round-10 deck: about twice an ordinary enemy's HP and an elite's bite, a six-turn fight. Bosses 2-10 have not been retuned on this curve yet.
 const BOSSES = [
-  {id:'inferno_drake', name:'Inferno Drake', icon:'🐲', el:'fire', hp:140, atk:9, pat:[AS(1,'burn',5),D(12),A(.6,3),A(1.6)]},
+  {id:'inferno_drake', name:'Inferno Drake', icon:'🐲', el:'fire', hp:45, atk:6, pat:[AS(1,'burn',5),D(12),A(.6,3),A(1.6)]},
   {id:'lich_king', name:'Lich King', icon:'👑', el:'shadow', hp:150, atk:9, pat:[S('vuln',2),A(1.3),X(),SU('skeleton_horde'),AS(1,'poison',5),A(1.5)], ls:true, passives:['skeleton_horde']},
   {id:'frost_titan', name:'Frost Titan', icon:'🧊', el:'ice', hp:180, atk:10, pat:[D(15),A(1.4),AS(1,'chill',2),A(.6,3)]},
   {id:'storm_colossus', name:'Storm Colossus', icon:'🌩️', el:'light', hp:170, atk:11, pat:[AS(1,'shock',5),A(.5,4),X(),B(3),A(1.6)], passives:['aegis_core']},
