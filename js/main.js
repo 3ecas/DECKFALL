@@ -38,6 +38,7 @@ function handle(act,t){
     case 'abandon': { clearTimeout(UI.timer); recordBest(); clearSave(); G=null; UI.modal=null; render(); } break;
     case 'quit': { clearTimeout(UI.timer); save(); G=null; UI.modal=null; render(); } break;
     case 'sound': { SFX.toggle(); render(); } break;
+    case 'passives': { const d=document.querySelector('.slots'); if(d) d.classList.toggle('open'); } break;
   }
 }
 document.addEventListener('click',e=>{ const t=e.target.closest('[data-act]'); if(!t) return; if(t.tagName==='BUTTON'&&t.disabled) return; if(t.tagName==='BUTTON'&&!['end','ult','sound','bet','double','cashout'].includes(t.dataset.act)) sfx('click'); handle(t.dataset.act,t); });

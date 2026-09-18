@@ -78,24 +78,31 @@ function cardHTML(id,o){
 }
 function passivePlain(p){ return PASSIVES[p.pid].text.replace(/\{(\w+)\}/g,(m,k)=>p.v&&p.v[k]!=null?p.v[k]:'?'); }
 function slotsHTML(){
-  const F=G.fight; const max=PS('slots'); let h='';
-  for(let i=0;i<max;i++){ const p=F.passives[i]; h+=p?`<div class="slot ${p.kind}" style="--el:${EL[p.el].c}" title="${esc(passivePlain(p))}"><span class="sic">${p.icon}</span><span class="snm">${esc(p.name)}</span><span class="skd">${KIND_LABEL[p.kind]}${p.kind==='trap'?' · armed':''}</span></div>`:`<div class="slot empty"><span class="skd">empty slot</span></div>`; }
-  return `<span class="slotslbl">Passives</span>${h}`;
+  // The passives drawer: a tab (count + icons) and one mini card per slot. Rendered inside .slots, which stays put across patches.
+  const F=G.fight; const max=PS('slots'); const used=F.passives.filter(Boolean).length; let h='';
+  for(let i=0;i<max;i++){ const p=F.passives[i]; h+=p?`<div class="slot ${p.kind}" style="--el:${EL[p.el].c}"><span class="sic">${p.icon}</span><span class="snm">${esc(p.name)}</span><span class="skd">${KIND_LABEL[p.kind]}${p.kind==='trap'?' · armed':''}</span><span class="stx">${esc(passivePlain(p))}</span></div>`:`<div class="slot empty"><span class="skd">empty slot</span></div>`; }
+  const icons=F.passives.filter(Boolean).map(p=>`<span title="${esc(p.name)}">${p.icon}</span>`).join('');
+  return `<div class="pdtab"><span>☗ Passives</span><b>${used}/${max}</b><span class="pdi">${icons}</span><span class="pdh">hover or tap to reveal</span></div><div class="pcards">${h}</div>`;
 }
 function enemyPassivesHTML(e){ return e.passives.map(p=>`<span class="epc ${p.kind}" title="${esc(passivePlain(p))}">${p.icon} ${esc(p.name)}</span>`).join(''); }
+// Enemies are cards too: same plaques, element art panel, HP ribbon where a price would sit, dotted box with intent, statuses and passives.
 function enemyHTML(e,i){
-  const F=G.fight; const sel=F.target===i&&e.alive; const ch=TYPE_CHART[e.el];
+  const F=G.fight; const sel=F.target===i&&e.alive; const ch=TYPE_CHART[e.el]; const el=EL[e.el];
   const weak=ch.weak.map(x=>`<span title="Weak to ${EL[x].n} (2× damage)">${EL[x].i}</span>`).join('')||'—';
   const res=ch.resist.map(x=>`<span title="Resists ${EL[x].n} (½ damage)">${EL[x].i}</span>`).join('')||'—';
-  const badge=e.boss?'<span class="badge boss">BOSS</span>':e.elite?'<span class="badge elite">ELITE</span>':'';
-  return `<div class="enemy ${sel?'sel':''} ${e.alive?'':'dead'} ${e.boss?'isboss':''}" data-act="target" data-i="${i}" data-uid="${e.uid}" style="--el:${EL[e.el].c}" tabindex="0">
-    <div class="ename"><span>${esc(e.name)}</span><span class="badges">${badge}<span class="badge el">${EL[e.el].i} ${EL[e.el].n}</span></span></div>
-    <div class="eface"><span>${e.icon}</span></div>
+  const rank=e.boss?'boss':e.elite?'elite':'foe'; const body={foe:'#aab4bf',elite:'#e2b45c',boss:'#e0667a'}[rank];
+  const nameCls=e.name.length>18?' xl':e.name.length>12?' long':'';
+  return `<div class="card enemy el-${e.el} r-${rank} ${sel?'sel':''} ${e.alive?'':'dead'} ${e.boss?'isboss':''}" data-act="target" data-i="${i}" data-uid="${e.uid}" style="--el:${el.c};--tier:${body}" tabindex="0" title="${esc(e.name)} · ${el.n}${e.boss?' · Boss':e.elite?' · Elite':''} · tap to target">
+    <div class="cname${nameCls}">${esc(e.name)}</div>
+    <div class="cart"><span>${e.icon}</span></div>
     <div class="bar ehp"><i style="width:${e.hp/e.maxHp*100}%"></i><b class="num">${e.hp} / ${e.maxHp}</b></div>
-    <div class="types"><span>Weak ${weak}</span><span>Resist ${res}</span></div>
-    <div class="statuses">${enemyStatusesHTML(e)}</div>
-    <div class="epassives">${enemyPassivesHTML(e)}</div>
-    <div class="intent">${enemyIntentHTML(e)}</div>
+    <div class="cbox">
+      <div class="ctags"><span class="ctag" title="Element">${el.n}</span><span class="ctier"><span title="Weak to (2× damage)">Weak ${weak}</span><span title="Resists (½ damage)">Res ${res}</span></span></div>
+      <div class="intent">${enemyIntentHTML(e)}</div>
+      <div class="statuses">${enemyStatusesHTML(e)}</div>
+      <div class="epassives">${enemyPassivesHTML(e)}</div>
+    </div>
+    <div class="ckind">${e.boss?'☠ Boss':e.elite?'★ Elite':'⚔ Enemy'}</div>
   </div>`;
 }
 function enemyStatusesHTML(e){
@@ -138,17 +145,22 @@ function playerStatusesHTML(){
   return out.join('');
 }
 function playerHTML(){
-  const F=G.fight; const p=G.p; const bonus=F.energyBonus+pSum('manaPerTurn')+pSum('sMana');
+  const F=G.fight; const p=G.p; const bonus=F.energyBonus+pSum('manaPerTurn')+pSum('sMana'); const max=PS('energyMax')+bonus;
+  const stat=(i,v,l,t)=>`<span class="stat" title="${t}"><i>${i}</i><b>${v}</b><small>${l}</small></span>`;
+  const stats=[stat('⚔️',PS('attack')+F.str+pSum('atkBonus'),'Atk','Attack: added to every attack card, summon and machine'),stat('🔮',PS('spell')+F.spellT+pSum('spellBonus'),'Spell','Spell Power: added to every spell'),stat('🎯',(PS('crit')+F.critT)+'%','Crit','Critical chance: 50% bonus damage'),stat('🪨',PS('armor')+F.armorT,'Armor','Armor: flat damage reduction on every hit'),stat('💨',(PS('dodge')+F.dodgeT)+'%','Dodge','Dodge: chance to avoid an attack'),stat('🗡️',PS('counter')+'%','Counter','Counter: chance to strike back when hit')];
+  if(PS('lifesteal')) stats.push(stat('🩸',PS('lifesteal')+'%','Steal','Life steal: heal a share of every attack'));
+  const th=PS('thorns')+F.thornsT+pSum('thorns'); if(th) stats.push(stat('🌵',th,'Thorns','Thorns: attackers take damage'));
+  const cells=Array.from({length:10},(_,k)=>`<i class="mcell ${k<F.energy?'on':k<max?'cap':''}"></i>`).join('');
   return `<div class="player">
-    <div class="mana" title="Mana: spells and summons cost Mana, everything else is free"><b>${F.energy}</b><small>/${PS('energyMax')+bonus}</small></div>
-    <div class="pmid">
-      <div class="pstats"><span>⚔️ <b>${PS('attack')+F.str+pSum('atkBonus')}</b></span><span>🔮 <b>${PS('spell')+F.spellT+pSum('spellBonus')}</b></span><span>🪨 <b>${PS('armor')+F.armorT}</b></span><span>💨 <b>${PS('dodge')+F.dodgeT}%</b></span><span>🗡️ <b>${PS('counter')}%</b></span><span>🎯 <b>${PS('crit')+F.critT}%</b></span>${PS('lifesteal')?`<span>🩸 <b>${PS('lifesteal')}%</b></span>`:''}${PS('thorns')+F.thornsT+pSum('thorns')?`<span>🌵 <b>${PS('thorns')+F.thornsT+pSum('thorns')}</b></span>`:''}</div>
+    <div class="prow">
+      <div class="pstats">${stats.join('')}</div>
       <div class="statuses pstatuses">${playerStatusesHTML()}</div>
+      <div class="pbtns">
+        <button class="btn ultbtn ${p.ultCharge>=100?'ready':''}" data-act="ult" ${p.ultCharge<100||UI.busy?'disabled':''} title="${ULT[p.ult].desc}">${ULT[p.ult].icon} ${p.ultCharge>=100?'ULTIMATE':ULT[p.ult].name+' '+p.ultCharge+'%'}</button>
+        <button class="btn primary endbtn" data-act="end" ${UI.busy?'disabled':''}>End Turn</button>
+      </div>
     </div>
-    <div class="pbtns">
-      <button class="btn ultbtn ${p.ultCharge>=100?'ready':''}" data-act="ult" ${p.ultCharge<100||UI.busy?'disabled':''} title="${ULT[p.ult].desc}">${ULT[p.ult].icon} ${p.ultCharge>=100?'ULTIMATE':ULT[p.ult].name+' '+p.ultCharge+'%'}</button>
-      <button class="btn primary endbtn" data-act="end" ${UI.busy?'disabled':''}>End Turn</button>
-    </div>
+    <div class="manabar" title="Mana: spells and summons cost Mana, everything else is free. Refills to ${max} every turn."><span class="mlbl">Mana</span><div class="mcells">${cells}</div><span class="mval num">${F.energy}<small>/${max}</small></span></div>
   </div>`;
 }
 function handHTML(){
@@ -184,10 +196,10 @@ function modalHTML(){
 }
 function helpHTML(){ return `<h2>How to play</h2>
 <p><b>Rounds.</b> Every round is a fight, then spoils, then something automatic on the road: a chest, a blessing that boosts you for a few rounds, a shrine, a forge, a trap, an ambush. Every fourth round a merchant appears with cards, attributes, an evolution forge and the Lucky Coin. Elites every fifth round, a boss every tenth.</p>
-<p><b>Turns.</b> You draw a hand each turn. <b>Attacks, shields, skills, potions, machines and traps are free.</b> Spells and summons cost Mana. When nothing in your hand can be played, the turn ends by itself. End Turn lets every enemy act according to the intent shown on it.</p>
+<p><b>Turns.</b> You draw a hand each turn. <b>Attacks, shields, skills, potions, machines and traps are free.</b> Spells and summons cost Mana: the blue bar above your hand, refilled every turn. When nothing in your hand can be played, the turn ends by itself. End Turn lets every enemy act according to the intent shown on its card.</p>
 <p><b>Card face.</b> Name top-left. Spells and summons show their Mana cost top-right; a card with no cost box is free to play. The picture in the middle. The dotted box shows the element, the tier and what the card does: the first line is the main effect, the lines underneath are extras. Bottom-right says what kind of card it is (attack, spell, shield, skill, potion, machine, summon, trap). The whole card is coloured by its tier, and a green ▲ badge bottom-left counts how many tiers it has evolved.</p>
 <p><b>Tiers.</b> Basic cards do one plain thing. Common, uncommon, medium, good, great, rare, perfect and ultimate cards add effects and grow. Getting a card you already own <b>evolves</b> it one tier, multiplying its numbers. Some cards are born ultimate.</p>
-<p><b>Passives.</b> Machines, summons and armed traps take one of your passive slots and stay for the fight. Machines give bonuses (double first attack, block per machine, damage per attack played). Summons act every turn. Traps spring on the next enemy attack. Enemies have passives too, and some can destroy yours. Sabotage, EMP and Pilfer destroy or steal theirs.</p>
+<p><b>Passives.</b> Machines, summons and armed traps take one of your passive slots and stay for the fight. Machines give bonuses (double first attack, block per machine, damage per attack played). Summons act every turn. Traps spring on the next enemy attack. Enemies have passives too, and some can destroy yours. Sabotage, EMP and Pilfer destroy or steal theirs. Yours live in the drawer tucked under your hand: hover or tap it to see them.</p>
 <p><b>Elements.</b> Ten elements with combos: Fire burns and detonates, Ice chills, freezes and shatters, Lightning shocks and multi-hits, Water soaks, Grass grows, Poison stacks and doubles, Earth turns Block into damage, Shadow steals life, Holy heals and smites. Hit a weakness for <b>2×</b>. Open <b>Types</b> for the chart.</p>
 <p><b>Death is final.</b> Enemies scale every round. When HP hits zero the run ends and you start over with basic cards.</p>
 <p class="muted small">Keyboard: 1–9 plays a card, E ends the turn, U fires the Ultimate, Space continues, Esc closes windows.</p>`; }

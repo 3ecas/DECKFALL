@@ -47,11 +47,10 @@ function battleHTML(){
   const F=G.fight; UI.handUids=[];
   return `<div id="battle" data-key="${F.key}" class="battle">
     ${hudHTML()}
-    <div class="arena"><div class="field">${F.enemies.map((e,i)=>enemyHTML(e,i)).join('')}</div></div>
-    <div class="slots">${slotsHTML()}</div>
-    ${logHTML()}
+    <div class="arena"><div class="field">${F.enemies.map((e,i)=>enemyHTML(e,i)).join('')}</div>${logHTML()}</div>
     ${playerHTML()}
     <div class="handwrap"><div class="handbar">${handbarHTML()}</div><div class="hand">${handHTML()}</div></div>
+    <div class="slots" data-act="passives">${slotsHTML()}</div>
   </div>`;
 }
 function spoilsHTML(){
