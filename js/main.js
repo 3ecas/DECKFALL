@@ -18,13 +18,13 @@ function handle(act,t){
     case 'spoils-card': spoilsPickCard(t.dataset.id); break;
     case 'spoils-skip': spoilsSkipCard(); break;
     case 'spoils-ult': spoilsPickUlt(t.dataset.id||null); break;
-    case 'spoils-next': if(G.spoils&&G.spoils.cardTaken&&(!G.spoils.ultOffer||G.spoils.ultTaken)) spoilsContinue(); break;
+    case 'spoils-next': if(spoilsDone(G.spoils)) spoilsContinue(); break;
+    case 'spoils-drop': spoilsTakeDrop(); break;
+    case 'spoils-drop-skip': spoilsSkipDrop(); break;
     case 'inter-card': interludePick(t.dataset.id); break;
     case 'inter-skip': interludeSkip(); break;
     case 'inter-next': interludeContinue(); break;
     case 'shop-upgrade': shopUpgrade(t.dataset.id); break;
-    case 'shop-remove': shopRemove(); break;
-    case 'shop-heal': shopHeal(); break;
     case 'shop-leave': nextRound(); break;
     case 'forge-pick': forgePick(); break;
     case 'camp-rest': campChoose('rest'); break;
@@ -53,7 +53,7 @@ document.addEventListener('keydown',e=>{
     else if(e.key==='e'||e.key==='E') endTurn();
   } else if(e.key===' '||e.key==='Enter'){
     if(G.phase==='interlude') interludeContinue();
-    else if(G.phase==='spoils'&&G.spoils.cardTaken&&(!G.spoils.ultOffer||G.spoils.ultTaken)) spoilsContinue();
+    else if(G.phase==='spoils'&&spoilsDone(G.spoils)) spoilsContinue();
     e.preventDefault();
   }
 });

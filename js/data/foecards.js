@@ -1,0 +1,151 @@
+'use strict';
+// ===================== ENEMY ABILITIES =====================
+// Every creature has its own abilities, written as real cards (same c() helper and effect vocabulary as cards.js).
+// Enemies play them between basic attacks; a slain creature can drop one of them for you to use. `drop` names the owner.
+// They never show up in level-up or boss offers: the only way to get one is to take it from the creature.
+function fc(owner,id,name,type,el,cost,tier,icon,n,fx,o){ c(id,name,type,el,cost,tier,icon,n,fx,Object.assign({drop:owner},o||{})); }
+// ---- lowlands (rounds 1-2) ----
+fc('wolf','f_fang_bite','Fang Bite','attack','beast',0,0,'🦷',{dmg:4},[['dmg','dmg']]);
+fc('wolf','f_howl','Howl','skill','beast',0,0,'🐺',{v:2},[['ss','str','v']]);
+fc('giant_rat','f_gnaw','Gnaw','attack','beast',0,0,'🐀',{dmg:3,v:1},[['dmg','dmg'],['se','weak','v']]);
+fc('giant_rat','f_scurry','Scurry','skill','beast',0,0,'💨',{},[['ss','dodgeNext',null]]);
+fc('bandit','f_cheap_shot','Cheap Shot','attack','phys',0,0,'🗡️',{dmg:4,v:1},[['dmg','dmg'],['se','vuln','v']]);
+fc('bandit','f_parry_stance','Parry Stance','shield','phys',0,0,'🛡️',{b:4},[['block','b'],['ss','counterNext',null]]);
+fc('crab','f_pincer','Pincer','attack','water',0,0,'🦀',{dmg:5},[['dmg','dmg']]);
+fc('crab','f_shell_up','Shell Up','shield','water',0,0,'🐚',{b:5,a:1},[['block','b'],['armor','a']]);
+fc('sprout_fiend','f_sap_lash','Sap Lash','attack','grass',0,0,'🌿',{dmg:3,v:1},[['dmg','dmg'],['se','weak','v']]);
+fc('sprout_fiend','f_photosynthesis','Photosynthesis','skill','grass',0,0,'☀️',{h:3,r:1},[['heal','h'],['ss','regen','r']]);
+fc('venom_spider','f_poison_fang','Poison Fang','attack','poison',0,0,'🐍',{dmg:3,v:3},[['dmg','dmg'],['se','poison','v']]);
+fc('venom_spider','f_web','Sticky Web','skill','poison',0,0,'🕸️',{v:2,k:1},[['se','weak','v'],['se','vuln','k']]);
+fc('fire_imp','f_imp_flame','Imp Flame','spell','fire',1,0,'🔥',{dmg:4,v:2},[['dmg','dmg'],['se','burn','v']]);
+fc('fire_imp','f_fire_dance','Fire Dance','attack','fire',0,0,'💃',{dmg:2,hits:2,v:1},[['dmg','dmg',{hits:'hits'}],['se','burn','v']]);
+fc('water_sprite','f_water_whip','Water Whip','spell','water',1,0,'💦',{dmg:5,v:1},[['dmg','dmg'],['se','wet','v']]);
+fc('water_sprite','f_mist_heal','Mist Heal','spell','water',1,0,'🌫️',{h:6},[['heal','h']]);
+fc('rock_beetle','f_carapace','Carapace','shield','earth',0,0,'🪲',{b:7},[['block','b']]);
+fc('rock_beetle','f_shell_bash','Shell Bash','attack','earth',0,0,'💥',{m:1},[['special','blockDmg',{m:'m'}]]);
+fc('slime','f_acid_splash','Acid Splash','spell','poison',1,0,'🧪',{dmg:3,v:2},[['dmg','dmg',{aoe:1}],['se','poison','v',{aoe:1}]]);
+fc('slime','f_engulf','Engulf','attack','poison',0,0,'🟢',{dmg:3,v:3},[['dmg','dmg'],['se','poison','v']]);
+fc('vampire_bat','f_blood_bite','Blood Bite','attack','shadow',0,0,'🦇',{dmg:4},[['dmg','dmg',{ls:50}]]);
+fc('vampire_bat','f_screech','Screech','skill','shadow',0,0,'🔊',{v:1},[['se','weak','v',{aoe:1}]]);
+// ---- rounds 3-5 ----
+fc('frost_wisp','f_frost_touch','Frost Touch','spell','ice',1,1,'❄️',{dmg:4,v:1},[['dmg','dmg'],['se','chill','v']]);
+fc('frost_wisp','f_wisp_veil','Wisp Veil','shield','ice',0,1,'🌫️',{b:3},[['block','b'],['ss','dodgeNext',null]]);
+fc('storm_hawk','f_dive_talon','Dive Talon','attack','light',0,1,'🦅',{dmg:3,hits:2},[['dmg','dmg',{hits:'hits'}]]);
+fc('storm_hawk','f_thunderclap','Thunderclap','spell','light',1,1,'🌩️',{dmg:6,v:2},[['dmg','dmg'],['se','shock','v']]);
+fc('mandrake','f_scream','Mandrake Scream','skill','grass',0,1,'😱',{v:2,k:1},[['se','weak','v'],['se','vuln','k']]);
+fc('mandrake','f_root_grip','Root Grip','spell','grass',1,1,'🌱',{dmg:5,h:4},[['dmg','dmg'],['heal','h']]);
+fc('plague_rat','f_plague_bite','Plague Bite','attack','poison',0,1,'🐀',{dmg:3,v:4},[['dmg','dmg'],['se','poison','v']]);
+fc('plague_rat','f_swarm','Rat Swarm','attack','poison',0,1,'🐁',{dmg:2,hits:3},[['dmg','dmg',{hits:'hits'}]]);
+fc('bandit_archer','f_aimed_shot','Aimed Shot','attack','phys',0,1,'🎯',{dmg:7},[['dmg','dmg',{pierce:1}]]);
+fc('bandit_archer','f_crippling_arrow','Crippling Arrow','attack','phys',0,1,'🏹',{dmg:4,v:2},[['dmg','dmg'],['se','vuln','v']]);
+fc('bear','f_maul','Maul','attack','beast',0,1,'🐻',{dmg:9},[['dmg','dmg']]);
+fc('bear','f_hibernate','Hibernate','skill','beast',0,1,'💤',{h:8,b:5},[['heal','h'],['block','b']]);
+fc('magma_slime','f_magma_burst','Magma Burst','spell','fire',2,1,'🌋',{dmg:6,v:2},[['dmg','dmg',{aoe:1}],['se','burn','v',{aoe:1}]]);
+fc('magma_slime','f_molten_shell','Molten Shell','shield','fire',0,1,'🔥',{b:6,t:2},[['block','b'],['ss','thornsT','t']]);
+fc('shade','f_shadow_step','Shadow Step','skill','shadow',0,1,'👤',{v:2},[['ss','dodgeNext',null],['ss','str','v']]);
+fc('shade','f_grasp','Umbral Grasp','spell','shadow',1,1,'🫳',{dmg:6,v:2},[['dmg','dmg'],['se','weak','v']]);
+fc('zealot','f_smiting_blow','Smiting Blow','attack','holy',0,1,'⚜️',{dmg:7},[['dmg','dmg',{bv:'vuln'}]]);
+fc('zealot','f_prayer','Prayer','skill','holy',0,1,'🙏',{v:15},[['healPct','v'],['cleanse']]);
+fc('toxic_ooze','f_toxic_spray','Toxic Spray','spell','poison',1,1,'🫧',{dmg:4,v:4},[['dmg','dmg',{aoe:1}],['se','poison','v',{aoe:1}]]);
+fc('toxic_ooze','f_corrosion','Corrosion','skill','poison',0,1,'🧫',{v:2,k:2},[['se','vuln','v'],['se','weak','k']]);
+fc('tinkerer','f_wrench_whack','Wrench Whack','attack','phys',0,1,'🔧',{dmg:6},[['dmg','dmg']]);
+fc('tinkerer','f_deploy_turret','Deploy Turret','mecha','phys',0,1,'🎯',{v:4},[['passive','auto_turret']]);
+fc('mimic','f_mimic_chomp','Mimic Chomp','attack','phys',0,1,'🧰',{dmg:8},[['dmg','dmg']]);
+fc('mimic','f_trap_lid','Trap Lid','shield','phys',0,1,'📦',{b:6},[['block','b'],['ss','counterNext',null]]);
+// ---- rounds 6-9 ----
+fc('thorn_beast','f_thorn_lash','Thorn Lash','attack','grass',0,2,'🌿',{dmg:6,t:2},[['dmg','dmg'],['ss','thornsT','t']]);
+fc('thorn_beast','f_bristle','Bristle','shield','grass',0,2,'🦔',{b:6,t:3},[['block','b'],['ss','thornsT','t']]);
+fc('ice_golem','f_ice_slam','Ice Slam','attack','ice',0,2,'🧊',{dmg:8,v:1},[['dmg','dmg'],['se','chill','v']]);
+fc('ice_golem','f_glacial_wall','Glacial Wall','shield','ice',0,2,'🧱',{b:10},[['block','b']]);
+fc('stone_golem','f_boulder_fist','Boulder Fist','attack','earth',0,2,'🪨',{dmg:9},[['dmg','dmg']]);
+fc('stone_golem','f_stone_skin','Stone Skin','shield','earth',0,2,'🗿',{b:8,a:2},[['block','b'],['armor','a']]);
+fc('flame_knight','f_blazing_cleave','Blazing Cleave','attack','fire',0,2,'🔥',{dmg:7,v:2},[['dmg','dmg',{aoe:1}],['se','burn','v',{aoe:1}]]);
+fc('flame_knight','f_burning_blade','Burning Blade','skill','fire',0,2,'🗡️',{v:2,k:2},[['ss','str','v'],['se','burn','k']]);
+fc('thunder_elemental','f_chain_bolt','Chain Bolt','spell','light',2,2,'⚡',{dmg:4,hits:3,v:1},[['dmg','dmg',{hits:'hits'}],['se','shock','v']]);
+fc('thunder_elemental','f_overcharge','Overcharge','skill','light',0,2,'🔋',{v:3},[['ss','str','v']]);
+fc('mercenary','f_riposte_stance','Riposte Stance','shield','phys',0,2,'🛡️',{b:8},[['block','b'],['ss','counterNext',null]]);
+fc('mercenary','f_lunge','Lunge','attack','phys',0,2,'🗡️',{dmg:10},[['dmg','dmg']]);
+fc('beastmaster','f_whip_crack','Whip Crack','attack','beast',0,2,'🪢',{dmg:6,v:1},[['dmg','dmg'],['se','weak','v']]);
+fc('beastmaster','f_call_wolf','Call Wolf','summon','beast',1,2,'🐺',{v:3},[['passive','wolf_pup']]);
+fc('warlock','f_curse_bolt','Curse Bolt','spell','shadow',1,2,'🔮',{dmg:7,v:2},[['dmg','dmg'],['se','vuln','v']]);
+fc('warlock','f_summon_imp','Summon Imp','summon','shadow',1,2,'👿',{v:3},[['passive','imp']]);
+// ---- rounds 10-13 ----
+fc('kraken_spawn','f_tentacle_flurry','Tentacle Flurry','attack','water',0,3,'🐙',{dmg:4,hits:3,v:1},[['dmg','dmg',{hits:'hits'}],['se','wet','v']]);
+fc('kraken_spawn','f_ink_cloud','Ink Cloud','skill','water',0,3,'🖤',{v:2},[['se','weak','v'],['ss','dodgeNext',null]]);
+fc('dire_wolf','f_savage_bite','Savage Bite','attack','beast',0,3,'🐺',{dmg:10},[['dmg','dmg',{ls:30}]]);
+fc('dire_wolf','f_pack_howl','Pack Howl','skill','beast',0,3,'🌕',{v:3},[['ss','str','v']]);
+fc('basilisk','f_venom_spit','Venom Spit','spell','poison',1,3,'🦎',{dmg:7,v:5},[['dmg','dmg'],['se','poison','v']]);
+fc('basilisk','f_stone_gaze','Stone Gaze','skill','poison',0,3,'👁️',{v:2,k:2},[['se','vuln','v'],['se','weak','k']]);
+fc('paladin','f_holy_smite','Holy Smite','spell','holy',2,3,'✨',{dmg:9,v:1},[['dmg','dmg'],['se','vuln','v']]);
+fc('paladin','f_divine_shield','Divine Shield','shield','holy',0,3,'🛡️',{b:12,v:10},[['block','b'],['healPct','v']]);
+fc('treant','f_root_crush','Root Crush','attack','grass',0,3,'🌳',{dmg:10},[['dmg','dmg']]);
+fc('treant','f_bark_skin','Bark Skin','shield','grass',0,3,'🪵',{b:10,r:3},[['block','b'],['ss','regen','r']]);
+fc('necromancer','f_soul_drain','Soul Drain','spell','shadow',2,3,'💀',{dmg:8},[['dmg','dmg',{ls:100}]]);
+fc('necromancer','f_raise_dead','Raise Dead','summon','shadow',2,3,'🧟',{v:4,h:2},[['passive','zombie']]);
+fc('yeti','f_avalanche_slam','Avalanche Slam','attack','ice',0,3,'🦍',{dmg:11,v:1},[['dmg','dmg'],['se','chill','v']]);
+fc('yeti','f_frost_roar','Frost Roar','skill','ice',0,3,'🗣️',{v:2,k:2},[['se','weak','v'],['ss','str','k']]);
+// ---- rounds 14-17 ----
+fc('fire_elemental','f_conflagration','Conflagration','spell','fire',2,4,'🔥',{dmg:9,v:4},[['dmg','dmg',{aoe:1}],['se','burn','v',{aoe:1}]]);
+fc('fire_elemental','f_heat_shield','Heat Shield','shield','fire',0,4,'🛡️',{b:8,t:3},[['block','b'],['ss','thornsT','t']]);
+fc('storm_mage','f_lightning_lance','Lightning Lance','spell','light',2,4,'🌩️',{dmg:12,v:3},[['dmg','dmg'],['se','shock','v']]);
+fc('storm_mage','f_static_field','Static Field','skill','light',0,4,'⚡',{v:3},[['se','shock','v'],['ss','dodgeNext',null]]);
+fc('golemancer','f_clay_shot','Clay Shot','spell','earth',1,4,'🧱',{dmg:9},[['dmg','dmg']]);
+fc('golemancer','f_raise_golem','Raise Golem','summon','earth',2,4,'🗿',{b:5},[['passive','clay_golem']]);
+fc('siren','f_siren_song','Siren Song','skill','water',0,4,'🎶',{v:3,k:2},[['se','weak','v'],['se','vuln','k']]);
+fc('siren','f_tidal_grasp','Tidal Grasp','spell','water',2,4,'🌊',{dmg:10,v:2,h:6},[['dmg','dmg'],['se','wet','v'],['heal','h']]);
+fc('wraith','f_death_touch','Death Touch','spell','shadow',2,4,'☠️',{dmg:10,v:2},[['dmg','dmg',{ls:50}],['se','weak','v']]);
+fc('wraith','f_phase','Phase','skill','shadow',0,4,'👻',{v:2},[['ss','dodgeNext',null],['ss','str','v']]);
+// ---- rounds 18-21 ----
+fc('earth_titan','f_titan_stomp','Titan Stomp','attack','earth',0,5,'🦶',{dmg:14,v:2},[['dmg','dmg'],['se','vuln','v']]);
+fc('earth_titan','f_earthen_bulwark','Earthen Bulwark','shield','earth',0,5,'🏔️',{b:16,a:2},[['block','b'],['armor','a']]);
+fc('fallen_angel','f_judgment_blade','Judgment Blade','attack','holy',0,5,'⚔️',{dmg:12,v:2},[['dmg','dmg'],['se','vuln','v']]);
+fc('fallen_angel','f_dark_prayer','Dark Prayer','skill','holy',0,5,'🕯️',{v:15,k:3},[['healPct','v'],['ss','str','k']]);
+fc('war_engineer','f_shock_cannon','Shock Cannon','spell','light',2,5,'🔫',{dmg:12,v:3},[['dmg','dmg'],['se','shock','v']]);
+fc('war_engineer','f_repair_bots','Repair Bots','skill','light',0,5,'🤖',{v:15,b:8},[['healPct','v'],['block','b']]);
+fc('salamander','f_lava_bite','Lava Bite','attack','fire',0,5,'🦎',{dmg:12,v:5},[['dmg','dmg'],['se','burn','v']]);
+fc('salamander','f_magma_armor','Magma Armor','shield','fire',0,5,'🌋',{b:12,t:4},[['block','b'],['ss','thornsT','t']]);
+fc('frost_wraith','f_soul_freeze','Soul Freeze','spell','ice',2,5,'☃️',{dmg:10,v:1,k:2},[['dmg','dmg'],['se','chill','v'],['se','weak','k']]);
+fc('frost_wraith','f_frozen_veil','Frozen Veil','shield','ice',0,5,'❄️',{b:10},[['block','b'],['ss','dodgeNext',null]]);
+fc('forest_wyrm','f_wyrm_bite','Wyrm Bite','attack','grass',0,5,'🐉',{dmg:12,v:5},[['dmg','dmg'],['se','poison','v']]);
+fc('forest_wyrm','f_verdant_pulse','Verdant Pulse','skill','grass',0,5,'💚',{v:15,r:4},[['healPct','v'],['ss','regen','r']]);
+// ---- rounds 22+ ----
+fc('hydra','f_triple_bite','Triple Bite','attack','poison',0,6,'🐉',{dmg:6,hits:3,v:3},[['dmg','dmg',{hits:'hits'}],['se','poison','v']]);
+fc('hydra','f_regrow_heads','Regrow Heads','skill','poison',0,6,'🌀',{v:20,k:2},[['healPct','v'],['ss','str','k']]);
+fc('chimera','f_fire_breath','Fire Breath','spell','beast',2,6,'🔥',{dmg:12,v:4},[['dmg','dmg',{aoe:1}],['se','burn','v',{aoe:1}]]);
+fc('chimera','f_lion_maul','Lion Maul','attack','beast',0,6,'🦁',{dmg:8,hits:2},[['dmg','dmg',{hits:'hits'}]]);
+fc('demon','f_hellfire','Hellfire','spell','shadow',3,6,'😈',{dmg:14,v:5},[['dmg','dmg',{aoe:1}],['se','burn','v',{aoe:1}]]);
+fc('demon','f_dark_pact','Dark Pact','skill','shadow',0,6,'🩸',{v:4,s:3},[['ss','str','v'],['selfDmg','s']]);
+// ---- bosses ----
+fc('inferno_drake','f_dragon_breath','Dragon Breath','spell','fire',3,7,'🐲',{dmg:12,v:5},[['dmg','dmg',{aoe:1}],['se','burn','v',{aoe:1}]]);
+fc('inferno_drake','f_wing_buffet','Wing Buffet','attack','fire',0,7,'🪽',{dmg:6,hits:3},[['dmg','dmg',{hits:'hits'}]]);
+fc('inferno_drake','f_molten_scales','Molten Scales','shield','fire',0,7,'🔥',{b:12,t:4},[['block','b'],['ss','thornsT','t']]);
+fc('lich_king','f_soul_reap','Soul Reap','spell','shadow',3,7,'💀',{dmg:14},[['dmg','dmg',{ls:100}]]);
+fc('lich_king','f_raise_horde','Raise Horde','summon','shadow',2,7,'☠️',{v:3,hits:3},[['passive','skeleton_horde']]);
+fc('lich_king','f_curse_of_doom','Curse of Doom','skill','shadow',0,7,'🕯️',{v:2,k:2},[['se','vuln','v'],['se','weak','k']]);
+fc('frost_titan','f_glacier_smash','Glacier Smash','attack','ice',0,7,'🧊',{dmg:16,v:1},[['dmg','dmg'],['se','chill','v']]);
+fc('frost_titan','f_frost_armor','Frost Armor','shield','ice',0,7,'🛡️',{b:15},[['block','b']]);
+fc('frost_titan','f_blizzard_breath','Blizzard Breath','spell','ice',2,7,'🌨️',{dmg:8,v:1},[['dmg','dmg',{aoe:1}],['se','chill','v',{aoe:1}]]);
+fc('storm_colossus','f_thunder_fist','Thunder Fist','attack','light',0,7,'👊',{dmg:14,v:5},[['dmg','dmg'],['se','shock','v']]);
+fc('storm_colossus','f_storm_surge','Storm Surge','spell','light',3,7,'🌩️',{dmg:5,hits:4},[['dmg','dmg',{hits:'hits'}]]);
+fc('storm_colossus','f_overload','Overload','skill','light',0,7,'⚡',{v:3},[['ss','str','v']]);
+fc('elder_treant','f_root_quake','Root Quake','attack','grass',0,7,'🌳',{dmg:14,v:1},[['dmg','dmg'],['se','vuln','v']]);
+fc('elder_treant','f_living_bark','Living Bark','shield','grass',0,7,'🪵',{b:16,r:5},[['block','b'],['ss','regen','r']]);
+fc('elder_treant','f_summon_ent','Summon Ent','summon','grass',2,7,'🌲',{b:4,t:2},[['passive','ent']]);
+fc('hydra_matriarch','f_venom_flood','Venom Flood','spell','poison',3,7,'☠️',{dmg:10,v:8},[['dmg','dmg',{aoe:1}],['se','poison','v',{aoe:1}]]);
+fc('hydra_matriarch','f_hydra_bite','Hydra Bite','attack','poison',0,7,'🐉',{dmg:6,hits:3,v:3},[['dmg','dmg',{hits:'hits'}],['se','poison','v']]);
+fc('hydra_matriarch','f_regrow','Regrow','skill','poison',0,7,'🌀',{v:15,k:2},[['healPct','v'],['ss','str','k']]);
+fc('leviathan','f_tidal_crush','Tidal Crush','attack','water',0,7,'🐋',{dmg:16,v:2},[['dmg','dmg'],['se','wet','v']]);
+fc('leviathan','f_deep_tide','Deep Tide','spell','water',3,7,'🌊',{dmg:6,hits:4,v:1},[['dmg','dmg',{hits:'hits'}],['se','wet','v']]);
+fc('leviathan','f_abyssal_shell','Abyssal Shell','shield','water',0,7,'🐚',{b:18},[['block','b']]);
+fc('earthshaker','f_earthquake','Earthquake','attack','earth',0,7,'🌋',{dmg:16,v:2},[['dmg','dmg'],['se','vuln','v']]);
+fc('earthshaker','f_mountain_guard','Mountain Guard','shield','earth',0,7,'🏔️',{b:20,a:2},[['block','b'],['armor','a']]);
+fc('earthshaker','f_summon_golem','Summon Golem','summon','earth',2,7,'🗿',{b:5},[['passive','clay_golem']]);
+fc('seraph','f_holy_lance','Holy Lance','spell','holy',3,7,'✨',{dmg:14,v:2},[['dmg','dmg'],['se','vuln','v']]);
+fc('seraph','f_wings_of_light','Wings of Light','skill','holy',0,7,'🕊️',{v:15},[['healPct','v'],['cleanse']]);
+fc('seraph','f_summon_valkyrie','Summon Valkyrie','summon','holy',2,7,'⚔️',{v:6,h:3},[['passive','valkyrie']]);
+fc('chaos_beast','f_chaos_maul','Chaos Maul','attack','beast',0,7,'👾',{dmg:15,v:5},[['dmg','dmg'],['se','burn','v']]);
+fc('chaos_beast','f_feral_frenzy','Feral Frenzy','attack','beast',0,7,'🐾',{dmg:6,hits:3},[['dmg','dmg',{hits:'hits'}]]);
+fc('chaos_beast','f_call_bear','Call Bear','summon','beast',2,7,'🐻',{v:6},[['passive','bear']]);
+for(const x of CARDS) if(!CARD[x.id]) CARD[x.id]=x;
+// owner id -> its ability ids, and the reverse lookup for the library
+const FOE_MOVES={}; for(const x of CARDS) if(x.drop){ (FOE_MOVES[x.drop]=FOE_MOVES[x.drop]||[]).push(x.id); }

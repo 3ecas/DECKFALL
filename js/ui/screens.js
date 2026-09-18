@@ -91,13 +91,12 @@ function battleHTML(){
   return `<div id="battle" data-key="${F.key}" class="battle">
     ${hudHTML({bars:false})}
     <div class="arena"><div class="field">${F.enemies.map((e,i)=>enemyHTML(e,i)).join('')}</div>${logHTML()}</div>
-    ${playerHTML()}
     <div class="handwrap"><div class="handbar">${handbarHTML()}</div><div class="hand">${handHTML()}</div></div>
-    <div class="slots" data-act="passives">${slotsHTML()}</div>
+    ${playerHTML()}
   </div>`;
 }
 function spoilsHTML(){
-  const r=G.spoils; const p=G.p; const done=r.cardTaken&&(!r.ultOffer||r.ultTaken);
+  const r=G.spoils; const p=G.p; const done=spoilsDone(r);
   const title=r.kind==='boss'?'Boss slain':r.kind==='elite'?'Elite slain':'Victory';
   const msgs=(r.msgs||(r.cardMsg?[r.cardMsg]:[])).map(m=>`<p class="msg">${esc(m)}</p>`).join('');
   const levelPicks=(r.picks||0)-(r.bossPick?1:0); const lvlOfPick=p.level-levelPicks+1;
@@ -107,6 +106,7 @@ function spoilsHTML(){
     <div class="muted small">Level ${p.level} · ${p.xp} / ${p.xpNext} XP · every level lets you choose a new card</div>
     ${msgs}
     ${!r.cardTaken&&r.cards?`<div class="eyebrow">${r.bossPick?'The boss drops a card':`Level ${lvlOfPick} · choose a new card`}</div><div class="cardgrid fan">${r.cards.map((id,i)=>cardHTML(id,{big:true,act:'spoils-card',data:`data-id="${id}" style="--i:${i}"`,enter:true,tag:p.deck.includes(id)?(canEvolve(id)?`Owned · evolve to ${TIERS[curTier(id)+1]}`:'Owned · copy'):null})).join('')}</div><button class="btn ghost sm" data-act="spoils-skip">Skip</button>`:''}
+    ${r.cardTaken&&r.drop&&!r.dropTaken?`<div class="eyebrow">☠ ${esc(r.drop.from)} dropped one of its abilities</div><div class="cardgrid fan">${cardHTML(r.drop.id,{big:true,act:'spoils-drop',data:`data-id="${r.drop.id}" style="--i:0"`,enter:true,tag:p.deck.includes(r.drop.id)?(canEvolve(r.drop.id)?`Owned · evolve to ${TIERS[curTier(r.drop.id)+1]}`:'Owned · copy'):null})}</div><button class="btn ghost sm" data-act="spoils-drop-skip">Leave it</button>`:''}
     ${r.ultOffer&&!r.ultTaken?`<div class="eyebrow">The boss's power is yours</div><div class="upgrades narrow">${r.ultOffer.map(id=>{const u=ULT[id];return `<div class="upg"><div class="uname">${u.icon} ${u.name} ${elPill(u.el)}</div><div class="udesc">${u.desc}</div><button class="btn sm primary" data-act="spoils-ult" data-id="${id}">Learn</button></div>`;}).join('')}</div><button class="btn ghost sm" data-act="spoils-ult">Keep ${ULT[p.ult].name}</button>`:''}
     ${r.ultTaken&&r.ultMsg?`<p class="msg">${esc(r.ultMsg)}</p>`:''}
     ${done?`<div class="autobar"><i></i></div><button class="btn sm ghost" data-act="spoils-next">Continue now</button>`:''}
@@ -129,12 +129,11 @@ function interludeHTML(){
 }
 function shopHTML(){
   const p=G.p;
-  const body=`<div class="eyebrow">Upgrade a card · one tier higher, priced by the tier it becomes</div><div class="shopcards">${deckSummary().map(x=>{const ok=canEvolve(x.id); const c=ok?evolvePrice(x.id):0; return cardHTML(x.id,{act:'shop-upgrade',data:`data-id="${x.id}"`,price:ok?c:null,priceTag:ok?` → ${TIERS[curTier(x.id)+1]}`:'',tag:ok?null:'Ultimate',dim:!ok||p.gold<c});}).join('')}</div>
-    <div class="eyebrow">Services</div>
-    <div class="row"><button class="btn" data-act="shop-remove" ${p.gold<shopRemoveCost()?'disabled':''}>Remove a card · ${shopRemoveCost()} 🪙</button><button class="btn" data-act="shop-heal" ${p.gold<shopHealCost()||p.hp>=p.maxHp?'disabled':''}>Heal 30% · ${shopHealCost()} 🪙</button></div>`;
+  const grid=deckSummary().map(x=>{const ok=canEvolve(x.id); const c=ok?evolvePrice(x.id):0; return cardHTML(x.id,{act:'shop-upgrade',data:`data-id="${x.id}"`,price:ok?c:null,priceTag:ok?` → ${TIERS[curTier(x.id)+1]}`:'',tag:ok?null:'Ultimate',dim:!ok||p.gold<c});}).join('');
   return `<div class="scene shop">
     <div class="row between"><h2>⚒️ Merchant · Round ${G.round}</h2><button class="btn primary" data-act="shop-leave">Continue the climb →</button></div>
-    <div class="shopbody">${body}</div>
+    <div class="eyebrow">Upgrade a card · one tier higher, priced by the tier it becomes</div>
+    <div class="shopcards">${grid}</div>
   </div>`;
 }
 function gameoverHTML(){

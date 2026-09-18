@@ -10,7 +10,7 @@ const CARDS = [];
 function c(id,name,type,el,cost,tier,icon,n,fx,o){ CARDS.push(Object.assign({id,name,type,el,cost,tier:TIERS[tier],icon,n:n||{},fx:fx||[]},o||{})); }
 // ---------- FIRE: burn, amplify, detonate ----------
 c('ember','Ember','spell','fire',1,0,'🔥',{dmg:3},[['dmg','dmg']]);
-c('kindle','Kindle','spell','fire',0,0,'🕯️',{v:2},[['se','burn','v']]);
+c('kindle','Kindle','spell','fire',1,0,'🕯️',{v:2},[['se','burn','v']]);
 c('torch_swing','Torch Swing','attack','fire',0,0,'🔥',{dmg:4},[['dmg','dmg']]);
 c('fireball','Fireball','spell','fire',1,1,'☄️',{dmg:6},[['dmg','dmg']]);
 c('fire_arrow','Fire Arrow','attack','fire',0,1,'🏹',{dmg:4,v:2},[['dmg','dmg'],['se','burn','v']]);
@@ -38,7 +38,7 @@ c('mana_spring','Mana Spring','skill','water',0,1,'⛲',{e:2},[['energy','e']]);
 c('water_arrow','Water Arrow','attack','water',0,1,'🏹',{dmg:4,v:2},[['dmg','dmg'],['se','wet','v']]);
 c('undertow','Undertow','spell','water',1,2,'🌀',{dmg:5},[['dmg','dmg',{bv:'wet'}]]);
 c('tide_blade','Tide Blade','attack','water',0,2,'🗡️',{dmg:6,v:2},[['dmg','dmg'],['se','wet','v']]);
-c('soak','Soak','spell','water',0,2,'🫗',{v:3},[['se','wet','v',{aoe:1}]]);
+c('soak','Soak','spell','water',1,2,'🫗',{v:3},[['se','wet','v',{aoe:1}]]);
 c('riptide','Riptide','spell','water',2,3,'🌊',{dmg:10,v:2},[['dmg','dmg'],['se','weak','v']]);
 c('cleansing_rain','Cleansing Rain','spell','water',1,3,'🌧️',{h:6},[['cleanse'],['heal','h']]);
 c('flow','Flow','skill','water',0,3,'〰️',{d:2},[['draw','d']]);
@@ -52,7 +52,7 @@ c('maelstrom','Maelstrom','spell','water',3,7,'🌪️',{v:2,dmg:12,hits:2},[['s
 c('leviathans_call',"Leviathan's Call",'spell','water',3,8,'🐋',{dmg:32,v:2,h:20},[['dmg','dmg',{aoe:1}],['se','weak','v',{aoe:1}],['heal','h']]);
 // ---------- ICE: chill, freeze, shatter ----------
 c('frost_shard','Frost Shard','spell','ice',1,0,'❄️',{dmg:3},[['dmg','dmg']]);
-c('cold_snap','Cold Snap','spell','ice',0,0,'🌬️',{v:1},[['se','chill','v']]);
+c('cold_snap','Cold Snap','spell','ice',1,0,'🌬️',{v:1},[['se','chill','v']]);
 c('ice_wall','Ice Wall','shield','ice',0,0,'🧱',{b:4},[['block','b']]);
 c('frost_bolt','Frost Bolt','spell','ice',1,1,'🧊',{dmg:6,v:1},[['dmg','dmg'],['se','chill','v']]);
 c('ice_arrow','Ice Arrow','attack','ice',0,1,'🏹',{dmg:4,v:2},[['dmg','dmg'],['se','chill','v']]);
@@ -72,7 +72,7 @@ c('frozen_heart','Frozen Heart','shield','ice',0,6,'💙',{b:12},[['block','b']]
 c('winters_grasp',"Winter's Grasp",'spell','ice',2,7,'🫳',{d:2},[['se','frozen',null,{aoe:1}],['draw','d']]);
 c('eternal_winter','Eternal Winter','spell','ice',3,8,'☃️',{dmg:22,k:2},[['dmg','dmg',{aoe:1}],['se','frozen',null,{aoe:1}],['se','vuln','k',{aoe:1}]]);
 // ---------- LIGHTNING: shock, multi-hit, mana ----------
-c('spark','Spark','spell','light',0,0,'⚡',{dmg:2},[['dmg','dmg']]);
+c('spark','Spark','spell','light',1,0,'⚡',{dmg:2},[['dmg','dmg']]);
 c('jolt','Jolt','spell','light',1,0,'🔌',{dmg:4},[['dmg','dmg']]);
 c('static','Static','spell','light',1,0,'🌐',{v:3},[['se','shock','v']]);
 c('lightning_arrow','Lightning Arrow','attack','light',0,1,'🏹',{dmg:4,v:3},[['dmg','dmg'],['se','shock','v']]);
@@ -80,7 +80,7 @@ c('storm_blade','Storm Blade','attack','light',0,1,'🗡️',{dmg:6,v:2},[['dmg'
 c('charge','Charge','skill','light',0,1,'🔋',{e:1,u:15},[['energy','e'],['ult','u']]);
 c('chain_lightning','Chain Lightning','spell','light',2,2,'🔗',{dmg:5,v:2},[['dmg','dmg',{aoe:1}],['se','shock','v',{aoe:1}]]);
 c('conduct','Conduct','spell','light',1,2,'🧲',{m:3},[['special','stDmg',{s:'shock',m:'m'}]]);
-c('flicker','Flicker','spell','light',0,2,'✨',{dmg:2,hits:2},[['dmg','dmg',{hits:'hits'}]]);
+c('flicker','Flicker','spell','light',1,2,'✨',{dmg:2,hits:2},[['dmg','dmg',{hits:'hits'}]]);
 c('thunderbolt','Thunderbolt','spell','light',2,3,'🌩️',{dmg:11,v:4},[['dmg','dmg'],['se','shock','v']]);
 c('static_field','Static Field','spell','light',1,3,'🌐',{v:5},[['se','shock','v',{aoe:1}]]);
 c('overcharge','Overcharge','skill','light',0,3,'🔋',{e:2},[['energy','e']],{exhaust:true});
@@ -97,7 +97,7 @@ c('herbal_salve','Herbal Salve','spell','grass',1,0,'🌿',{h:4},[['heal','h']])
 c('vine_lash','Vine Lash','spell','grass',1,0,'🌱',{dmg:3},[['dmg','dmg']]);
 c('leaf_guard','Leaf Guard','shield','grass',0,0,'🍃',{b:4},[['block','b']]);
 c('thorns','Thorns','skill','grass',0,1,'🌵',{t:3},[['ss','thornsT','t']]);
-c('seed','Seed','spell','grass',0,1,'🌰',{r:2},[['ss','regen','r']]);
+c('seed','Seed','spell','grass',1,1,'🌰',{r:2},[['ss','regen','r']]);
 c('sprout_strike','Sprout Strike','attack','grass',0,1,'🌱',{dmg:4,v:1},[['dmg','dmg'],['ss','str','v']]);
 c('leech_seed','Leech Seed','spell','grass',1,2,'🫘',{v:3,h:3},[['se','poison','v'],['heal','h']]);
 c('bramble_coat','Bramble Coat','shield','grass',0,2,'🌿',{b:5,t:4},[['block','b'],['ss','thornsT','t']]);
@@ -115,7 +115,7 @@ c('gaias_embrace',"Gaia's Embrace",'skill','grass',0,7,'🌍',{v:4,r:4,t:4},[['s
 c('verdant_apocalypse','Verdant Apocalypse','spell','grass',3,8,'🌋',{dmg:28,v:2,h:15},[['dmg','dmg',{aoe:1}],['se','weak','v',{aoe:1}],['heal','h']]);
 // ---------- POISON: stacking, doubling, bursting ----------
 c('venom_dart','Venom Dart','spell','poison',1,0,'🎯',{dmg:3},[['dmg','dmg']]);
-c('toxic_spit','Toxic Spit','spell','poison',0,0,'🤢',{v:2},[['se','poison','v']]);
+c('toxic_spit','Toxic Spit','spell','poison',1,0,'🤢',{v:2},[['se','poison','v']]);
 c('poison_arrow','Poison Arrow','attack','poison',0,0,'🏹',{dmg:4},[['dmg','dmg']]);
 c('venom_blade','Venom Blade','attack','poison',0,1,'🗡️',{dmg:5,v:3},[['dmg','dmg'],['se','poison','v']]);
 c('toxic_cloud','Toxic Cloud','spell','poison',1,1,'☁️',{v:3},[['se','poison','v',{aoe:1}]]);
@@ -158,7 +158,7 @@ c('world_ender','World Ender','spell','earth',3,8,'💥',{dmg:38,v:3,k:3},[['dmg
 // ---------- SHADOW: life steal, sacrifice, curses ----------
 c('shadow_bolt','Shadow Bolt','spell','shadow',1,0,'🌑',{dmg:3},[['dmg','dmg']]);
 c('umbral_cut','Umbral Cut','attack','shadow',0,0,'🗡️',{dmg:4},[['dmg','dmg']]);
-c('gloom','Gloom','spell','shadow',0,0,'🌫️',{v:1},[['se','weak','v']]);
+c('gloom','Gloom','spell','shadow',1,0,'🌫️',{v:1},[['se','weak','v']]);
 c('drain','Drain','attack','shadow',0,1,'🩸',{dmg:4},[['dmg','dmg',{ls:100}]]);
 c('curse','Curse','spell','shadow',1,1,'📿',{v:2,k:2},[['se','weak','v'],['se','vuln','k']]);
 c('dark_pact','Dark Pact','skill','shadow',0,1,'🕯️',{s:3,e:1},[['selfDmg','s'],['energy','e']]);

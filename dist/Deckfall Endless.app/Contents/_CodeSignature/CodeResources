@@ -10,15 +10,15 @@
 		</data>
 		<key>Resources/game/css/style.css</key>
 		<data>
-		nfyFOz//3SN/2Hajqmrfrs1QZzc=
+		WBaeWq7ke0X+6icP3I/GlT4m820=
 		</data>
 		<key>Resources/game/index.html</key>
 		<data>
-		sK9PFGOgUQGN40XrZThDGQtLt2o=
+		IwNDhpfOyNqDrqLAVIOdFcxqTWg=
 		</data>
 		<key>Resources/game/js/data/cards.js</key>
 		<data>
-		CrfiLvG0sWDwvFROmfuPuX4HYFA=
+		gujs84n/AFuStO/fngtI1L1pepA=
 		</data>
 		<key>Resources/game/js/data/elements.js</key>
 		<data>
@@ -26,7 +26,11 @@
 		</data>
 		<key>Resources/game/js/data/enemies.js</key>
 		<data>
-		2CJ+rATHd0E3bmd2itrsqC954uQ=
+		J7z5PtUDj5OlaqrrGk9SMIbYnsg=
+		</data>
+		<key>Resources/game/js/data/foecards.js</key>
+		<data>
+		MtMBdK2YFsM4259pTemdl437FjQ=
 		</data>
 		<key>Resources/game/js/data/interludes.js</key>
 		<data>
@@ -38,27 +42,27 @@
 		</data>
 		<key>Resources/game/js/engine/combat.js</key>
 		<data>
-		XZbOG/VbK9WB6pwS6OxUco9UVME=
+		CMbizxjUovX4NkuRKwnSes44Lwg=
 		</data>
 		<key>Resources/game/js/engine/state.js</key>
 		<data>
-		s+WPbxzTjKnQW5LSyx8EWOgeQRg=
+		XNaQ7yl0xgoLgFOoJ2pW3Q82AKg=
 		</data>
 		<key>Resources/game/js/main.js</key>
 		<data>
-		zFTomNwvZVTNYQnY3typmDYv2HQ=
+		j+7ifw11ko6B2g0lc4SK71JqIlk=
 		</data>
 		<key>Resources/game/js/ui/components.js</key>
 		<data>
-		2aGfMAqU4M5QVUPmOGVxfSP8syk=
+		6B4hU8ZbnRF2RWgY8qWm7i3sGd8=
 		</data>
 		<key>Resources/game/js/ui/fx.js</key>
 		<data>
-		hMF53jyJAT0GhCYNEerigXKiXO0=
+		4mh0IuZfPvllrtjrxY7li75a+CE=
 		</data>
 		<key>Resources/game/js/ui/screens.js</key>
 		<data>
-		mxuZAYVuG4j3Nq7C+OsW0K8m0Ro=
+		YbVIfBSHvJ5x4YP/WKyy0uuKD74=
 		</data>
 		<key>Resources/game/js/ui/sound.js</key>
 		<data>
@@ -78,21 +82,21 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			MZLZN3VFpaSjTpwWE3e4KaszrrGGWmNMgCxrZ/uTWLU=
+			nokaSftotsM/mwdp8avf6DGREyWyT/JWU4Qruw1lFPg=
 			</data>
 		</dict>
 		<key>Resources/game/index.html</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			27tLx4qnPeD+aCiXs7K0qnYYwjXz4+F94j7G2T+icrk=
+			Tn9djV4ve5NuUqDLyqxXcUDa9ViQsI4k2ipR6bVkzg4=
 			</data>
 		</dict>
 		<key>Resources/game/js/data/cards.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			a1F8c8VBVDQ4IVu/9qNwE7wRO3TxxP/i7qf2WZnbz1c=
+			83LwlPn0FD0B1rH3oDktQQORUzLFnLbz7A23ouk1uS0=
 			</data>
 		</dict>
 		<key>Resources/game/js/data/elements.js</key>
@@ -106,7 +110,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			B9T080Gek7bN+CwIJ+ArYywMUaP0HMNuBhdJirciPm8=
+			BurrwTpWQWK1e2e2Gc0NPXckb1EEefA5zl5Kq/7lgzE=
+			</data>
+		</dict>
+		<key>Resources/game/js/data/foecards.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			0Cji52ojJdP3TyKCDlx4vudxAy1NEquU1wPeO51Yrck=
 			</data>
 		</dict>
 		<key>Resources/game/js/data/interludes.js</key>
@@ -127,42 +138,42 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			10JH763wR2QfgAlKNEMf/EqcDS30is53sAJD+Abyckk=
+			lTCGMFSCnbxdQ17A69zaN2wGybGCNpdASLbhdWHyh4Y=
 			</data>
 		</dict>
 		<key>Resources/game/js/engine/state.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			H88sOFJRltNjpFlVbRsLDDMUG8lkvcmlmqt1A/wbrgo=
+			YrgmnhsvH+RXhmuYcTPa+F0E9Wymw6Bn4pMupae35hg=
 			</data>
 		</dict>
 		<key>Resources/game/js/main.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			9m2w9rqZY+dUUxxAv98YmN6ga5n2xryVhJxx47REMkI=
+			CC3Hxnsc1qjhfqD8G9TIxC3g8C+55gfLjU5QXhzSm+Y=
 			</data>
 		</dict>
 		<key>Resources/game/js/ui/components.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			pBjsKrQCy9ElTdSLEHPpWKJohZ098xRbGPzEfVIuqeQ=
+			IZJI0e+uQkjowF3BvHoQnwpr2DDFCpK0YZZLcuYdyHY=
 			</data>
 		</dict>
 		<key>Resources/game/js/ui/fx.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			VPxNLLqy3RY3I64B3RpbD1CtrbdegQP47JX6ootrcTw=
+			Ub54IWM96D0KbgbNhXN/B1cWOd+0EQZBaW3yNWmtqLY=
 			</data>
 		</dict>
 		<key>Resources/game/js/ui/screens.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			J5hZhLMVgzxO5IQhthVBsmzxsFQxg/DHUePmx+M+DBQ=
+			7Ftq2W+11sgB/uq0OkQtdI0A6VHKfjb4sBH6PPAga2Y=
 			</data>
 		</dict>
 		<key>Resources/game/js/ui/sound.js</key>
