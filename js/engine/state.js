@@ -33,7 +33,7 @@ function startingDeck(){
 }
 function newGame(){
   G={ phase:'battle', round:1, kills:0, fights:0, bossesSlain:0, removes:0, evolves:0, turnsTotal:0, lastInter:null,
-      p:{ hp:70,maxHp:70,level:1,xp:0,xpNext:40, attack:0,spell:0,armor:0,dodge:5,counter:10,crit:5,lifesteal:0,thorns:0,ultPower:100,luck:0,energyMax:3,handSize:5,regen:0,slots:3,
+      p:{ hp:70,maxHp:70,level:1,xp:0,xpNext:40, attack:0,spell:0,armor:0,dodge:0,counter:0,crit:0,lifesteal:0,thorns:0,ultPower:100,luck:0,energyMax:3,handSize:5,regen:0,slots:3,
           gold:40, ultCharge:0, ult:'bladestorm', ults:['bladestorm'], deck:startingDeck(), evo:{}, bought:{} },
       boosts:[], fight:null, spoils:null, inter:null, shop:null, log:[] };
   sfx('start'); startRound();

@@ -4,12 +4,11 @@ function handle(act,t){
   switch(act){
     case 'noop': return;
     case 'new': clearTimeout(UI.timer); UI.modal=null; newGame(); render(); break;
-    case 'continue': { const s=loadSave(); if(s){ G=s; UI.busy=false; UI.modal=null; UI.handUids=[]; if(G.phase==='battle'&&(!G.fight||G.fight.over)) nextRound(); else if(G.phase==='interlude'&&G.inter){ if(G.inter.t==='ambush'){ nextRound(); } else { render(); if(G.inter.auto&&!(G.inter.cards&&!G.inter.picked)) UI.timer=setTimeout(nextRound,2500); } } else if(G.phase==='spoils'&&G.spoils){ render(); spoilsMaybeContinue(); } else render(); } else render(); } break;
+    case 'continue': { const s=loadSave(); if(s){ G=s; UI.busy=false; UI.modal=null; UI.handUids=[]; if(G.phase==='battle'&&(!G.fight||G.fight.over)) nextRound(); else if(G.phase==='interlude'&&G.inter){ if(G.inter.t==='ambush'){ nextRound(); } else { render(); if(G.inter.auto&&!(G.inter.cards&&!G.inter.picked)) UI.timer=setTimeout(nextRound,2500); } } else if(G.phase==='spoils'&&G.spoils){ render(); spoilsMaybeContinue(); } else if(G.phase==='battle'&&G.fight.turn===0){ startPlayerTurn(); } else render(); } else render(); } break;   // a fight is saved before its first turn: start it on load
     case 'title': clearTimeout(UI.timer); G=null; UI.modal=null; render(); break;
     case 'target': { const i=+t.dataset.i; if(G.fight&&G.fight.enemies[i]&&G.fight.enemies[i].alive){ G.fight.target=i; render(); } } break;
     case 'play': playCard(+t.dataset.i); break;
     case 'end': endTurn(); break;
-    case 'ult': useUltimate(); break;
     case 'spoils-card': spoilsPickCard(t.dataset.id); break;
     case 'spoils-skip': spoilsSkipCard(); break;
     case 'spoils-ult': spoilsPickUlt(t.dataset.id||null); break;
@@ -49,7 +48,6 @@ document.addEventListener('keydown',e=>{
   if(G.phase==='battle'){
     if(e.key>='1'&&e.key<='9') playCard(parseInt(e.key,10)-1);
     else if(e.key==='e'||e.key==='E') endTurn();
-    else if(e.key==='u'||e.key==='U') useUltimate();
   } else if(e.key===' '||e.key==='Enter'){
     if(G.phase==='interlude') interludeContinue();
     else if(G.phase==='spoils'&&G.spoils.cardTaken&&(!G.spoils.ultOffer||G.spoils.ultTaken)) spoilsContinue();

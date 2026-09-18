@@ -19,7 +19,7 @@ function render(){
 }
 function patchBattle(){
   const F=G.fight; const app=document.getElementById('app');
-  const hud=app.querySelector('.hud'); if(hud) hud.outerHTML=hudHTML();
+  const hud=app.querySelector('.hud'); if(hud) hud.outerHTML=hudHTML({bars:false});
   F.enemies.forEach((e,i)=>{ const n=app.querySelector(`.enemy[data-uid="${e.uid}"]`); if(!n) return; n.classList.toggle('sel',F.target===i&&e.alive); n.classList.toggle('dead',!e.alive); const bar=n.querySelector('.ehp i'); if(bar) bar.style.width=(e.hp/e.maxHp*100)+'%'; const bt=n.querySelector('.ehp b'); if(bt) bt.textContent=`${e.hp} / ${e.maxHp}`; const st=n.querySelector('.statuses'); if(st) st.innerHTML=enemyStatusesHTML(e); const it=n.querySelector('.intent'); if(it) it.innerHTML=enemyIntentHTML(e); const ep=n.querySelector('.epassives'); if(ep) ep.innerHTML=enemyPassivesHTML(e); });
   const sl=app.querySelector('.slots'); if(sl) sl.innerHTML=slotsHTML();
   const lg=app.querySelector('.log'); if(lg){ lg.outerHTML=logHTML(); const l2=app.querySelector('.log'); l2.scrollTop=l2.scrollHeight; }
@@ -46,7 +46,7 @@ function handbarHTML(){ const F=G.fight; const alive=F.enemies.filter(e=>e.alive
 function battleHTML(){
   const F=G.fight; UI.handUids=[];
   return `<div id="battle" data-key="${F.key}" class="battle">
-    ${hudHTML()}
+    ${hudHTML({bars:false})}
     <div class="arena"><div class="field">${F.enemies.map((e,i)=>enemyHTML(e,i)).join('')}</div>${logHTML()}</div>
     ${playerHTML()}
     <div class="handwrap"><div class="handbar">${handbarHTML()}</div><div class="hand">${handHTML()}</div></div>

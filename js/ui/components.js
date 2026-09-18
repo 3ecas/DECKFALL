@@ -114,15 +114,17 @@ function enemyStatusesHTML(e){
 }
 function enemyIntentHTML(e){ const it=e.alive?intentInfo(e):{i:'💀',t:'Slain'}; return `<span>${it.i}</span><span>${it.t}</span>`; }
 function boostsHTML(){ return G.boosts.map(b=>`<span class="boost" title="${b.name}: ${b.rounds} round${b.rounds>1?'s':''} left">${b.icon} ${b.el?'+'+b.v+'% '+EL[b.el].n:'+'+b.v+' '+STATNAMES[b.stat]} <i>${b.rounds}</i></span>`).join(''); }
-function hudHTML(){
+function gaugesHTML(){
   const p=G.p;
+  return `<div class="bar hp" title="Health"><i style="width:${p.hp/p.maxHp*100}%"></i><b class="num">❤ ${p.hp} / ${p.maxHp}</b></div>
+      <div class="bar xp" title="Experience: ${p.xp} / ${p.xpNext}"><i style="width:${p.xp/p.xpNext*100}%"></i><b class="num">Lv ${p.level}</b></div>
+      <div class="bar ult" title="Ultimate: ${ULT[p.ult].name} · fires by itself when the meter is full. ${ULT[p.ult].desc}"><i style="width:${p.ultCharge}%"></i><b class="num">${ULT[p.ult].icon} ${p.ultCharge}%</b></div>`;
+}
+function hudHTML(o){
+  o=o||{}; const p=G.p;
   return `<div class="hud">
     <div class="hud-l"><span class="round">Round ${G.round}</span><span class="gold num" id="goldv">${p.gold}</span></div>
-    <div class="bars">
-      <div class="bar hp" title="Health"><i style="width:${p.hp/p.maxHp*100}%"></i><b class="num">❤ ${p.hp} / ${p.maxHp}</b></div>
-      <div class="bar xp" title="Experience"><i style="width:${p.xp/p.xpNext*100}%"></i><b class="num">Lv ${p.level}</b></div>
-      <div class="bar ult" title="Ultimate: ${ULT[p.ult].name}"><i style="width:${p.ultCharge}%"></i><b class="num">${ULT[p.ult].icon} ${p.ultCharge}%</b></div>
-    </div>
+    ${o.bars===false?'':`<div class="bars">${gaugesHTML()}</div>`}
     <div class="boosts">${boostsHTML()}</div>
     <div class="tools"><button class="btn sm" data-act="modal" data-m="deck">Deck ${p.deck.length}</button><button class="btn sm" data-act="modal" data-m="stats">Stats</button><button class="btn sm" data-act="modal" data-m="chart">Types</button><button class="btn sm" data-act="sound" title="Sound on/off" aria-label="Sound">${SFX.enabled?'🔊':'🔇'}</button><button class="btn sm" data-act="modal" data-m="menu" aria-label="Menu">☰</button></div>
   </div>`;
@@ -151,15 +153,14 @@ function playerHTML(){
   if(PS('lifesteal')) stats.push(stat('🩸',PS('lifesteal')+'%','Steal','Life steal: heal a share of every attack'));
   const th=PS('thorns')+F.thornsT+pSum('thorns'); if(th) stats.push(stat('🌵',th,'Thorns','Thorns: attackers take damage'));
   const cells=Array.from({length:10},(_,k)=>`<i class="mcell ${k<F.energy?'on':k<max?'cap':''}"></i>`).join('');
+  const sts=playerStatusesHTML();
   return `<div class="player">
+    <div class="endrow"><button class="btn primary endbtn" data-act="end" ${UI.busy?'disabled':''}>End Turn</button></div>
     <div class="prow">
+      <div class="pbars">${gaugesHTML()}</div><i class="pdiv"></i>
       <div class="pstats">${stats.join('')}</div>
-      <div class="statuses pstatuses">${playerStatusesHTML()}</div>
-      <div class="pbtns">
-        <button class="btn ultbtn ${p.ultCharge>=100?'ready':''}" data-act="ult" ${p.ultCharge<100||UI.busy?'disabled':''} title="${ULT[p.ult].desc}">${ULT[p.ult].icon} ${p.ultCharge>=100?'ULTIMATE':ULT[p.ult].name+' '+p.ultCharge+'%'}</button>
-        <button class="btn primary endbtn" data-act="end" ${UI.busy?'disabled':''}>End Turn</button>
-      </div>
     </div>
+    ${sts?`<div class="statuses pstatuses">${sts}</div>`:''}
     <div class="manabar" title="Mana: spells and summons cost Mana, everything else is free. Refills to ${max} every turn."><span class="mlbl">Mana</span><div class="mcells">${cells}</div><span class="mval num">${F.energy}<small>/${max}</small></span></div>
   </div>`;
 }
@@ -196,10 +197,10 @@ function modalHTML(){
 }
 function helpHTML(){ return `<h2>How to play</h2>
 <p><b>Rounds.</b> Every round is a fight, then spoils, then something automatic on the road: a chest, a blessing that boosts you for a few rounds, a shrine, a forge, a trap, an ambush. Every fourth round a merchant appears with cards, attributes, an evolution forge and the Lucky Coin. Elites every fifth round, a boss every tenth.</p>
-<p><b>Turns.</b> You draw a hand each turn. <b>Attacks, shields, skills, potions, machines and traps are free.</b> Spells and summons cost Mana: the blue bar above your hand, refilled every turn. When nothing in your hand can be played, the turn ends by itself. End Turn lets every enemy act according to the intent shown on its card.</p>
+<p><b>Turns.</b> You draw a hand each turn. <b>Attacks, shields, skills, potions, machines and traps are free.</b> Spells and summons cost Mana: the blue bar above your hand, refilled every turn. Your Ultimate fires by itself the moment its meter fills. When nothing in your hand can be played, the turn ends by itself. End Turn lets every enemy act according to the intent shown on its card.</p>
 <p><b>Card face.</b> Name top-left. Spells and summons show their Mana cost top-right; a card with no cost box is free to play. The picture in the middle. The dotted box shows the element, the tier and what the card does: the first line is the main effect, the lines underneath are extras. Bottom-right says what kind of card it is (attack, spell, shield, skill, potion, machine, summon, trap). The whole card is coloured by its tier, and a green ▲ badge bottom-left counts how many tiers it has evolved.</p>
 <p><b>Tiers.</b> Basic cards do one plain thing. Common, uncommon, medium, good, great, rare, perfect and ultimate cards add effects and grow. Getting a card you already own <b>evolves</b> it one tier, multiplying its numbers. Some cards are born ultimate.</p>
 <p><b>Passives.</b> Machines, summons and armed traps take one of your passive slots and stay for the fight. Machines give bonuses (double first attack, block per machine, damage per attack played). Summons act every turn. Traps spring on the next enemy attack. Enemies have passives too, and some can destroy yours. Sabotage, EMP and Pilfer destroy or steal theirs. Yours live in the drawer tucked under your hand: hover or tap it to see them.</p>
 <p><b>Elements.</b> Ten elements with combos: Fire burns and detonates, Ice chills, freezes and shatters, Lightning shocks and multi-hits, Water soaks, Grass grows, Poison stacks and doubles, Earth turns Block into damage, Shadow steals life, Holy heals and smites. Hit a weakness for <b>2×</b>. Open <b>Types</b> for the chart.</p>
 <p><b>Death is final.</b> Enemies scale every round. When HP hits zero the run ends and you start over with basic cards.</p>
-<p class="muted small">Keyboard: 1–9 plays a card, E ends the turn, U fires the Ultimate, Space continues, Esc closes windows.</p>`; }
+<p class="muted small">Keyboard: 1–9 plays a card, E ends the turn, Space continues, Esc closes windows.</p>`; }

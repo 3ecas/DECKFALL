@@ -50,7 +50,7 @@ function startPlayerTurn(){
   if(F.st.burn&&G.p.hp>0){ dmgPlayerRaw(F.st.burn,'Burn'); F.st.burn=Math.floor(F.st.burn/2); if(F.st.burn<=0) delete F.st.burn; }
   if(checkDeath()) return;
   const before=F.hand.length; draw(PS('handSize')+pSum('drawPerTurn')); sfx('draw',{n:F.hand.length-before});
-  render(); autoEndCheck();
+  render(); if(G.p.ultCharge>=100){ setTimeout(()=>{ if(G&&G.fight&&!G.fight.over&&!UI.busy) useUltimate(); },350); return; } autoEndCheck();
 }
 function draw(n){ const F=G.fight; for(let i=0;i<n;i++){ if(F.hand.length>=10) break; if(!F.draw.length){ if(!F.discard.length) break; F.draw=shuffle(F.discard); F.discard=[]; } F.hand.push(F.draw.pop()); } }
 function addBlock(n){ const F=G.fight; F.block+=n; floatP(`🛡️ +${n}`,'block'); log(`You gain ${n} Block`); sfx('block'); }
@@ -58,8 +58,8 @@ function needsTarget(d){ return d.fx.some(f=>(f[0]==='dmg'&&!(f[2]&&f[2].aoe))||
 function canPlay(inst){ const F=G.fight; const d=CARD[inst.id]; return !d.unplayable&&F.energy>=cardCost(inst.id); }
 function autoEndCheck(){
   clearTimeout(UI.autoTimer); const F=G.fight; if(!F||F.over||UI.busy) return;
-  if(F.hand.some(canPlay)||G.p.ultCharge>=100) return;
-  UI.autoTimer=setTimeout(()=>{ const F2=G.fight; if(!F2||F2.over||UI.busy||G.phase!=='battle') return; if(F2.hand.some(canPlay)||G.p.ultCharge>=100) return; toast(F2.hand.length?'Nothing left to play. Ending turn.':'Hand empty. Ending turn.'); endTurn(); },900);
+  if(F.hand.some(canPlay)) return;
+  UI.autoTimer=setTimeout(()=>{ const F2=G.fight; if(!F2||F2.over||UI.busy||G.phase!=='battle') return; if(F2.hand.some(canPlay)) return; toast(F2.hand.length?'Nothing left to play. Ending turn.':'Hand empty. Ending turn.'); endTurn(); },900);
 }
 async function playCard(idx){
   const F=G.fight; if(!F||F.over||UI.busy) return; const inst=F.hand[idx]; if(!inst) return; const d=CARD[inst.id]; const cost=cardCost(inst.id);
@@ -180,6 +180,7 @@ async function afterAction(){
   const F=G.fight; if(!F||F.over) return;
   if(checkDeath()) return;
   if(F.enemies.every(e=>!e.alive)){ render(); await sleep(500); winFight(); return; }
+  if(G.p.ultCharge>=100&&!UI.busy){ render(); await sleep(250); await useUltimate(); return; }   // the Ultimate fires by itself when its meter is full
   render(); autoEndCheck();
 }
 function intentInfo(e){
