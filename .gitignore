@@ -1,0 +1,6 @@
+# macOS clutter
+.DS_Store
+# generated at publish time, not part of the game
+artifact.html
+# local tool settings
+.claude/

@@ -36,7 +36,7 @@ function newGame(){
       p:{ hp:70,maxHp:70,level:1,xp:0,xpNext:40, attack:0,spell:0,armor:0,dodge:5,counter:10,crit:5,lifesteal:0,thorns:0,ultPower:100,luck:0,energyMax:3,handSize:5,regen:0,slots:3,
           gold:40, ultCharge:0, ult:'bladestorm', ults:['bladestorm'], deck:startingDeck(), evo:{}, bought:{} },
       boosts:[], fight:null, spoils:null, inter:null, shop:null, log:[] };
-  startRound();
+  sfx('start'); startRound();
 }
 // ---- scaling & rewards ----
 const hpMult=s=>0.9*(1+0.16*s+0.006*s*s);
@@ -47,7 +47,7 @@ function scaledPrice(base){ return Math.round(base*(1+0.03*G.round)); }
 function gainXp(x){
   G.p.xp+=x; let ups=0;
   while(G.p.xp>=G.p.xpNext){ G.p.xp-=G.p.xpNext; G.p.level++; G.p.xpNext=Math.round(40+G.p.level*22); G.p.maxHp+=8; G.p.attack+=1; G.p.spell+=1; heal(Math.round(G.p.maxHp*.25)); ups++; }
-  if(ups){ log(`Level up! You are level ${G.p.level}: +8 Max HP, +1 Attack, +1 Spell Power`,'good'); if(typeof banner==='function') banner(`Level ${G.p.level}!`,'gold'); }
+  if(ups){ log(`Level up! You are level ${G.p.level}: +8 Max HP, +1 Attack, +1 Spell Power`,'good'); if(typeof banner==='function') banner(`Level ${G.p.level}!`,'gold'); setTimeout(()=>sfx('levelup'),700); }
 }
 function heal(n){ if(!G) return 0; const b=G.p.hp; G.p.hp=Math.min(G.p.maxHp,G.p.hp+Math.max(0,Math.round(n))); return G.p.hp-b; }
 function gainUlt(n){ G.p.ultCharge=clamp(G.p.ultCharge+n,0,100); }
@@ -104,12 +104,12 @@ function openInterlude(t){
   else if(t==='idol'){ const id=randomCardId('idol'); addCard(id); addCard('doom'); I.lines.push(`You gain ${CARD[id].name} (${CARD[id].tier}). A Doom curse joins your deck.`); }
   else if(t==='ambush'){ I.auto=true; }
   else if(t==='treasury'){ const gold=goldReward()*5; p.gold+=gold; I.lines.push(`+${gold} gold`); I.cards=offerPool('treasury',3); I.auto=false; I.lines.push('and a card that remembers its owner'); }
-  G.phase='interlude'; render(); save();
+  G.phase='interlude'; render(); save(); sfx({chest:'chest',treasury:'chest',boost:'blessing',shrine:'shrine',forge:'forge',trap:'trapfall',idol:'idol',ambush:'ambush'}[t]||'click');
   if(t==='ambush'){ UI.timer=setTimeout(()=>{ startFight({elite:true,goldMult:2,ambush:true}); },1500); }
   else if(I.auto){ UI.timer=setTimeout(nextRound,3200); }
 }
 function forgeRandom(){ const ids=[...new Set(G.p.deck)].filter(canEvolve); if(!ids.length) return null; const id=pick(ids); evolveCard(id,1); return id; }
-function interludePick(id){ const I=G.inter; if(!I||!I.cards||I.picked) return; const res=addCard(id); I.picked=true; I.lines.push(res==='evolved'?`${CARD[id].name} evolves to ${TIERS[curTier(id)]}.`:`${CARD[id].name} joins your deck.`); render(); save(); UI.timer=setTimeout(nextRound,1200); }
+function interludePick(id){ const I=G.inter; if(!I||!I.cards||I.picked) return; sfx(G.p.deck.includes(id)&&canEvolve(id)?'evolve':'pick'); const res=addCard(id); I.picked=true; I.lines.push(res==='evolved'?`${CARD[id].name} evolves to ${TIERS[curTier(id)]}.`:`${CARD[id].name} joins your deck.`); render(); save(); UI.timer=setTimeout(nextRound,1200); }
 function interludeSkip(){ const I=G.inter; if(!I||I.picked) return; I.picked=true; I.lines.push('You take no card.'); render(); save(); UI.timer=setTimeout(nextRound,900); }
 function interludeContinue(){ const I=G.inter; if(!I) return; if(I.cards&&!I.picked) return; if(I.t==='ambush') return; clearTimeout(UI.timer); nextRound(); }
 function nextRound(){ clearTimeout(UI.timer); if(!G) return; G.round++; G.inter=null; G.spoils=null; G.fight=null; G.shop=null; startRound(); save(); }
@@ -120,34 +120,34 @@ function openShop(){
   const upg=shuffle(UPG.filter(u=>!(u.max&&G.p[u.k]>=u.max))).slice(0,4).map(u=>u.k);
   const pots=shuffle(CARDS.filter(x=>x.type==='potion').map(x=>x.id)).slice(0,3);
   G.shop={cards,upg,pots,rerolls:0,tab:'wares',gamble:{bet:0,pot:0,phase:'bet',streak:0,last:null,rounds:0}};
-  G.phase='shop'; render(); save();
+  G.phase='shop'; render(); save(); sfx('shop');
 }
 function shopBuyCard(id,fromPots){
   const price=fromPots?Math.round(cardPrice(id)*0.8):cardPrice(id); if(G.p.gold<price){toast('Not enough gold');return;}
-  G.p.gold-=price; const r=addCard(id); toast(r==='evolved'?`${CARD[id].name} evolved to ${TIERS[curTier(id)]}`:r==='copied'?`Another ${CARD[id].name} (already ultimate)`:`${CARD[id].name} added`);
+  G.p.gold-=price; sfx('buy'); const r=addCard(id); if(r==='evolved') sfx('evolve'); toast(r==='evolved'?`${CARD[id].name} evolved to ${TIERS[curTier(id)]}`:r==='copied'?`Another ${CARD[id].name} (already ultimate)`:`${CARD[id].name} added`);
   const list=fromPots?G.shop.pots:G.shop.cards; if(r==='added') list.splice(list.indexOf(id),1);
   render(); save();
 }
 function shopBuyUpg(k){
   const u=UPG.find(x=>x.k===k); const price=upgPrice(u); if(G.p.gold<price){toast('Not enough gold');return;}
   if(u.max&&G.p[k]>=u.max){toast('Maxed out');return;}
-  G.p.gold-=price; G.p[k]+=u.v; if(k==='maxHp') heal(10); G.p.bought[k]=(G.p.bought[k]||0)+1; toast(`+${u.v} ${STATNAMES[k]}`); render(); save();
+  G.p.gold-=price; G.p[k]+=u.v; if(k==='maxHp') heal(10); G.p.bought[k]=(G.p.bought[k]||0)+1; toast(`+${u.v} ${STATNAMES[k]}`); sfx('buy'); render(); save();
 }
 function shopRemoveCost(){ return Math.round(55*(1+0.35*G.removes)*(1+0.02*G.round)); }
 function shopRemove(){ const c=shopRemoveCost(); if(G.p.gold<c){toast('Not enough gold');return;} pickDeckCard('Choose a card to remove',id=>{ G.p.gold-=c; G.removes++; removeCard(id); toast(`${CARD[id].name} removed`); render(); save(); }); }
-function shopEvolve(){ pickDeckCard('Choose a card to evolve',id=>{ if(!canEvolve(id)){toast('Already ultimate');render();return;} const c=evolvePrice(id); if(G.p.gold<c){toast(`Needs ${c} gold`);render();return;} G.p.gold-=c; evolveCard(id,1); toast(`${CARD[id].name} evolved to ${TIERS[curTier(id)]}`); render(); save(); },id=>canEvolve(id)?`${evolvePrice(id)} 🪙 → ${TIERS[curTier(id)+1]}`:'max'); }
+function shopEvolve(){ pickDeckCard('Choose a card to evolve',id=>{ if(!canEvolve(id)){toast('Already ultimate');render();return;} const c=evolvePrice(id); if(G.p.gold<c){toast(`Needs ${c} gold`);render();return;} G.p.gold-=c; evolveCard(id,1); toast(`${CARD[id].name} evolved to ${TIERS[curTier(id)]}`); sfx('evolve'); render(); save(); },id=>canEvolve(id)?`${evolvePrice(id)} 🪙 → ${TIERS[curTier(id)+1]}`:'max'); }
 function shopHealCost(){ return Math.round(30*(1+0.03*G.round)); }
-function shopHeal(){ const c=shopHealCost(); if(G.p.gold<c){toast('Not enough gold');return;} if(G.p.hp>=G.p.maxHp){toast('Already at full health');return;} G.p.gold-=c; const h=heal(Math.round(G.p.maxHp*0.3)); toast(`Healed ${h}`); render(); save(); }
+function shopHeal(){ const c=shopHealCost(); if(G.p.gold<c){toast('Not enough gold');return;} if(G.p.hp>=G.p.maxHp){toast('Already at full health');return;} G.p.gold-=c; const h=heal(Math.round(G.p.maxHp*0.3)); toast(`Healed ${h}`); sfx('heal'); render(); save(); }
 function shopRerollCost(){ return 25+15*G.shop.rerolls; }
 function shopReroll(){ const c=shopRerollCost(); if(G.p.gold<c){toast('Not enough gold');return;} G.p.gold-=c; G.shop.rerolls++; G.shop.cards=offerPool('shop',5,x=>x.type!=='potion'); G.shop.upg=shuffle(UPG.filter(u=>!(u.max&&G.p[u.k]>=u.max))).slice(0,4).map(u=>u.k); render(); save(); }
 function gambleChance(){ const g=G.shop.gamble; const base=clamp(50+PS('luck')/2,50,62); return clamp(Math.round(base-6*g.streak),35,62); }
 function gambleFlip(bet){
   const g=G.shop.gamble; if(g.phase==='double') return; bet=Math.floor(bet); if(bet<=0||bet>G.p.gold){toast('Bet what you have.');return;}
-  G.p.gold-=bet; g.bet=bet; g.streak=0; g.rounds++; const win=Math.random()*100<gambleChance(); g.last=win?'win':'lose'; g.flipping=true;
+  G.p.gold-=bet; g.bet=bet; g.streak=0; g.rounds++; const win=Math.random()*100<gambleChance(); g.last=win?'win':'lose'; g.flipping=true; sfx('flip'); setTimeout(()=>sfx(win?'win':'lose'),800);
   if(win){ g.pot=bet*2; g.phase='double'; } else { g.pot=0; g.phase='lost'; } render(); save();
 }
-function gambleDouble(){ const g=G.shop.gamble; if(g.phase!=='double') return; g.streak++; const win=Math.random()*100<gambleChance(); g.last=win?'win':'lose'; g.flipping=true; if(win) g.pot*=2; else { g.pot=0; g.phase='lost'; } render(); save(); }
-function gambleCashOut(){ const g=G.shop.gamble; if(g.phase!=='double') return; G.p.gold+=g.pot; toast(`+${g.pot} gold`); g.phase='done'; render(); save(); }
+function gambleDouble(){ const g=G.shop.gamble; if(g.phase!=='double') return; g.streak++; const win=Math.random()*100<gambleChance(); g.last=win?'win':'lose'; g.flipping=true; sfx('flip'); setTimeout(()=>sfx(win?'win':'lose'),800); if(win) g.pot*=2; else { g.pot=0; g.phase='lost'; } render(); save(); }
+function gambleCashOut(){ const g=G.shop.gamble; if(g.phase!=='double') return; G.p.gold+=g.pot; toast(`+${g.pot} gold`); sfx('coins'); g.phase='done'; render(); save(); }
 
 // ---- death ----
-function gameOver(){ clearTimeout(UI.timer); if(G.fight) G.fight.over=true; G.best=recordBest(); clearSave(); G.phase='gameover'; render(); }
+function gameOver(){ clearTimeout(UI.timer); sfx('defeat'); if(G.fight) G.fight.over=true; G.best=recordBest(); clearSave(); G.phase='gameover'; render(); }

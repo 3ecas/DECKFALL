@@ -37,9 +37,10 @@ function handle(act,t){
     case 'abandon-ask': { UI.modal={type:'menu',confirm:true}; render(); } break;
     case 'abandon': { clearTimeout(UI.timer); recordBest(); clearSave(); G=null; UI.modal=null; render(); } break;
     case 'quit': { clearTimeout(UI.timer); save(); G=null; UI.modal=null; render(); } break;
+    case 'sound': { SFX.toggle(); render(); } break;
   }
 }
-document.addEventListener('click',e=>{ const t=e.target.closest('[data-act]'); if(!t) return; if(t.tagName==='BUTTON'&&t.disabled) return; handle(t.dataset.act,t); });
+document.addEventListener('click',e=>{ const t=e.target.closest('[data-act]'); if(!t) return; if(t.tagName==='BUTTON'&&t.disabled) return; if(t.tagName==='BUTTON'&&!['end','ult','sound','bet','double','cashout'].includes(t.dataset.act)) sfx('click'); handle(t.dataset.act,t); });
 document.addEventListener('keydown',e=>{
   if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')) return;
   if(e.key==='Escape'&&UI.modal){ closeModal(); return; }

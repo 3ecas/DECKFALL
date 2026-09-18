@@ -108,7 +108,7 @@ function hudHTML(){
       <div class="bar ult" title="Ultimate: ${ULT[p.ult].name}"><i style="width:${p.ultCharge}%"></i><b class="num">${ULT[p.ult].icon} ${p.ultCharge}%</b></div>
     </div>
     <div class="boosts">${boostsHTML()}</div>
-    <div class="tools"><button class="btn sm" data-act="modal" data-m="deck">Deck ${p.deck.length}</button><button class="btn sm" data-act="modal" data-m="stats">Stats</button><button class="btn sm" data-act="modal" data-m="chart">Types</button><button class="btn sm" data-act="modal" data-m="menu" aria-label="Menu">☰</button></div>
+    <div class="tools"><button class="btn sm" data-act="modal" data-m="deck">Deck ${p.deck.length}</button><button class="btn sm" data-act="modal" data-m="stats">Stats</button><button class="btn sm" data-act="modal" data-m="chart">Types</button><button class="btn sm" data-act="sound" title="Sound on/off" aria-label="Sound">${SFX.enabled?'🔊':'🔇'}</button><button class="btn sm" data-act="modal" data-m="menu" aria-label="Menu">☰</button></div>
   </div>`;
 }
 function logHTML(){ return `<div class="log">${G.log.slice(-8).map(l=>`<div class="${l.c}">${esc(l.m)}</div>`).join('')}</div>`; }

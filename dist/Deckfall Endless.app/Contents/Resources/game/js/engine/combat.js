@@ -11,8 +11,8 @@ function pSum(k){ let t=0; for(const p of G.fight.passives){ const x=pv_(p,k); i
 function hasP(k){ return G.fight.passives.some(p=>pv_(p,k)!=null); }
 function mechaCount(list){ return list.filter(p=>p.kind==='mecha').length; }
 function removePassive(list,p,reason){ const i=list.indexOf(p); if(i<0) return; list.splice(i,1); if(p.owner==='p'&&p.inst){ if(reason==='destroyed'||reason==='sprung') G.fight.exhaust.push(p.inst); else G.fight.discard.push(p.inst); } if(p.owner==='e'&&pv_(p,'thorns')){ const e=G.fight.enemies.find(x=>x.passives.includes(p)||x.passives===list); if(e) e.thorns=Math.max(0,e.thorns-pv_(p,'thorns')); } }
-function playPassive(inst,pid){ const F=G.fight; const max=PS('slots'); if(F.passives.length>=max){ const old=F.passives[0]; removePassive(F.passives,old,'replaced'); log(`${old.name} is dismantled to make room`,'bad'); } const p=mkPassive(pid,cardVals(inst.id),inst,'p'); F.passives.push(p); inst.inPlay=true; log(`${p.name} enters play (${p.kind})`,'good'); floatP(`${p.icon} ${p.name}`,'mana'); }
-function stealPassive(e,p){ const F=G.fight; const i=e.passives.indexOf(p); if(i<0) return; e.passives.splice(i,1); if(pv_(p,'thorns')) e.thorns=Math.max(0,e.thorns-pv_(p,'thorns')); if(F.passives.length>=PS('slots')){ const old=F.passives[0]; removePassive(F.passives,old,'replaced'); log(`${old.name} is dismantled to make room`,'bad'); } p.owner='p'; p.inst=null; F.passives.push(p); log(`You steal ${p.name} from ${e.name}!`,'se'); floatE(e,`${p.icon} stolen!`,'se'); }
+function playPassive(inst,pid){ const F=G.fight; const max=PS('slots'); if(F.passives.length>=max){ const old=F.passives[0]; removePassive(F.passives,old,'replaced'); log(`${old.name} is dismantled to make room`,'bad'); } const p=mkPassive(pid,cardVals(inst.id),inst,'p'); F.passives.push(p); inst.inPlay=true; log(`${p.name} enters play (${p.kind})`,'good'); floatP(`${p.icon} ${p.name}`,'mana'); sfx('passive',{kind:p.kind}); }
+function stealPassive(e,p){ const F=G.fight; const i=e.passives.indexOf(p); if(i<0) return; e.passives.splice(i,1); if(pv_(p,'thorns')) e.thorns=Math.max(0,e.thorns-pv_(p,'thorns')); if(F.passives.length>=PS('slots')){ const old=F.passives[0]; removePassive(F.passives,old,'replaced'); log(`${old.name} is dismantled to make room`,'bad'); } p.owner='p'; p.inst=null; F.passives.push(p); log(`You steal ${p.name} from ${e.name}!`,'se'); floatE(e,`${p.icon} stolen!`,'se'); sfx('steal'); }
 // ---- setup ----
 function mkEnemy(def,o){
   const s=G.round; const hm=hpMult(s)*(o.scale||1)*(o.elite?1.6:1); const am=atkMult(s)*(o.elite?1.25:1);
@@ -38,7 +38,7 @@ function startFight(o){
   G.fight={key:UI.fightKey++, enemies, turn:0, energy:0, energyBonus:0, hand:[], draw:drawPile, discard:[], exhaust:[], passives:[], block:0, st:{}, str:0, spellT:0, thornsT:0, critT:0, armorT:0, regen:0, dodgeT:0, elBoost:{}, dodgeNext:false, counterNext:false, parry:false, retain:false, target:0, played:0, turnAttacks:0, o, over:false};
   G.log=[]; log(o.boss?`BOSS: ${enemies[0].name} blocks the way!`:o.elite?`An elite ${enemies[0].name} appears!`:`${enemies.map(e=>e.name).join(' and ')} appear${enemies.length>1?'':'s'}!`, o.boss?'bad':'');
   G.phase='battle'; G.spoils=null; G.inter=null; G.shop=null; UI.handUids=[]; save();
-  const f=fx(); if(f) setTimeout(()=>f.banner(o.boss?`Boss: ${enemies[0].name}`:o.elite?`Elite: ${enemies[0].name}`:`Round ${G.round}`, o.boss?'boss':o.elite?'elite':''),50);
+  const f=fx(); if(f) setTimeout(()=>f.banner(o.boss?`Boss: ${enemies[0].name}`:o.elite?`Elite: ${enemies[0].name}`:`Round ${G.round}`, o.boss?'boss':o.elite?'elite':''),50); sfx(o.boss?'boss':o.elite?'elite':'battle');
   startPlayerTurn();
 }
 function startPlayerTurn(){
@@ -49,11 +49,11 @@ function startPlayerTurn(){
   if(F.st.poison){ dmgPlayerRaw(F.st.poison,'Poison'); F.st.poison--; if(F.st.poison<=0) delete F.st.poison; }
   if(F.st.burn&&G.p.hp>0){ dmgPlayerRaw(F.st.burn,'Burn'); F.st.burn=Math.floor(F.st.burn/2); if(F.st.burn<=0) delete F.st.burn; }
   if(checkDeath()) return;
-  draw(PS('handSize')+pSum('drawPerTurn'));
+  const before=F.hand.length; draw(PS('handSize')+pSum('drawPerTurn')); sfx('draw',{n:F.hand.length-before});
   render(); autoEndCheck();
 }
 function draw(n){ const F=G.fight; for(let i=0;i<n;i++){ if(F.hand.length>=10) break; if(!F.draw.length){ if(!F.discard.length) break; F.draw=shuffle(F.discard); F.discard=[]; } F.hand.push(F.draw.pop()); } }
-function addBlock(n){ const F=G.fight; F.block+=n; floatP(`🛡️ +${n}`,'block'); log(`You gain ${n} Block`); }
+function addBlock(n){ const F=G.fight; F.block+=n; floatP(`🛡️ +${n}`,'block'); log(`You gain ${n} Block`); sfx('block'); }
 function needsTarget(d){ return d.fx.some(f=>(f[0]==='dmg'&&!(f[2]&&f[2].aoe))||(f[0]==='se'&&!(f[3]&&f[3].aoe))||(f[0]==='special'&&['execute','snipe','retaliation','stDmg','doubleSt','spread','blockDmg','playedDmg','sabotage','pilfer','mimic'].includes(f[1])&&!(f[2]&&f[2].aoe))); }
 function canPlay(inst){ const F=G.fight; const d=CARD[inst.id]; return !d.unplayable&&F.energy>=cardCost(inst.id); }
 function autoEndCheck(){
@@ -68,7 +68,7 @@ async function playCard(idx){
   clearTimeout(UI.autoTimer);
   let target=null;
   if(needsTarget(d)){ target=F.enemies[F.target]; if(!target||!target.alive){ target=F.enemies.find(e=>e.alive); F.target=F.enemies.indexOf(target); } }
-  UI.busy=true; const f=fx(); if(f){ f.playCard(idx,target); await sleep(200); }
+  UI.busy=true; sfx('play',{type:d.type,el:d.el}); const f=fx(); if(f){ f.playCard(idx,target); await sleep(200); }
   F.energy-=cost; F.hand.splice(idx,1); F.played++; if(d.type==='attack') F.turnAttacks++; gainUlt(8);
   log(`You play ${d.name}${curTier(inst.id)>tierIdx(inst.id)?' ('+TIERS[curTier(inst.id)]+')':''}`);
   try{ await runEffects(d,cardVals(inst.id),target,inst); }catch(err){ console.error(err); }
@@ -90,10 +90,10 @@ async function runEffects(d,v,target,inst){
     else if(t==='armor'){ F.armorT+=v[f[1]]; log(`+${v[f[1]]} Armor for this fight`,'good'); }
     else if(t==='se'){ const o=f[3]||{}; const val=f[2]?v[f[2]]:1; const ts=o.aoe?alive():[target].filter(e=>e&&e.alive); for(const e of ts) applyStatusEnemy(e,f[1],val); }
     else if(t==='ss') applySelf(f[1],f[2]?v[f[2]]:1);
-    else if(t==='heal'){ const h=heal(v[f[1]]); floatP(`+${h}`,'heal'); log(`${src} heals ${h}`,'good'); }
-    else if(t==='healPct'){ const h=heal(Math.round(G.p.maxHp*v[f[1]]/100)); floatP(`+${h}`,'heal'); log(`${src} heals ${h}`,'good'); }
+    else if(t==='heal'){ const h=heal(v[f[1]]); floatP(`+${h}`,'heal'); log(`${src} heals ${h}`,'good'); sfx('heal'); }
+    else if(t==='healPct'){ const h=heal(Math.round(G.p.maxHp*v[f[1]]/100)); floatP(`+${h}`,'heal'); log(`${src} heals ${h}`,'good'); sfx('heal'); }
     else if(t==='draw') draw(v[f[1]]);
-    else if(t==='energy'){ F.energy+=v[f[1]]; log(`+${v[f[1]]} Mana`,'good'); floatP(`+${v[f[1]]} Mana`,'mana'); }
+    else if(t==='energy'){ F.energy+=v[f[1]]; log(`+${v[f[1]]} Mana`,'good'); floatP(`+${v[f[1]]} Mana`,'mana'); sfx('mana'); }
     else if(t==='maxEnergy'){ F.energyBonus+=v[f[1]]; F.energy+=v[f[1]]; log(`+${v[f[1]]} Mana every turn this fight`,'good'); }
     else if(t==='ult'){ gainUlt(v[f[1]]); log(`+${v[f[1]]} Ultimate charge`,'good'); }
     else if(t==='selfDmg') dmgPlayerRaw(v[f[1]],src);
@@ -117,8 +117,8 @@ async function special(name,p,d,v,target,kind){
   else if(name==='elBoost'){ F.elBoost[p.el]=(F.elBoost[p.el]||0)+v[p.v]; log(`${EL[p.el].n} cards deal +${v[p.v]}% this fight`,'good'); }
   else if(name==='parry'){ F.parry=true; }
   else if(name==='redraw'){ const n=v[p.n]||2; let k=0; for(let i=0;i<n&&F.hand.length;i++){ const j=Math.floor(Math.random()*F.hand.length); const c=F.hand.splice(j,1)[0]; F.discard.push(c); k++; } draw(n); log(`Discarded ${k}, drew ${n}`,'good'); }
-  else if(name==='sabotage'){ const e=(target&&target.alive&&target.passives.length)?target:alive().find(x=>x.passives.length); if(!e){ log('No enemy passive to sabotage'); return; } const px=pick(e.passives); removePassive(e.passives,px,'destroyed'); log(`${px.name} is destroyed!`,'se'); floatE(e,`${px.icon} destroyed`,'se'); }
-  else if(name==='emp'){ let n=0; for(const e of alive()) while(e.passives.length){ removePassive(e.passives,e.passives[0],'destroyed'); n++; } log(n?`EMP destroys ${n} enemy passive${n>1?'s':''}!`:'EMP finds nothing to destroy',n?'se':''); }
+  else if(name==='sabotage'){ const e=(target&&target.alive&&target.passives.length)?target:alive().find(x=>x.passives.length); if(!e){ log('No enemy passive to sabotage'); return; } const px=pick(e.passives); removePassive(e.passives,px,'destroyed'); log(`${px.name} is destroyed!`,'se'); floatE(e,`${px.icon} destroyed`,'se'); sfx('break'); }
+  else if(name==='emp'){ let n=0; for(const e of alive()) while(e.passives.length){ removePassive(e.passives,e.passives[0],'destroyed'); n++; } log(n?`EMP destroys ${n} enemy passive${n>1?'s':''}!`:'EMP finds nothing to destroy',n?'se':''); if(n) sfx('break'); }
   else if(name==='pilfer'){ const e=(target&&target.alive&&target.passives.length)?target:alive().find(x=>x.passives.length); if(!e){ log('Nothing to steal'); return; } stealPassive(e,pick(e.passives)); }
   else if(name==='pilferAll'){ let n=0; for(const e of alive()) while(e.passives.length&&n<PS('slots')){ stealPassive(e,e.passives[0]); n++; } if(!n) log('Nothing to steal'); }
   else if(name==='mimic'){ const e=target&&target.alive?target:alive()[0]; if(!e) return; let el=e.el; if(el==='beast'||el==='phys') el=pick(['fire','water','ice','light','grass','poison','earth','shadow','holy']); const id=randomCardId('fight',[],x=>x.el===el&&x.type!=='curse'); F.hand.push({uid:UI.uid++,id,temp:true}); log(`You conjure ${CARD[id].name} from ${e.name}'s essence`,'se'); }
@@ -141,7 +141,7 @@ function calcDmg(base,kind,el,e,o){
 function hitEnemy(e,base,o){
   if(!e||!e.alive) return 0;
   const F=G.fight; const r=calcDmg(base,o.kind,o.el,e,o);
-  const dealt=damageEnemy(e,r.d,{pierce:o.pierce,el:o.el});
+  const dealt=damageEnemy(e,r.d,{pierce:o.pierce,el:o.el}); sfx('hit',{el:o.el,se:r.se,crit:r.crit});
   const ls=(o.ls||0)+PS('lifesteal')+(o.isAttack?pSum('lifesteal'):0); if(ls>0&&dealt>0){ const h=heal(Math.max(1,Math.round(dealt*ls/100))); if(h>0) floatP(`+${h}`,'heal'); }
   if(o.kind==='phys'&&!o.summon&&e.thorns>0&&e.alive){ G.p.hp-=e.thorns; floatP(`-${e.thorns} thorns`,'dmg'); log(`${e.name}'s thorns deal ${e.thorns} to you`,'bad'); }
   if(e.alive){ for(const p of F.passives){ const s=o.isAttack?pv_(p,'attackStatus'):o.isSpell?pv_(p,'spellStatus'):null; if(s) applyStatusEnemy(e,s,pv_(p,'sv')||1); } }
@@ -157,15 +157,15 @@ function damageEnemy(e,amount,o){
   e.hp-=dmg;
   if(dmg>0&&e.st.shock>0){ const x=e.st.shock; e.hp-=x; dmg+=x; e.st.shock--; if(e.st.shock<=0) delete e.st.shock; log(`Shock adds ${x} damage`); }
   gainUlt(2); const f=fx(); if(f) f.hit(e,o.el||'phys');
-  if(e.hp<=0){ e.hp=0; e.alive=false; G.kills++; gainUlt(15); log(`${e.name} is slain!`,'good'); if(f) f.death(e); }
+  if(e.hp<=0){ e.hp=0; e.alive=false; G.kills++; gainUlt(15); log(`${e.name} is slain!`,'good'); if(f) f.death(e); sfx('death'); }
   return dmg;
 }
-function damageEnemyRaw(e,amount,el,src){ if(!e.alive) return; const d=Math.max(0,Math.round(amount)); e.hp-=d; floatE(e,`${d}`,'dmg'); log(`${src} deals ${d} to ${e.name}`); const f=fx(); if(f) f.hit(e,el); if(e.hp<=0){ e.hp=0; e.alive=false; G.kills++; gainUlt(15); log(`${e.name} is slain!`,'good'); if(f) f.death(e); } }
+function damageEnemyRaw(e,amount,el,src){ if(!e.alive) return; const d=Math.max(0,Math.round(amount)); e.hp-=d; floatE(e,`${d}`,'dmg'); log(`${src} deals ${d} to ${e.name}`); const f=fx(); if(f) f.hit(e,el); sfx('tick',{el}); if(e.hp<=0){ e.hp=0; e.alive=false; G.kills++; gainUlt(15); log(`${e.name} is slain!`,'good'); if(f) f.death(e); sfx('death'); } }
 function applyStatusEnemy(e,s,val){
   if(!e.alive) return;
-  if(s==='frozen'){ e.st.frozen=1; log(`${e.name} is Frozen and will skip its turn!`,'se'); floatE(e,'Frozen!','se'); return; }
-  e.st[s]=(e.st[s]||0)+val;
-  if(s==='chill'){ const th=e.boss?5:3; if(e.st.chill>=th){ delete e.st.chill; e.st.frozen=1; log(`${e.name} freezes solid!`,'se'); floatE(e,'Frozen!','se'); return; } }
+  if(s==='frozen'){ e.st.frozen=1; log(`${e.name} is Frozen and will skip its turn!`,'se'); floatE(e,'Frozen!','se'); sfx('freeze'); return; }
+  e.st[s]=(e.st[s]||0)+val; sfx('status',{s});
+  if(s==='chill'){ const th=e.boss?5:3; if(e.st.chill>=th){ delete e.st.chill; e.st.frozen=1; log(`${e.name} freezes solid!`,'se'); floatE(e,'Frozen!','se'); sfx('freeze'); return; } }
   log(`${e.name} gains ${val} ${ST[s].n}`);
 }
 function applySelf(s,val){ const F=G.fight;
@@ -221,7 +221,7 @@ async function endTurn(){
   if(checkDeath()){ UI.busy=false; return; }
   render();
   if(F.passives.length){ await passivesEndTurn(); if(F.enemies.every(e=>!e.alive)){ UI.busy=false; await sleep(400); winFight(); return; } }
-  const f=fx(); if(f) f.banner('Enemy turn','dim'); await sleep(500);
+  const f=fx(); if(f) f.banner('Enemy turn','dim'); sfx('enemyturn'); await sleep(500);
   for(const e of F.enemies){ if(!e.alive) continue; await enemyAct(e); if(G.p.hp<=0){ checkDeath(); UI.busy=false; return; } render(); await sleep(420); }
   for(const e of F.enemies){ if(!e.alive) continue; for(const k of ['weak','vuln','wet']) if(e.st[k]){ e.st[k]--; if(e.st[k]<=0) delete e.st[k]; } e.block=0; }
   UI.busy=false;
@@ -247,18 +247,18 @@ async function enemyAct(e){
   if(e.passives.length){ await enemyPassives(e); if(G.p.hp<=0||!e.alive) return; }
   const it=e.pat[e.pi%e.pat.length]; e.pi++; const f=fx(); const F=G.fight;
   if(it.t==='atk'){ let landed=false; for(let h=0;h<it.hits;h++){ if(f){ f.lunge(e); await sleep(160); } let d=(e.atk+(e.st.str||0)+enemyAtkBonus(e))*it.m; if(e.st.weak) d*=0.75; if(await enemyHitPlayer(e,Math.round(d),{src:e.name,counter:true,drain:e.ls})) landed=true; if(G.p.hp<=0||!e.alive) return; if(it.hits>1){ render(); await sleep(220); } } if(it.s&&landed) applyStatusPlayer(it.s,scaledDebuff(it.s,it.v,e)); }
-  else if(it.t==='def'){ const b=Math.round(it.v*e.atkScale); e.block+=b; log(`${e.name} braces: +${b} Block`); floatE(e,`🛡️${b}`,'block'); }
-  else if(it.t==='buff'){ const v=Math.max(1,Math.round(it.v*e.atkScale*0.5)); e.st.str=(e.st.str||0)+v; log(`${e.name} gains ${v} Strength`,'bad'); floatE(e,`💪+${v}`,'se'); }
-  else if(it.t==='debuff'){ applyStatusPlayer(it.s,scaledDebuff(it.s,it.v,e)); floatP(`${ST[it.s].i} ${ST[it.s].n}`,'dmg'); }
-  else if(it.t==='heal'){ const h=Math.round(e.maxHp*it.p); e.hp=Math.min(e.maxHp,e.hp+h); log(`${e.name} heals ${h}`,'bad'); floatE(e,`+${h}`,'heal'); }
-  else if(it.t==='dispel'){ if(F.passives.length){ const p=pick(F.passives); removePassive(F.passives,p,'destroyed'); log(`${e.name} destroys your ${p.name}!`,'bad'); floatP(`${p.icon} destroyed`,'dmg'); } else log(`${e.name} finds nothing to dispel`); }
-  else if(it.t==='summon'){ const p=addEnemyPassive(e,it.id); if(p){ log(`${e.name} summons ${p.name}!`,'bad'); floatE(e,`${p.icon} ${p.name}`,'se'); } else log(`${e.name} tries to summon, but its ranks are full`); }
+  else if(it.t==='def'){ const b=Math.round(it.v*e.atkScale); e.block+=b; log(`${e.name} braces: +${b} Block`); floatE(e,`🛡️${b}`,'block'); sfx('eblock'); }
+  else if(it.t==='buff'){ const v=Math.max(1,Math.round(it.v*e.atkScale*0.5)); e.st.str=(e.st.str||0)+v; log(`${e.name} gains ${v} Strength`,'bad'); floatE(e,`💪+${v}`,'se'); sfx('ebuff'); }
+  else if(it.t==='debuff'){ applyStatusPlayer(it.s,scaledDebuff(it.s,it.v,e)); floatP(`${ST[it.s].i} ${ST[it.s].n}`,'dmg'); sfx('debuff'); }
+  else if(it.t==='heal'){ const h=Math.round(e.maxHp*it.p); e.hp=Math.min(e.maxHp,e.hp+h); log(`${e.name} heals ${h}`,'bad'); floatE(e,`+${h}`,'heal'); sfx('eheal'); }
+  else if(it.t==='dispel'){ if(F.passives.length){ const p=pick(F.passives); removePassive(F.passives,p,'destroyed'); log(`${e.name} destroys your ${p.name}!`,'bad'); floatP(`${p.icon} destroyed`,'dmg'); sfx('break'); } else log(`${e.name} finds nothing to dispel`); }
+  else if(it.t==='summon'){ const p=addEnemyPassive(e,it.id); if(p){ log(`${e.name} summons ${p.name}!`,'bad'); floatE(e,`${p.icon} ${p.name}`,'se'); sfx('passive',{kind:'summon'}); } else log(`${e.name} tries to summon, but its ranks are full`); }
 }
 // Every enemy-side hit on you goes through here: armed traps, dodge, block, armor, thorns, counters.
 async function enemyHitPlayer(e,d,o){
   const F=G.fight; o=o||{}; if(F.st.vuln) d=Math.round(d*1.5);
   const trap=F.passives.find(p=>p.kind==='trap');
-  if(trap){ removePassive(F.passives,trap,'sprung'); log(`${trap.name} springs!`,'se'); floatP(`${trap.icon} ${trap.name}!`,'se');
+  if(trap){ removePassive(F.passives,trap,'sprung'); log(`${trap.name} springs!`,'se'); floatP(`${trap.icon} ${trap.name}!`,'se'); sfx('trap');
     const td=pv_(trap,'tDmg'); if(td) damageEnemyRaw(e,td+Math.floor(PS('attack')/2),trap.el,trap.name);
     const ta=pv_(trap,'tAll'); if(ta) for(const x of F.enemies.filter(z=>z.alive)) damageEnemyRaw(x,ta+Math.floor(PS('attack')/2),trap.el,trap.name);
     if(pv_(trap,'tReflect')&&e.alive) damageEnemyRaw(e,d,'phys','Reflected damage');
@@ -267,11 +267,11 @@ async function enemyHitPlayer(e,d,o){
     render(); await sleep(300);
     if(pv_(trap,'tNegate')){ log(`${o.src||e.name}'s attack is negated`,'good'); return false; }
   }
-  if(Math.random()*100<(F.dodgeNext?100:PS('dodge')+F.dodgeT)){ F.dodgeNext=false; log(`You dodge ${o.src||e.name}'s attack!`,'good'); floatP('Dodge!','miss'); gainUlt(5); if(o.counter&&e.alive&&(F.counterNext||Math.random()*100<PS('counter')+30)) await counterAttack(e); return false; }
+  if(Math.random()*100<(F.dodgeNext?100:PS('dodge')+F.dodgeT)){ F.dodgeNext=false; log(`You dodge ${o.src||e.name}'s attack!`,'good'); floatP('Dodge!','miss'); gainUlt(5); sfx('dodge'); if(o.counter&&e.alive&&(F.counterNext||Math.random()*100<PS('counter')+30)) await counterAttack(e); return false; }
   let blocked=0; if(F.block>0){ blocked=Math.min(F.block,d); F.block-=blocked; d-=blocked; }
   if(d>0) d=Math.max(0,d-(PS('armor')+F.armorT));
   G.p.hp-=d; gainUlt(8); const f=fx(); if(f&&d>0) f.playerHit();
-  if(d>0) floatP(`-${d}`,'dmg'); else floatP('Blocked','block');
+  if(d>0){ floatP(`-${d}`,'dmg'); sfx('hurt'); } else { floatP('Blocked','block'); sfx('blocked'); }
   log(`${o.src||e.name} hits you for ${d}${blocked?` (${blocked} blocked)`:''}`,'bad');
   const th=PS('thorns')+F.thornsT+pSum('thorns'); if(th>0&&e.alive) damageEnemyRaw(e,th,'phys','Thorns');
   if(o.drain&&d>0&&e.alive){ const h=Math.round(d*0.5); e.hp=Math.min(e.maxHp,e.hp+h); log(`${e.name} drains ${h} HP`,'bad'); }
@@ -281,11 +281,11 @@ async function enemyHitPlayer(e,d,o){
 async function counterAttack(e){
   const F=G.fight; const mult=F.parry?2:1; F.counterNext=false; F.parry=false;
   const r=calcDmg(4+Math.floor(G.round/6),'phys','phys',e,{}); const dealt=damageEnemy(e,r.d*mult,{el:'phys'});
-  floatE(e,`Counter ${dealt}`,'se'); log(`Counter attack! ${dealt} damage to ${e.name}`,'good'); render(); await sleep(200);
+  floatE(e,`Counter ${dealt}`,'se'); log(`Counter attack! ${dealt} damage to ${e.name}`,'good'); sfx('counter'); render(); await sleep(200);
 }
 async function useUltimate(){
   const F=G.fight; if(!F||F.over||UI.busy||G.p.ultCharge<100) return; UI.busy=true; G.p.ultCharge=0; clearTimeout(UI.autoTimer);
-  const u=ULT[G.p.ult]; const pw=PS('ultPower')/100; log(`ULTIMATE: ${u.name}!`,'se'); const f=fx(); if(f){ f.flash('ult'); f.banner(`${u.icon} ${u.name}`,'ult'); await sleep(350); }
+  const u=ULT[G.p.ult]; const pw=PS('ultPower')/100; log(`ULTIMATE: ${u.name}!`,'se'); sfx('ultimate'); const f=fx(); if(f){ f.flash('ult'); f.banner(`${u.icon} ${u.name}`,'ult'); await sleep(1100); }
   const alive=()=>F.enemies.filter(e=>e.alive); const tgt=()=>(F.enemies[F.target]&&F.enemies[F.target].alive)?F.enemies[F.target]:alive()[0];
   const o=(kind,el,ls)=>({kind,el,ls,src:u.name});
   switch(u.id){
@@ -311,10 +311,10 @@ function winFight(){
   const kind=o.boss?'boss':(o.elite||o.mimic)?'elite':'fight';
   let ultOffer=null; if(o.boss){ const notOwned=ULTS.filter(u=>!G.p.ults.includes(u.id)); if(notOwned.length) ultOffer=shuffle(notOwned.slice()).slice(0,2).map(u=>u.id); }
   G.spoils={gold,xp,cards:offerPool(kind,3),kind,ultOffer,cardTaken:false,ultTaken:false,levelBefore:G.p.level};
-  gainXp(xp);
+  sfx('victory'); gainXp(xp);
   G.phase='spoils'; render(); save();
 }
 function spoilsMaybeContinue(){ const r=G.spoils; if(r.cardTaken&&(!r.ultOffer||r.ultTaken)){ clearTimeout(UI.timer); UI.timer=setTimeout(spoilsContinue,1000); } }
-function spoilsPickCard(id){ const r=G.spoils; if(!r||r.cardTaken) return; const res=addCard(id); r.cardTaken=true; r.cardMsg=res==='evolved'?`${CARD[id].name} evolves to ${TIERS[curTier(id)]}`:res==='copied'?`Another ${CARD[id].name} joins your deck`:`${CARD[id].name} joins your deck`; render(); save(); spoilsMaybeContinue(); }
+function spoilsPickCard(id){ const r=G.spoils; if(!r||r.cardTaken) return; sfx(G.p.deck.includes(id)&&canEvolve(id)?'evolve':'pick'); const res=addCard(id); r.cardTaken=true; r.cardMsg=res==='evolved'?`${CARD[id].name} evolves to ${TIERS[curTier(id)]}`:res==='copied'?`Another ${CARD[id].name} joins your deck`:`${CARD[id].name} joins your deck`; render(); save(); spoilsMaybeContinue(); }
 function spoilsSkipCard(){ const r=G.spoils; if(!r||r.cardTaken) return; r.cardTaken=true; r.cardMsg='You take no card.'; render(); save(); spoilsMaybeContinue(); }
 function spoilsPickUlt(id){ const r=G.spoils; if(!r||r.ultTaken) return; r.ultTaken=true; if(id){ G.p.ults.push(id); G.p.ult=id; r.ultMsg=`${ULT[id].name} is now your Ultimate.`; } else r.ultMsg=`You keep ${ULT[G.p.ult].name}.`; render(); save(); spoilsMaybeContinue(); }
