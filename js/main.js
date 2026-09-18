@@ -4,8 +4,14 @@ function handle(act,t){
   switch(act){
     case 'noop': return;
     case 'new': clearTimeout(UI.timer); UI.modal=null; newGame(); render(); break;
-    case 'continue': { const s=loadSave(); if(s){ G=s; UI.busy=false; UI.modal=null; UI.handUids=[]; if(G.phase==='battle'&&(!G.fight||G.fight.over)) nextRound(); else if(G.phase==='interlude'&&G.inter){ if(G.inter.t==='ambush'){ nextRound(); } else { render(); if(G.inter.auto&&!(G.inter.cards&&!G.inter.picked)) UI.timer=setTimeout(nextRound,2500); } } else if(G.phase==='spoils'&&G.spoils){ render(); spoilsMaybeContinue(); } else if(G.phase==='battle'&&G.fight.turn===0){ startPlayerTurn(); } else render(); } else render(); } break;   // a fight is saved before its first turn: start it on load
+    case 'continue': { const s=loadSave(); if(s){ G=s; UI.busy=false; UI.modal=null; UI.handUids=[]; markSeen(G.p.deck); if(G.phase==='battle'&&(!G.fight||G.fight.over)) nextRound(); else if(G.phase==='interlude'&&G.inter){ if(G.inter.t==='ambush'){ nextRound(); } else { render(); if(G.inter.auto&&!(G.inter.cards&&!G.inter.picked)) UI.timer=setTimeout(nextRound,2500); } } else if(G.phase==='spoils'&&G.spoils){ render(); spoilsMaybeContinue(); } else if(G.phase==='battle'&&G.fight.turn===0){ startPlayerTurn(); } else render(); } else render(); } break;   // a fight is saved before its first turn: start it on load
     case 'title': clearTimeout(UI.timer); G=null; UI.modal=null; render(); break;
+    case 'library': clearTimeout(UI.timer); UI.modal=null; UI.screen='library'; if(G) markSeen(G.p.deck); render(); break;
+    case 'lib-back': UI.screen=null; render(); break;
+    case 'lib-el': case 'lib-type': case 'lib-tier': case 'lib-cost': { const key={'lib-el':'els','lib-type':'types','lib-tier':'tiers','lib-cost':'costs'}[act]; const arr=UI.lib[key]; const v=t.dataset.v; const i=arr.indexOf(v); if(i>=0) arr.splice(i,1); else arr.push(v); render(); } break;
+    case 'lib-undisc': UI.lib.undisc=t.dataset.v==='1'; render(); break;
+    case 'lib-sort': UI.lib.sort=t.dataset.v; render(); break;
+    case 'lib-reset': UI.lib={els:[],types:[],tiers:[],costs:[],q:'',undisc:false,sort:'tier'}; render(); break;
     case 'target': { const i=+t.dataset.i; if(G.fight&&G.fight.enemies[i]&&G.fight.enemies[i].alive){ G.fight.target=i; render(); } } break;
     case 'play': playCard(+t.dataset.i); break;
     case 'end': endTurn(); break;
@@ -16,18 +22,13 @@ function handle(act,t){
     case 'inter-card': interludePick(t.dataset.id); break;
     case 'inter-skip': interludeSkip(); break;
     case 'inter-next': interludeContinue(); break;
-    case 'shop-tab': G.shop.tab=t.dataset.t; render(); break;
-    case 'shop-card': shopBuyCard(t.dataset.id,false); break;
-    case 'shop-pot': shopBuyCard(t.dataset.id,true); break;
-    case 'shop-upg': shopBuyUpg(t.dataset.k); break;
+    case 'shop-upgrade': shopUpgrade(t.dataset.id); break;
     case 'shop-remove': shopRemove(); break;
-    case 'shop-evolve': shopEvolve(); break;
     case 'shop-heal': shopHeal(); break;
-    case 'shop-reroll': shopReroll(); break;
-    case 'shop-leave': if(G.shop&&G.shop.gamble.phase==='double'){ toast('Cash out or double first'); break; } nextRound(); break;
-    case 'bet': { const v=t.dataset.v; let amt=0; if(v==='all') amt=G.p.gold; else if(v==='custom'){ const inp=document.getElementById('betInput'); amt=inp?parseInt(inp.value,10)||0:0; } else if(v.endsWith('%')) amt=Math.floor(G.p.gold*parseInt(v,10)/100); else amt=parseInt(v,10); gambleFlip(amt); } break;
-    case 'double': gambleDouble(); break;
-    case 'cashout': gambleCashOut(); break;
+    case 'shop-leave': nextRound(); break;
+    case 'forge-pick': forgePick(); break;
+    case 'camp-rest': campChoose('rest'); break;
+    case 'camp-tough': campChoose('tough'); break;
     case 'modal': openModal(t.dataset.m); break;
     case 'close': closeModal(); break;
     case 'pick-card': { const m=UI.modal; UI.modal=null; if(m&&m.cb) m.cb(t.dataset.id); else render(); } break;
@@ -41,9 +42,11 @@ function handle(act,t){
   }
 }
 document.addEventListener('click',e=>{ const t=e.target.closest('[data-act]'); if(!t) return; if(t.tagName==='BUTTON'&&t.disabled) return; if(t.tagName==='BUTTON'&&!['end','ult','sound','bet','double','cashout'].includes(t.dataset.act)) sfx('click'); handle(t.dataset.act,t); });
+document.addEventListener('input',e=>{ if(e.target&&e.target.id==='libq'){ UI.lib.q=e.target.value; const g=document.querySelector('.libgrid'); if(g) g.innerHTML=libraryGridHTML(); const c=document.getElementById('libcount'); if(c) c.textContent='· '+libCountText(); } });
 document.addEventListener('keydown',e=>{
-  if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')) return;
   if(e.key==='Escape'&&UI.modal){ closeModal(); return; }
+  if(e.key==='Escape'&&UI.screen==='library'){ UI.screen=null; render(); return; }
+  if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')) return;
   if(!G||UI.modal) return;
   if(G.phase==='battle'){
     if(e.key>='1'&&e.key<='9') playCard(parseInt(e.key,10)-1);

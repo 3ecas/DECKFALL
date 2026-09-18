@@ -55,6 +55,7 @@ h3{font-size:1rem;font-weight:700;color:var(--ink)}
 .card.enemy.sel,.card.enemy.sel:hover{box-shadow:0 0 0 3px var(--gold),0 0 28px rgba(242,192,105,.5),0 8px 18px rgba(0,0,0,.5)}
 .card.enemy.dead,.card.enemy.dead:hover{opacity:.3;filter:grayscale(1);cursor:default;transform:scale(.94);box-shadow:none}
 .card.enemy .cart{top:21cqw;height:40cqw} .card.enemy .cart span{animation:bob 3s ease-in-out infinite}
+.card.enemy .ccost{flex-direction:column;gap:.3cqw} .card.enemy .ccost small{position:relative;font-family:var(--body);font-weight:800;font-size:3.4cqw;letter-spacing:.14em;text-transform:uppercase;color:#dcb25b;line-height:1} .card.enemy .ccost b{font-size:9.5cqw}
 .card.enemy .ehp{position:absolute;left:6.4cqw;top:64cqw;width:87.5cqw;height:7.2cqw;min-width:0;flex:none;border-radius:1cqw;margin:0;z-index:2}
 .card.enemy .ehp b{font-size:4.4cqw}
 .card.enemy .cbox{top:74.5cqw;height:auto;bottom:12.8cqw;padding:2.6cqw 2.6cqw 2cqw;gap:1.8cqw}
@@ -74,8 +75,7 @@ h3{font-size:1rem;font-weight:700;color:var(--ink)}
 /* player: stat chips, statuses, buttons, and the Mana bar right above the hand */
 .player{position:relative;display:flex;flex-direction:column;gap:7px;padding:8px 12px;border-radius:10px;background:linear-gradient(180deg,var(--plq1),var(--plq2) 70%);border:1px solid rgba(0,0,0,.6);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(220,178,91,.22),0 8px 24px rgba(0,0,0,.3)}
 .player.hit{animation:shake .32s}
-.endrow{display:flex;justify-content:center;margin:-24px 0 -2px}
-.endrow .btn{padding:9px 38px;font-size:1rem;letter-spacing:.06em;border-radius:10px;position:relative;z-index:3}
+.manabar .endbtn{margin-left:8px;padding:7px 26px;font-size:.95rem;letter-spacing:.05em;border-radius:8px;flex:none}
 .prow{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:stretch}
 .pbars{display:flex;gap:6px;flex:1 1 0;min-width:0} .pbars .bar{flex:1;width:auto;min-width:0}
 .pdiv{width:1px;align-self:center;height:24px;background:rgba(255,255,255,.14);box-shadow:1px 0 0 rgba(0,0,0,.5)}
@@ -85,7 +85,7 @@ h3{font-size:1rem;font-weight:700;color:var(--ink)}
 .pstatuses{min-height:0}
 .manabar{display:flex;align-items:center;gap:10px;padding-top:6px;border-top:1px solid rgba(255,255,255,.08)}
 .mlbl{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:#8fd0ff}
-.mcells{flex:1;display:grid;grid-template-columns:repeat(10,1fr);gap:4px;height:14px}
+.mcells{flex:1;min-width:0;display:grid;grid-template-columns:repeat(10,1fr);gap:4px;height:14px}
 .mcell{display:block;border-radius:3px;background:rgba(0,0,0,.45);border:1px solid rgba(0,0,0,.65);box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
 .mcell.cap{border-color:rgba(79,182,255,.5);background:rgba(20,60,110,.5)}
 .mcell.on{background:linear-gradient(180deg,#b6e6ff,#3a98e8 55%,#1d5fa8);border-color:#7fc6ff;box-shadow:0 0 10px rgba(79,182,255,.75),inset 0 1px 0 rgba(255,255,255,.6)}
@@ -173,7 +173,7 @@ table.stats td{padding:5px 8px;border-bottom:1px solid var(--line)} table.stats 
   #app{padding-inline:8px;gap:6px}
   .hand{min-height:190px} .card.enemy{flex-basis:150px;width:150px;height:225px} .card.enemy.isboss{flex-basis:170px;width:170px;height:255px}
   .field{align-items:flex-start} .log{top:auto;bottom:6px;left:6px;right:6px;width:auto;max-height:42px;font-size:.66rem;pointer-events:none}
-  .pbars{flex:1 1 100%} .pdiv{display:none} .pstats{flex:1 1 100%} .stat{flex:1 1 28%} .endrow{margin-top:-22px}
+  .pbars{flex:1 1 100%} .pdiv{display:none} .pstats{flex:1 1 100%} .stat{flex:1 1 28%} .manabar .endbtn{padding:7px 14px;font-size:.85rem}
   .hud .tools .btn{padding:4px 8px;font-size:.76rem} .log{max-height:58px;font-size:.74rem} .bars{min-width:160px}
   .center.scene{padding:14px} h1{font-size:1.9rem}
 }
@@ -288,3 +288,39 @@ body{background:#0b1417;background-image:repeating-linear-gradient(0deg,rgba(255
 input[type=number]{border:1px solid rgba(0,0,0,.6);background:rgba(0,0,0,.45);box-shadow:inset 0 1px 3px rgba(0,0,0,.6)}
 table.stats td{border-bottom:1px dotted rgba(255,255,255,.25)}
 ::-webkit-scrollbar{height:6px;width:6px} ::-webkit-scrollbar-thumb{background:rgba(220,178,91,.35);border-radius:3px} ::-webkit-scrollbar-track{background:transparent}
+
+/* ---- main menu: title column with plaque buttons beside a fan of discovered cards ---- */
+.menu{display:flex;flex-wrap:wrap;gap:28px 56px;align-items:center;justify-content:center;width:100%;max-width:1040px}
+.menu-l{display:flex;flex-direction:column;gap:14px;align-items:flex-start;text-align:left;max-width:540px;flex:1 1 380px}
+.menu-l .title-art{text-align:left}
+.menu-btns{display:flex;flex-direction:column;gap:10px;width:min(100%,360px);margin-top:4px}
+.menu-btns .btn{width:100%;display:flex;justify-content:center;align-items:center;gap:8px}
+.menu-btns .mcount{font-size:.78rem;font-weight:800;padding:2px 9px;border-radius:6px;background:rgba(0,0,0,.35);border:1px solid rgba(220,178,91,.35);color:var(--gold)}
+.menu-l .kv{justify-content:flex-start}
+.menu-r{flex:0 0 auto}
+.fan3{position:relative;width:360px;height:330px;filter:drop-shadow(0 24px 30px rgba(0,0,0,.55))}
+.fan3::before{content:'';position:absolute;inset:14% 6%;border-radius:50%;background:radial-gradient(closest-side,rgba(242,192,105,.22),transparent);pointer-events:none}
+.fan3 .card{position:absolute;left:50%;top:50%;margin:-142px 0 0 -95px;pointer-events:none;transform-origin:50% 130%;animation:fanIn .8s both}
+@keyframes fanIn{from{opacity:0}to{opacity:1}}
+.fan3 .card:nth-child(1),.fan3 .card:nth-child(1):hover{transform:rotate(-16deg) translateX(-56px);z-index:1;animation-delay:.05s}
+.fan3 .card:nth-child(2),.fan3 .card:nth-child(2):hover{transform:translateY(-14px);z-index:2;animation-delay:.2s}
+.fan3 .card:nth-child(3),.fan3 .card:nth-child(3):hover{transform:rotate(16deg) translateX(56px);z-index:3;animation-delay:.35s}
+@media (max-width:760px){ .menu-l{align-items:center;text-align:center} .menu-l .title-art{text-align:center} .menu-l .kv{justify-content:center} .fan3{width:300px;height:290px;transform:scale(.82)} }
+/* ---- card library ---- */
+.scene.lib{flex:1;min-height:0;display:flex;flex-direction:column;gap:12px;padding:16px;overflow:hidden;max-width:1200px;width:100%;margin:0 auto}
+.libhead h2{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#libq{width:min(46vw,260px);padding:8px 12px;border-radius:8px;border:1px solid rgba(0,0,0,.6);background:rgba(0,0,0,.45);color:var(--ink);box-shadow:inset 0 1px 3px rgba(0,0,0,.6);font:inherit}
+#libq:focus{outline:none;border-color:rgba(220,178,91,.6)}
+.libbody{display:flex;gap:16px;flex:1;min-height:0}
+.libside{flex:0 0 232px;display:flex;flex-direction:column;gap:12px;overflow:auto;padding:12px;border-radius:10px;background:rgba(0,0,0,.28);border:1px dotted rgba(255,255,255,.35)}
+.lfl{font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:var(--teal);margin-bottom:6px}
+.lfc{display:flex;flex-wrap:wrap;gap:5px}
+.fchip{font:inherit;font-size:.74rem;font-weight:700;padding:4px 9px;border-radius:6px;cursor:pointer;color:var(--ink2);border:1px solid rgba(0,0,0,.6);background:linear-gradient(180deg,var(--plq1),var(--plq2));box-shadow:inset 0 1px 0 rgba(255,255,255,.12);white-space:nowrap;text-transform:capitalize}
+.fchip:hover{color:var(--ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 0 0 1px rgba(220,178,91,.5)}
+.fchip.on{background:linear-gradient(180deg,#ffe08a,#e0a944);color:#1c1406;border-color:rgba(0,0,0,.55);box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+.fchip[style]{border-color:color-mix(in srgb,var(--el) 55%,rgba(0,0,0,.6))} .fchip[style].on{border-color:rgba(0,0,0,.55)}
+.libgrid{flex:1;display:flex;flex-wrap:wrap;gap:12px;align-content:flex-start;justify-content:center;overflow:auto;padding:8px 4px 16px}
+.libempty{width:100%;text-align:center;padding:40px 12px}
+.card.back{--tier:#3f4a55;--el:#7d8a99;cursor:default} .card.back .cname{letter-spacing:.2em} .card.back .cart span{opacity:.5;filter:none}
+.card.back .cbox{border-color:rgba(0,0,0,.45)} .card.back .cmain{color:rgba(0,0,0,.6)}
+@media (max-width:760px){ .libbody{flex-direction:column} .libside{flex:none;max-height:40%} }

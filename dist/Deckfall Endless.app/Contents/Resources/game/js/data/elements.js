@@ -60,7 +60,7 @@ const ST = {
   counterNext:{n:'Riposte', i:'🗡️', d:'Counters the next attack that lands.'},
   block: {n:'Block', i:'🛡️', d:'Absorbs damage until your next turn.'},
 };
-const STATNAMES = {maxHp:'Max HP', attack:'Attack', spell:'Spell Power', armor:'Armor', dodge:'Dodge %', counter:'Counter %', crit:'Crit %', lifesteal:'Life Steal %', thorns:'Thorns', ultPower:'Ultimate Power %', luck:'Luck', energyMax:'Mana', handSize:'Hand Size', regen:'Regen', slots:'Passive Slots'};
+const STATNAMES = {maxHp:'Max HP', attack:'Attack', spell:'Spell Power', armor:'Armor', dodge:'Dodge %', counter:'Counter %', crit:'Crit %', lifesteal:'Life Steal %', thorns:'Thorns', ultPower:'Ultimate Power %', luck:'Luck', energyMax:'Mana', handSize:'Opening Hand', regen:'Regen', slots:'Passive Slots'};
 const TYPES = {attack:'Attack', spell:'Spell', shield:'Shield', skill:'Skill', potion:'Potion', mecha:'Mecha', summon:'Summon', trap:'Trap', curse:'Curse'};
 const TYPE_ICON = {attack:'⚔', spell:'✦', shield:'⛨', skill:'◈', potion:'⚗', mecha:'⚙', summon:'☗', trap:'⚠', curse:'☠'};
 const TYPE_DESC = {attack:'Free to play. Scales with Attack.', spell:'Costs Mana. Scales with Spell Power.', shield:'Free. Block, armor, thorns.', skill:'Free. Mana, draws, buffs.', potion:'Free. One use per fight; some are consumed for permanent gains.', mecha:'Free. Goes into a passive slot and works every turn.', summon:'Costs Mana. A creature takes a passive slot and acts every turn.', trap:'Free. Tricks, thefts, and armed traps that spring on the next enemy attack.', curse:'Unplayable. Remove it at a merchant.'};

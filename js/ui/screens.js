@@ -2,6 +2,7 @@
 // ===================== SCREENS =====================
 function render(){
   const app=document.getElementById('app'); if(!app) return;
+  if(UI.screen==='library'){ app.innerHTML=libraryHTML()+modalHTML(); return; }
   if(!G){ app.innerHTML=titleHTML()+modalHTML(); return; }
   if(G.phase==='battle'&&G.fight){ const cur=app.querySelector('#battle'); if(cur&&cur.dataset.key==String(G.fight.key)){ patchBattle(); const mm=app.querySelector('.modal'); if(mm) mm.remove(); app.insertAdjacentHTML('beforeend',modalHTML()); return; } }
   let html='';
@@ -15,7 +16,6 @@ function render(){
   }
   app.innerHTML=html+modalHTML(); if(typeof afterRender==="function") afterRender();
   const lg=app.querySelector('.log'); if(lg) lg.scrollTop=lg.scrollHeight;
-  if(G.shop&&G.shop.gamble&&G.shop.gamble.flipping) G.shop.gamble.flipping=false;
 }
 function patchBattle(){
   const F=G.fight; const app=document.getElementById('app');
@@ -28,18 +28,61 @@ function patchBattle(){
   const hb=app.querySelector('.handbar'); if(hb) hb.innerHTML=handbarHTML();
 }
 function titleHTML(){
-  const s=loadSave(); const best=getBest();
+  const s=loadSave(); if(s&&s.p&&s.p.deck) markSeen(s.p.deck); const best=getBest(); const seen=seenCards(); const total=CARDS.filter(c=>c.type!=='curse').length;
+  const known=CARDS.filter(c=>seen.has(c.id)&&c.type!=='curse'); const fan=(known.length>=3?shuffle(known.slice()).slice(0,3):[CARD.strike,CARD.mana_potion,CARD.ember]).map(c=>c.id);
   return `<div class="center title">
-    <div class="eyebrow">An endless deck-building roguelike</div>
-    <div class="title-art"><span>Deckfall</span><span>Endless</span></div>
-    <p class="title-sub">Start with basic cards. Fight, loot, evolve, combo. Ten elements, nine tiers, an endless climb. Die, and start over.</p>
-    <div class="row center">
-      ${s?`<button class="btn primary big" data-act="continue">Continue · Round ${s.round}</button>`:''}
-      <button class="btn ${s?'':'primary'} big" data-act="new">${s?'New run (deletes save)':'Begin'}</button>
-      <button class="btn ghost" data-act="modal" data-m="help">How to play</button>
+    <div class="menu">
+      <div class="menu-l">
+        <div class="eyebrow">An endless deck-building roguelike</div>
+        <div class="title-art"><span>Deckfall</span><span>Endless</span></div>
+        <p class="title-sub">Start with five basic cards. Fight, loot, evolve, combo. Ten elements, nine tiers, an endless climb. Die, and start over.</p>
+        <div class="menu-btns">
+          ${s?`<button class="btn primary big" data-act="continue">Continue · Round ${s.round}</button>`:''}
+          <button class="btn ${s?'':'primary'} big" data-act="new">${s?'New run · deletes the save':'Begin a run'}</button>
+          <button class="btn big" data-act="library">📚 Card Library <span class="mcount">${known.length} / ${total}</span></button>
+          <button class="btn big ghost" data-act="modal" data-m="help">How to play</button>
+        </div>
+        ${best&&best.round?`<div class="kv"><span>Best round <b>${best.round}</b></span><span>Kills <b>${best.kills}</b></span><span>Level <b>${best.level}</b></span><span>Bosses <b>${best.bosses}</b></span><span>Runs <b>${best.runs}</b></span></div>`:''}
+      </div>
+      <div class="menu-r"><div class="fan3">${fan.map(id=>cardHTML(id,{mode:'static',tier:tierIdx(id),big:true})).join('')}</div></div>
     </div>
-    ${best&&best.round?`<div class="kv"><span>Best round <b>${best.round}</b></span><span>Kills <b>${best.kills}</b></span><span>Level <b>${best.level}</b></span><span>Bosses <b>${best.bosses}</b></span><span>Runs <b>${best.runs}</b></span></div>`:''}
-    <div class="muted small">${CARDS.filter(c=>c.type!=='curse').length} cards · ${Object.keys(EL).length-1} elements · ${TIERS.length} tiers · ${ENEMIES.length} enemies · ${BOSSES.length} bosses · ${ULTS.length} ultimates</div>
+    <div class="muted small">${total} cards · ${Object.keys(EL).length-1} elements · ${TIERS.length} tiers · ${ENEMIES.length} enemies · ${BOSSES.length} bosses · ${ULTS.length} ultimates</div>
+  </div>`;
+}
+// ---- Card Library: every card, revealed once discovered on a run; filters on the side ----
+const LIB_COSTS=[['free','Free'],['0','0'],['1','1'],['2','2'],['3','3']];
+const LIB_SORTS=[['tier','Tier'],['name','Name'],['el','Element'],['cost','Cost']];
+function libCards(){
+  const L=UI.lib; const seen=seenCards(); const q=L.q.trim().toLowerCase();
+  const paysMana=c=>c.type==='spell'||c.type==='summon';
+  let list=CARDS.filter(c=>c.type!=='curse'||seen.has(c.id));
+  list=list.filter(c=>(L.undisc||seen.has(c.id))&&(!L.els.length||L.els.includes(c.el))&&(!L.types.length||L.types.includes(c.type))&&(!L.tiers.length||L.tiers.includes(c.tier))&&(!L.costs.length||L.costs.includes(paysMana(c)?String(c.cost):'free'))&&(!q||c.name.toLowerCase().includes(q)||EL[c.el].n.toLowerCase().includes(q)||TYPES[c.type].toLowerCase().includes(q)));
+  const ti=c=>TIERS.indexOf(c.tier); const co=c=>paysMana(c)?c.cost:-1;
+  const cmp={tier:(a,b)=>ti(a)-ti(b)||a.name.localeCompare(b.name), name:(a,b)=>a.name.localeCompare(b.name), el:(a,b)=>a.el.localeCompare(b.el)||ti(a)-ti(b)||a.name.localeCompare(b.name), cost:(a,b)=>co(a)-co(b)||ti(a)-ti(b)||a.name.localeCompare(b.name)}[L.sort]||((a,b)=>0);
+  return list.sort(cmp);
+}
+function libraryGridHTML(){
+  const seen=seenCards(); const list=libCards();
+  if(!list.length) return `<div class="muted libempty">Nothing here yet. Cards appear once you find them on a run.</div>`;
+  return list.map(c=>seen.has(c.id)?cardHTML(c.id,{mode:'static',tier:tierIdx(c.id)}):`<div class="card back static" title="Undiscovered · find it on a run"><div class="cname">? ? ?</div><div class="cart"><span>❔</span></div><div class="cbox"><div class="ctags"><span class="ctag">Undiscovered</span></div><div class="cdesc"><p class="cmain">Find it on a run</p></div></div></div>`).join('');
+}
+function libCountText(){ const seen=seenCards(); const total=CARDS.filter(c=>c.type!=='curse').length; const known=CARDS.filter(c=>seen.has(c.id)&&c.type!=='curse').length; return `${known} / ${total} discovered · ${libCards().length} shown`; }
+function libraryHTML(){
+  const L=UI.lib; const chip=(act,v,lbl,on,style)=>`<button class="fchip ${on?'on':''}" data-act="${act}" data-v="${v}" ${style?`style="${style}"`:''}>${lbl}</button>`;
+  return `<div class="scene lib">
+    <div class="row between libhead"><h2>📚 Card Library <span class="muted small" id="libcount">· ${libCountText()}</span></h2><div class="row"><input id="libq" type="search" placeholder="Search name, element, type" value="${esc(L.q)}" autocomplete="off"><button class="btn" data-act="lib-back">← Back</button></div></div>
+    <div class="libbody">
+      <aside class="libside">
+        <div class="lf"><div class="lfl">Show</div><div class="lfc">${chip('lib-undisc','0','Discovered',!L.undisc)}${chip('lib-undisc','1','All · hidden as backs',L.undisc)}</div></div>
+        <div class="lf"><div class="lfl">Element</div><div class="lfc">${Object.keys(EL).map(k=>chip('lib-el',k,`${EL[k].i} ${EL[k].n}`,L.els.includes(k),`--el:${EL[k].c}`)).join('')}</div></div>
+        <div class="lf"><div class="lfl">Type</div><div class="lfc">${Object.keys(TYPES).map(k=>chip('lib-type',k,`${TYPE_ICON[k]} ${TYPES[k]}`,L.types.includes(k))).join('')}</div></div>
+        <div class="lf"><div class="lfl">Tier</div><div class="lfc">${TIERS.map(t=>chip('lib-tier',t,t,L.tiers.includes(t),`--el:${TIER[t].c}`)).join('')}</div></div>
+        <div class="lf"><div class="lfl">Mana cost</div><div class="lfc">${LIB_COSTS.map(([v,l])=>chip('lib-cost',v,l,L.costs.includes(v))).join('')}</div></div>
+        <div class="lf"><div class="lfl">Sort by</div><div class="lfc">${LIB_SORTS.map(([v,l])=>chip('lib-sort',v,l,L.sort===v)).join('')}</div></div>
+        <button class="btn sm ghost" data-act="lib-reset">Reset filters</button>
+      </aside>
+      <div class="libgrid">${libraryGridHTML()}</div>
+    </div>
   </div>`;
 }
 function handbarHTML(){ const F=G.fight; const alive=F.enemies.filter(e=>e.alive).length; return `<span class="muted small">Turn ${F.turn} · tap an enemy to target it · ${alive} ${alive===1?'enemy':'enemies'} left</span><span class="piles"><span>Draw ${F.draw.length}</span><span>Discard ${F.discard.length}</span><span>Exhaust ${F.exhaust.length}</span></span>`; }
@@ -54,20 +97,24 @@ function battleHTML(){
   </div>`;
 }
 function spoilsHTML(){
-  const r=G.spoils; const done=r.cardTaken&&(!r.ultOffer||r.ultTaken);
+  const r=G.spoils; const p=G.p; const done=r.cardTaken&&(!r.ultOffer||r.ultTaken);
   const title=r.kind==='boss'?'Boss slain':r.kind==='elite'?'Elite slain':'Victory';
+  const msgs=(r.msgs||(r.cardMsg?[r.cardMsg]:[])).map(m=>`<p class="msg">${esc(m)}</p>`).join('');
+  const levelPicks=(r.picks||0)-(r.bossPick?1:0); const lvlOfPick=p.level-levelPicks+1;
   return `<div class="center scene">
     <h1 class="pop">${title}</h1>
-    <div class="kv big"><span>🪙 <b class="countup" data-to="${r.gold}">0</b></span><span>XP <b class="countup" data-to="${r.xp}">0</b></span>${G.p.level>r.levelBefore?`<span class="good">Level <b>${G.p.level}</b>!</span>`:''}</div>
-    ${r.cardTaken?`<p class="msg">${esc(r.cardMsg)}</p>`:`<div class="eyebrow">${r.kind==='boss'?'The boss drops a card':'Take a card'}</div><div class="cardgrid fan">${r.cards.map((id,i)=>cardHTML(id,{big:true,act:'spoils-card',data:`data-id="${id}" style="--i:${i}"`,enter:true,tag:G.p.deck.includes(id)?(canEvolve(id)?`Owned · evolve to ${TIERS[curTier(id)+1]}`:'Owned · copy'):null})).join('')}</div><button class="btn ghost sm" data-act="spoils-skip">Skip</button>`}
-    ${r.ultOffer&&!r.ultTaken?`<div class="eyebrow">The boss's power is yours</div><div class="upgrades narrow">${r.ultOffer.map(id=>{const u=ULT[id];return `<div class="upg"><div class="uname">${u.icon} ${u.name} ${elPill(u.el)}</div><div class="udesc">${u.desc}</div><button class="btn sm primary" data-act="spoils-ult" data-id="${id}">Learn</button></div>`;}).join('')}</div><button class="btn ghost sm" data-act="spoils-ult">Keep ${ULT[G.p.ult].name}</button>`:''}
+    <div class="kv big"><span>🪙 <b class="countup" data-to="${r.gold}">0</b></span><span>XP <b class="countup" data-to="${r.xp}">0</b></span>${p.level>r.levelBefore?`<span class="good">Level <b>${p.level}</b>!</span>`:''}</div>
+    <div class="muted small">Level ${p.level} · ${p.xp} / ${p.xpNext} XP · every level lets you choose a new card</div>
+    ${msgs}
+    ${!r.cardTaken&&r.cards?`<div class="eyebrow">${r.bossPick?'The boss drops a card':`Level ${lvlOfPick} · choose a new card`}</div><div class="cardgrid fan">${r.cards.map((id,i)=>cardHTML(id,{big:true,act:'spoils-card',data:`data-id="${id}" style="--i:${i}"`,enter:true,tag:p.deck.includes(id)?(canEvolve(id)?`Owned · evolve to ${TIERS[curTier(id)+1]}`:'Owned · copy'):null})).join('')}</div><button class="btn ghost sm" data-act="spoils-skip">Skip</button>`:''}
+    ${r.ultOffer&&!r.ultTaken?`<div class="eyebrow">The boss's power is yours</div><div class="upgrades narrow">${r.ultOffer.map(id=>{const u=ULT[id];return `<div class="upg"><div class="uname">${u.icon} ${u.name} ${elPill(u.el)}</div><div class="udesc">${u.desc}</div><button class="btn sm primary" data-act="spoils-ult" data-id="${id}">Learn</button></div>`;}).join('')}</div><button class="btn ghost sm" data-act="spoils-ult">Keep ${ULT[p.ult].name}</button>`:''}
     ${r.ultTaken&&r.ultMsg?`<p class="msg">${esc(r.ultMsg)}</p>`:''}
     ${done?`<div class="autobar"><i></i></div><button class="btn sm ghost" data-act="spoils-next">Continue now</button>`:''}
   </div>`;
 }
 function interludeHTML(){
   const I=G.inter; const T=INTERLUDE_TEXT[I.t]||{icon:'❓',title:'...'}; const b=I.boost?BOOST[I.boost]:null;
-  const waiting=I.cards&&!I.picked;
+  const waiting=(I.cards||((I.t==='forge'||I.t==='camp')&&!I.auto))&&!I.picked;
   return `<div class="center scene inter ${I.t}">
     <div class="eyebrow">Round ${G.round} · on the road</div>
     <div class="sicon ${I.t==='chest'?'chest':''}"><span>${b?b.icon:T.icon}</span></div>
@@ -75,40 +122,20 @@ function interludeHTML(){
     ${T.text&&!b?`<p class="muted">${esc(T.text)}</p>`:''}
     <div class="lines">${I.lines.map((l,i)=>`<p class="line" style="--i:${i}">${esc(l)}</p>`).join('')}</div>
     ${I.cards&&!I.picked?`<div class="cardgrid fan">${I.cards.map((id,i)=>cardHTML(id,{big:true,act:'inter-card',data:`data-id="${id}" style="--i:${i}"`,enter:true,tag:G.p.deck.includes(id)?(canEvolve(id)?`Owned · evolve to ${TIERS[curTier(id)+1]}`:'Owned · copy'):null})).join('')}</div><button class="btn ghost sm" data-act="inter-skip">Take none</button>`:''}
+    ${I.t==='forge'&&!I.auto&&!I.picked?`<div class="row center"><button class="btn primary" data-act="forge-pick">Choose a card to reforge</button><button class="btn ghost" data-act="inter-next">Leave the forge</button></div>`:''}
+    ${I.t==='camp'&&!I.auto&&!I.picked?`<div class="row center"><button class="btn primary" data-act="camp-rest">🛏️ Rest · heal ${CAMP.healPct}% of Max HP</button><button class="btn" data-act="camp-tough">💪 Train · +${CAMP.toughPct}% Max HP for good</button></div>`:''}
     ${I.t==='ambush'?`<p class="msg bad">Prepare yourself.</p>`:waiting?'':`<div class="autobar ${I.picked?'fast':''}"><i></i></div><button class="btn sm ghost" data-act="inter-next">Continue now</button>`}
   </div>`;
 }
 function shopHTML(){
-  const s=G.shop; const p=G.p; const tab=s.tab||'wares';
-  const tabs=`<div class="tabs"><button class="tab ${tab==='wares'?'on':''}" data-act="shop-tab" data-t="wares">Cards</button><button class="tab ${tab==='attr'?'on':''}" data-act="shop-tab" data-t="attr">Attributes</button><button class="tab ${tab==='forge'?'on':''}" data-act="shop-tab" data-t="forge">Forge</button><button class="tab ${tab==='coin'?'on':''}" data-act="shop-tab" data-t="coin">Lucky Coin</button></div>`;
-  let body='';
-  if(tab==='wares') body=`<div class="eyebrow">Cards · buying an owned card evolves it</div><div class="shopcards">${s.cards.length?s.cards.map(id=>cardHTML(id,{act:'shop-card',data:`data-id="${id}"`,price:cardPrice(id),priceTag:p.deck.includes(id)?(canEvolve(id)?' · evolve':' · copy'):'',dim:p.gold<cardPrice(id)})).join(''):'<span class="muted">Sold out.</span>'}</div>
-    <div class="eyebrow">Potions · 20% off</div><div class="shopcards">${s.pots.length?s.pots.map(id=>cardHTML(id,{act:'shop-pot',data:`data-id="${id}"`,price:Math.round(cardPrice(id)*0.8),priceTag:p.deck.includes(id)?' · evolve':'',dim:p.gold<Math.round(cardPrice(id)*0.8)})).join(''):'<span class="muted">Sold out.</span>'}</div>
-    <div class="row"><button class="btn" data-act="shop-reroll" ${p.gold<shopRerollCost()?'disabled':''}>Reroll wares · ${shopRerollCost()} 🪙</button></div>`;
-  else if(tab==='attr') body=`<div class="eyebrow">Attributes · permanent</div><div class="upgrades">${s.upg.map(k=>{const u=UPG.find(x=>x.k===k);const pr=upgPrice(u);return `<div class="upg"><div class="uname">${STATNAMES[k]} <span class="tag">now ${p[k]}${['dodge','counter','crit','lifesteal','ultPower'].includes(k)?'%':''}</span></div><div class="udesc">+${u.v} · ${u.d}</div><button class="btn sm ${p.gold>=pr?'primary':''}" data-act="shop-upg" data-k="${k}" ${p.gold<pr?'disabled':''}>Buy · ${pr} 🪙</button></div>`;}).join('')}</div>
-    <div class="row"><button class="btn" data-act="shop-heal" ${p.gold<shopHealCost()||p.hp>=p.maxHp?'disabled':''}>Heal 30% · ${shopHealCost()} 🪙</button></div>`;
-  else if(tab==='forge') body=`<div class="eyebrow">Forge</div><p class="muted">Evolve any card one tier. Price depends on the tier it becomes. Or pay to forget a card that no longer fits your plan.</p><div class="row"><button class="btn primary" data-act="shop-evolve">Evolve a card</button><button class="btn" data-act="shop-remove" ${p.gold<shopRemoveCost()?'disabled':''}>Remove a card · ${shopRemoveCost()} 🪙</button></div><div class="tierrow">${TIERS.map(t=>`<span class="tierchip" style="--tier:${TIER[t].c}">${t}</span>`).join('<span class="muted">→</span>')}</div>`;
-  else body=gambleHTML();
+  const p=G.p;
+  const body=`<div class="eyebrow">Upgrade a card · one tier higher, priced by the tier it becomes</div><div class="shopcards">${deckSummary().map(x=>{const ok=canEvolve(x.id); const c=ok?evolvePrice(x.id):0; return cardHTML(x.id,{act:'shop-upgrade',data:`data-id="${x.id}"`,price:ok?c:null,priceTag:ok?` → ${TIERS[curTier(x.id)+1]}`:'',tag:ok?null:'Ultimate',dim:!ok||p.gold<c});}).join('')}</div>
+    <div class="eyebrow">Services</div>
+    <div class="row"><button class="btn" data-act="shop-remove" ${p.gold<shopRemoveCost()?'disabled':''}>Remove a card · ${shopRemoveCost()} 🪙</button><button class="btn" data-act="shop-heal" ${p.gold<shopHealCost()||p.hp>=p.maxHp?'disabled':''}>Heal 30% · ${shopHealCost()} 🪙</button></div>`;
   return `<div class="scene shop">
-    <div class="row between"><h2>🏪 Merchant · Round ${G.round}</h2><button class="btn primary" data-act="shop-leave">Continue the climb →</button></div>
-    ${tabs}<div class="shopbody">${body}</div>
+    <div class="row between"><h2>⚒️ Merchant · Round ${G.round}</h2><button class="btn primary" data-act="shop-leave">Continue the climb →</button></div>
+    <div class="shopbody">${body}</div>
   </div>`;
-}
-function gambleHTML(){
-  const g=G.shop.gamble; const p=G.p; const ch=gambleChance();
-  const coin=`<div class="coin ${g.flipping?'spin':''}">${g.last==='win'?'👑':g.last==='lose'?'💀':'🪙'}</div>`;
-  let body='';
-  if(g.phase!=='double'){
-    body=`${g.phase==='lost'?`<p class="msg bad">Tails. You lose ${g.bet} gold${g.streak?' and the whole pot':''}.</p>`:g.phase==='done'?`<p class="msg good">You walk away with ${g.pot} gold.</p>`:''}
-      <p class="muted">Bet gold. Heads doubles it, then you may double again and again. One tails and the whole pot is gone. Win chance <b>${ch}%</b>${PS('luck')?` (Luck ${PS('luck')})`:''}.</p>
-      <div class="row center">${[10,25,50,100].map(v=>`<button class="btn" data-act="bet" data-v="${v}" ${p.gold<v?'disabled':''}>${v}</button>`).join('')}<button class="btn" data-act="bet" data-v="25%" ${p.gold<4?'disabled':''}>25%</button><button class="btn" data-act="bet" data-v="50%" ${p.gold<2?'disabled':''}>50%</button><button class="btn danger" data-act="bet" data-v="all" ${p.gold<1?'disabled':''}>All in (${p.gold})</button></div>
-      <div class="row center"><label for="betInput" class="small muted">Custom</label><input id="betInput" type="number" min="1" max="${p.gold}" value="${Math.min(p.gold,20)}"><button class="btn" data-act="bet" data-v="custom" ${p.gold<1?'disabled':''}>Flip</button></div>`;
-  } else {
-    body=`<p class="msg good">Heads! ${g.streak?`Streak ${g.streak}.`:''}</p><div class="pot">Pot ${g.pot} 🪙</div>
-      <p class="muted">Double to ${g.pot*2}? Win chance <b>${ch}%</b>. Lose and the pot, bet included, is gone.</p>
-      <div class="row center"><button class="btn danger" data-act="double">Double up</button><button class="btn primary" data-act="cashout">Cash out ${g.pot}</button></div>`;
-  }
-  return `<div class="center">${coin}${body}</div>`;
 }
 function gameoverHTML(){
   const b=G.best||getBest()||{};

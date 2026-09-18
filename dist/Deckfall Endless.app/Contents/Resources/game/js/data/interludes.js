@@ -26,18 +26,19 @@ const BOOSTS = [
   {id:'s_thorns', name:'Iron Bristles', icon:'🌵', stat:'thorns', v:4, rounds:3, text:'Touch you and bleed. +4 Thorns.'},
 ];
 const BOOST = Object.fromEntries(BOOSTS.map(b=>[b.id,b]));
-// Interlude kinds with weights. The shop replaces the interlude every 4th round; bosses get a treasury.
+// Random encounters between rounds, with weights. Every 7th round the merchant replaces the encounter, every 4th of the cycle a campfire does; bosses get a treasury.
 const INTERLUDES = [
-  {t:'chest', w:30}, {t:'boost', w:36}, {t:'shrine', w:12}, {t:'forge', w:9}, {t:'trap', w:5}, {t:'idol', w:4}, {t:'ambush', w:4},
+  {t:'chest', w:30}, {t:'boost', w:34}, {t:'shrine', w:10}, {t:'forge', w:14}, {t:'camp', w:5}, {t:'trap', w:5}, {t:'idol', w:4}, {t:'ambush', w:6},
 ];
 const INTERLUDE_TEXT = {
   chest:  {icon:'📦', title:'A chest in the rubble'},
   boost:  {icon:'✨', title:'A blessing'},
   shrine: {icon:'⛩️', title:'A forgotten shrine', text:'Moss covers a shrine to a god nobody remembers. Warmth floods your wounds.'},
-  forge:  {icon:'⚒️', title:'A dwarven forge', text:'The coals are still hot. One of your cards is reforged into something better.'},
+  forge:  {icon:'⚒️', title:'A dwarven forge', text:'The coals are still hot. Choose a card and the smith reforges it into something better.'},
   trap:   {icon:'🕳️', title:'A trap!', text:'The floor gives way. You land on something soft, and something shiny.'},
   idol:   {icon:'🗿', title:'A cursed idol', text:'It offers power. It does not ask.'},
   ambush: {icon:'🗡️', title:'Ambush!', text:'Steel glints in the shadows. No way around it.'},
+  camp:   {icon:'🔥', title:'A campfire', text:'Embers crackle in a ring of stones. Sit a while.'},
   treasury:{icon:'👑', title:"The boss's treasury", text:'Behind the corpse: gold, and a card that remembers its owner.'},
   shop:   {icon:'🏪', title:'A merchant'},
 };

@@ -94,6 +94,7 @@ function enemyHTML(e,i){
   const nameCls=e.name.length>18?' xl':e.name.length>12?' long':'';
   return `<div class="card enemy el-${e.el} r-${rank} ${sel?'sel':''} ${e.alive?'':'dead'} ${e.boss?'isboss':''}" data-act="target" data-i="${i}" data-uid="${e.uid}" style="--el:${el.c};--tier:${body}" tabindex="0" title="${esc(e.name)} · ${el.n}${e.boss?' · Boss':e.elite?' · Elite':''} · tap to target">
     <div class="cname${nameCls}">${esc(e.name)}</div>
+    <div class="ccost elv" title="Enemy level"><small>Lv</small><b>${e.lvl||G.round}</b></div>
     <div class="cart"><span>${e.icon}</span></div>
     <div class="bar ehp"><i style="width:${e.hp/e.maxHp*100}%"></i><b class="num">${e.hp} / ${e.maxHp}</b></div>
     <div class="cbox">
@@ -155,13 +156,12 @@ function playerHTML(){
   const cells=Array.from({length:10},(_,k)=>`<i class="mcell ${k<F.energy?'on':k<max?'cap':''}"></i>`).join('');
   const sts=playerStatusesHTML();
   return `<div class="player">
-    <div class="endrow"><button class="btn primary endbtn" data-act="end" ${UI.busy?'disabled':''}>End Turn</button></div>
     <div class="prow">
       <div class="pbars">${gaugesHTML()}</div><i class="pdiv"></i>
       <div class="pstats">${stats.join('')}</div>
     </div>
     ${sts?`<div class="statuses pstatuses">${sts}</div>`:''}
-    <div class="manabar" title="Mana: spells and summons cost Mana, everything else is free. Refills to ${max} every turn."><span class="mlbl">Mana</span><div class="mcells">${cells}</div><span class="mval num">${F.energy}<small>/${max}</small></span></div>
+    <div class="manabar" title="Mana: spells and summons cost Mana, everything else is free. Refills to ${max} every turn."><span class="mlbl">Mana</span><div class="mcells">${cells}</div><span class="mval num">${F.energy}<small>/${max}</small></span><button class="btn primary endbtn" data-act="end" ${UI.busy?'disabled':''}>End Turn</button></div>
   </div>`;
 }
 function handHTML(){
@@ -192,12 +192,13 @@ function modalHTML(){
   else if(m.type==='chart'){ body=`<h2>Card types</h2><div class="typegrid">${Object.keys(TYPES).map(t=>`<div class="typerow ty-${t}"><span class="ctypelbl">${TYPE_ICON[t]} ${TYPES[t]}</span><span class="muted small">${TYPE_DESC[t]}</span></div>`).join('')}</div>
     <h2>Type Chart</h2><p class="muted small">Super effective hits deal <b>2×</b>, resisted hits <b>½</b>. Wet targets take +50% Lightning and Ice and half Fire. Attacks, summons and machines scale with Attack; spells with Spell Power.</p><div class="chart"><span class="h">Enemy</span><span class="h">Weak to (2×)</span><span class="h">Resists (½)</span>${Object.keys(TYPE_CHART).filter(k=>k!=='phys').map(k=>`${elPill(k)}<span>${TYPE_CHART[k].weak.map(x=>EL[x].i+' '+EL[x].n).join(', ')||'—'}</span><span>${TYPE_CHART[k].resist.map(x=>EL[x].i+' '+EL[x].n).join(', ')||'—'}</span>`).join('')}</div><h3>Card tiers</h3><div class="tierrow">${TIERS.map(t=>`<span class="tierchip" style="--tier:${TIER[t].c}">${t} ×${TIER[t].mult}</span>`).join('')}</div><h3>Status effects</h3><table class="stats">${Object.keys(ST).map(k=>`<tr><td>${ST[k].i} ${ST[k].n}</td><td class="left">${ST[k].d}</td></tr>`).join('')}</table>`; }
   else if(m.type==='help'){ body=helpHTML(); }
-  else if(m.type==='menu'){ body=`<h2>Menu</h2><div class="choices"><button class="choice" data-act="modal" data-m="help">How to play</button><button class="choice" data-act="quit">Save and return to title<small>Your run is saved automatically after every step.</small></button>${m.confirm?`<button class="choice danger" data-act="abandon">Yes, abandon this run for good</button>`:`<button class="choice" data-act="abandon-ask">Abandon run<small>Permadeath applies: the run is deleted.</small></button>`}</div>`; }
+  else if(m.type==='menu'){ body=`<h2>Menu</h2><div class="choices"><button class="choice" data-act="library">📚 Card Library<small>Every card you have discovered so far.</small></button><button class="choice" data-act="modal" data-m="help">How to play</button><button class="choice" data-act="quit">Save and return to title<small>Your run is saved automatically after every step.</small></button>${m.confirm?`<button class="choice danger" data-act="abandon">Yes, abandon this run for good</button>`:`<button class="choice" data-act="abandon-ask">Abandon run<small>Permadeath applies: the run is deleted.</small></button>`}</div>`; }
   return `<div class="modal" data-act="close"><div class="box" data-act="noop">${body}<div class="row end"><button class="btn" data-act="close">Close</button></div></div></div>`;
 }
 function helpHTML(){ return `<h2>How to play</h2>
-<p><b>Rounds.</b> Every round is a fight, then spoils, then something automatic on the road: a chest, a blessing that boosts you for a few rounds, a shrine, a forge, a trap, an ambush. Every fourth round a merchant appears with cards, attributes, an evolution forge and the Lucky Coin. Elites every fifth round, a boss every tenth.</p>
-<p><b>Turns.</b> You draw a hand each turn. <b>Attacks, shields, skills, potions, machines and traps are free.</b> Spells and summons cost Mana: the blue bar above your hand, refilled every turn. Your Ultimate fires by itself the moment its meter fills. When nothing in your hand can be played, the turn ends by itself. End Turn lets every enemy act according to the intent shown on its card.</p>
+<p><b>Rounds.</b> Every round is a fight, then spoils, then something on the road, in a cycle of seven. Rounds 1 to 3 and 5 to 6 bring a random encounter: a chest, a blessing that boosts you for a few rounds, a shrine, a dwarven forge where you choose a card to reforge, a campfire, a trap, a cursed idol, an ambush. Round 4 is always a campfire: rest to heal a share of your Max HP, or train to raise it for good. Round 7 is the merchant, who upgrades a card for gold, removes one for a fee and heals. Elites every fifth round, a boss every tenth: you pick one of the boss's cards, then another from its treasury.</p>
+<p><b>New cards.</b> Fights give gold and XP. Every level you gain lets you choose one of three new cards; that is the only way new cards come to you, apart from bosses and the odd cursed idol. Taking a card you already own evolves it instead.</p>
+<p><b>Turns.</b> Every fight opens with two cards in hand and you draw one more at the start of each turn; what you do not play stays in your hand (curses rotate back into the deck). <b>Attacks, shields, skills, potions, machines and traps are free.</b> Spells and summons cost Mana: the blue bar above your hand, refilled every turn. Your Ultimate fires by itself the moment its meter fills. When nothing in your hand can be played, the turn ends by itself. End Turn lets every enemy act according to the intent shown on its card.</p>
 <p><b>Card face.</b> Name top-left. Spells and summons show their Mana cost top-right; a card with no cost box is free to play. The picture in the middle. The dotted box shows the element, the tier and what the card does: the first line is the main effect, the lines underneath are extras. Bottom-right says what kind of card it is (attack, spell, shield, skill, potion, machine, summon, trap). The whole card is coloured by its tier, and a green ▲ badge bottom-left counts how many tiers it has evolved.</p>
 <p><b>Tiers.</b> Basic cards do one plain thing. Common, uncommon, medium, good, great, rare, perfect and ultimate cards add effects and grow. Getting a card you already own <b>evolves</b> it one tier, multiplying its numbers. Some cards are born ultimate.</p>
 <p><b>Passives.</b> Machines, summons and armed traps take one of your passive slots and stay for the fight. Machines give bonuses (double first attack, block per machine, damage per attack played). Summons act every turn. Traps spring on the next enemy attack. Enemies have passives too, and some can destroy yours. Sabotage, EMP and Pilfer destroy or steal theirs. Yours live in the drawer tucked under your hand: hover or tap it to see them.</p>

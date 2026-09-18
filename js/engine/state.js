@@ -1,7 +1,7 @@
 'use strict';
 // ===================== RUN STATE, ROUND FLOW, PROGRESSION, SAVE =====================
 let G = null;                       // the whole run (serialisable)
-const UI = {busy:false, modal:null, uid:1, handUids:[], fightKey:0, timer:null};
+const UI = {busy:false, modal:null, uid:1, handUids:[], fightKey:0, timer:null, screen:null, lib:{els:[],types:[],tiers:[],costs:[],q:'',undisc:false,sort:'tier'}};
 const SAVE_KEY='deckfall2_save', BEST_KEY='deckfall2_best';
 const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
@@ -17,6 +17,10 @@ const store={
 function save(){ if(!G) return; store.set(SAVE_KEY, JSON.stringify(G)); }
 function loadSave(){ try{ const s=store.get(SAVE_KEY); return s?JSON.parse(s):null; }catch(e){ return null; } }
 function clearSave(){ store.del(SAVE_KEY); }
+// ---- card discovery: every card that joined a deck or was offered on a run, kept across runs for the Card Library ----
+const SEEN_KEY='deckfall_seen'; let SEEN=null;
+function seenCards(){ if(!SEEN){ try{ const s=store.get(SEEN_KEY); SEEN=new Set(s?JSON.parse(s):[]); }catch(e){ SEEN=new Set(); } } return SEEN; }
+function markSeen(ids){ const S=seenCards(); let changed=false; for(const id of [].concat(ids)){ if(CARD[id]&&!S.has(id)){ S.add(id); changed=true; } } if(changed) store.set(SEEN_KEY,JSON.stringify([...S])); }
 function getBest(){ try{ const s=store.get(BEST_KEY); return s?JSON.parse(s):null; }catch(e){ return null; } }
 function recordBest(){ const b=getBest()||{round:0,kills:0,level:1,bosses:0,runs:0}; b.runs=(b.runs||0)+1; if(G.round>b.round){ b.round=G.round; b.kills=G.kills; b.level=G.p.level; b.bosses=G.bossesSlain; } store.set(BEST_KEY, JSON.stringify(b)); return b; }
 
@@ -26,28 +30,31 @@ function elBoostPct(el){ let v=0; for(const b of G.boosts) if(b.el===el) v+=b.v;
 
 // ---- new run: always basic cards, with random element seeds so every run opens differently ----
 function startingDeck(){
-  const deck=['strike','strike','strike','strike','guard','guard','mana_potion'];
-  const els=shuffle(['fire','water','ice','light','grass','poison','earth','shadow','holy']).slice(0,3);
-  for(const el of els){ const pool=CARDS.filter(x=>x.tier==='basic'&&x.el===el&&x.fx.some(f=>f[0]==='dmg'||f[0]==='se')&&x.type!=='curse'); deck.push(pick(pool).id); }
-  return deck;
+  // Five basic cards: three attacks (two Strikes plus a random basic attack), one random basic spell, one Mana Potion.
+  const basic=t=>CARDS.filter(x=>x.tier==='basic'&&x.type===t);
+  const atk=pick(basic('attack').filter(x=>x.id!=='strike'));
+  const spell=pick(basic('spell').filter(x=>x.fx.some(f=>f[0]==='dmg'||f[0]==='se')));
+  return ['strike','strike',atk.id,spell.id,'mana_potion'];
 }
 function newGame(){
   G={ phase:'battle', round:1, kills:0, fights:0, bossesSlain:0, removes:0, evolves:0, turnsTotal:0, lastInter:null,
-      p:{ hp:70,maxHp:70,level:1,xp:0,xpNext:40, attack:0,spell:0,armor:0,dodge:0,counter:0,crit:0,lifesteal:0,thorns:0,ultPower:100,luck:0,energyMax:3,handSize:5,regen:0,slots:3,
+      p:{ hp:70,maxHp:70,level:1,xp:0,xpNext:40, attack:0,spell:0,armor:0,dodge:0,counter:0,crit:0,lifesteal:0,thorns:0,ultPower:100,luck:0,energyMax:3,handSize:2,regen:0,slots:3,
           gold:40, ultCharge:0, ult:'bladestorm', ults:['bladestorm'], deck:startingDeck(), evo:{}, bought:{} },
       boosts:[], fight:null, spoils:null, inter:null, shop:null, log:[] };
-  sfx('start'); startRound();
+  markSeen(G.p.deck); sfx('start'); startRound();
 }
 // ---- scaling & rewards ----
-const hpMult=s=>0.9*(1+0.16*s+0.006*s*s);
-const atkMult=s=>1+0.09*s+0.0025*s*s;
+// Enemy curve: round 1 foes are level 1 (3-5 HP, 1 attack); growth is gentle early and keeps climbing forever.
+const hpMult=s=>0.17+0.06*(s-1)+0.0055*(s-1)*(s-1);
+const atkMult=s=>0.25+0.05*(s-1)+0.003*(s-1)*(s-1);
 function goldReward(){ return Math.round((12+4*G.round)*(1+PS('luck')/100)); }
 function xpReward(){ return 12+4*G.round; }
 function scaledPrice(base){ return Math.round(base*(1+0.03*G.round)); }
 function gainXp(x){
   G.p.xp+=x; let ups=0;
   while(G.p.xp>=G.p.xpNext){ G.p.xp-=G.p.xpNext; G.p.level++; G.p.xpNext=Math.round(40+G.p.level*22); G.p.maxHp+=8; G.p.attack+=1; G.p.spell+=1; heal(Math.round(G.p.maxHp*.25)); ups++; }
-  if(ups){ log(`Level up! You are level ${G.p.level}: +8 Max HP, +1 Attack, +1 Spell Power`,'good'); if(typeof banner==='function') banner(`Level ${G.p.level}!`,'gold'); setTimeout(()=>sfx('levelup'),700); }
+  if(ups){ log(`Level up! You are level ${G.p.level}: +8 Max HP, +1 Attack, +1 Spell Power, and a new card`,'good'); if(typeof banner==='function') banner(`Level ${G.p.level}!`,'gold'); setTimeout(()=>sfx('levelup'),700); }
+  return ups;
 }
 function heal(n){ if(!G) return 0; const b=G.p.hp; G.p.hp=Math.min(G.p.maxHp,G.p.hp+Math.max(0,Math.round(n))); return G.p.hp-b; }
 function gainUlt(n){ G.p.ultCharge=clamp(G.p.ultCharge+n,0,100); }
@@ -60,7 +67,7 @@ function canEvolve(id){ return CARD[id].type!=='curse'&&curTier(id)<8; }
 function evolveCard(id,n){ const before=curTier(id); G.p.evo[id]=Math.min(8-tierIdx(id),(G.p.evo[id]||0)+(n||1)); if(curTier(id)>before) G.evolves++; return curTier(id)>before; }
 function cardVals(id,tier){ const d=CARD[id]; const cur=tier!=null?tier:(G?curTier(id):tierIdx(id)); const m=TIER[TIERS[cur]].mult/TIER[d.tier].mult; const v={}; for(const k in d.n) v[k]=SCALE_KEYS.includes(k)?Math.max(1,Math.round(d.n[k]*m)):d.n[k]; return v; }
 function cardCost(id){ const d=CARD[id]; return (d.type==='spell'||d.type==='summon')?d.cost:0; }
-function addCard(id){ if(CARD[id].type==='curse'){ G.p.deck.push(id); return 'added'; } if(G.p.deck.includes(id)){ if(canEvolve(id)){ evolveCard(id,1); return 'evolved'; } G.p.deck.push(id); return 'copied'; } G.p.deck.push(id); return 'added'; }
+function addCard(id){ markSeen(id); if(CARD[id].type==='curse'){ G.p.deck.push(id); return 'added'; } if(G.p.deck.includes(id)){ if(canEvolve(id)){ evolveCard(id,1); return 'evolved'; } G.p.deck.push(id); return 'copied'; } G.p.deck.push(id); return 'added'; }
 function removeCard(id){ const i=G.p.deck.indexOf(id); if(i>=0) G.p.deck.splice(i,1); if(!G.p.deck.includes(id)) delete G.p.evo[id]; }
 function tierWeights(kind){
   const s=G.round; const shift={fight:0,elite:1,boss:2.2,chest:0.6,shop:0.4,treasury:2.6,idol:2}[kind]||0;
@@ -69,10 +76,7 @@ function tierWeights(kind){
   return w;
 }
 function randomCardId(kind,exclude,filter){ const tier=weightedPick(tierWeights(kind)); let pool=CARDS.filter(x=>x.tier===tier&&x.type!=='curse'&&!(exclude||[]).includes(x.id)&&(!filter||filter(x))); if(!pool.length) pool=CARDS.filter(x=>x.type!=='curse'&&!(exclude||[]).includes(x.id)); return pick(pool).id; }
-function offerPool(kind,n,filter){ const ids=[]; let guard=0; while(ids.length<n&&guard++<40){ const id=randomCardId(kind,ids,filter); if(!ids.includes(id)) ids.push(id); } return ids; }
-function cardPrice(id){ const t=TIERS[curTier(id)]; const owned=G.p.deck.includes(id); return Math.round(TIER[owned?TIERS[Math.min(8,curTier(id)+1)]:t].price*(1+0.03*G.round)); }
-function evolvePrice(id){ return Math.round(TIER[TIERS[Math.min(8,curTier(id)+1)]].price*0.7*(1+0.03*G.round)); }
-function upgPrice(u){ const n=G.p.bought[u.k]||0; return Math.round(u.p*(1+0.32*n)*(1+0.025*G.round)); }
+function offerPool(kind,n,filter){ const ids=[]; let guard=0; while(ids.length<n&&guard++<40){ const id=randomCardId(kind,ids,filter); if(!ids.includes(id)) ids.push(id); } markSeen(ids); return ids; }
 function deckCounts(){ const m={}; for(const id of G.p.deck) m[id]=(m[id]||0)+1; return m; }
 
 // ---- round flow: battle -> spoils -> interlude (automatic) -> next round ----
@@ -81,7 +85,8 @@ function spoilsContinue(){
   clearTimeout(UI.timer); const o=(G.fight&&G.fight.o)||{};
   if(o.ambush||o.mimic){ nextRound(); return; }
   tickBoosts();
-  if(o.boss) openInterlude('treasury'); else if(G.round%4===0) openInterlude('shop'); else openInterlude(pickInterlude());
+  // Seven-round cycle: random encounters, a campfire on the 4th round, the merchant on the 7th. Bosses get their treasury.
+  if(o.boss) openInterlude('treasury'); else if(G.round%7===0) openInterlude('shop'); else if(G.round%7===4) openInterlude('camp'); else openInterlude(pickInterlude());
 }
 function pickInterlude(){ const w={}; for(const it of INTERLUDES){ if(it.t===G.lastInter) continue; if(it.t==='ambush'&&G.round<3) continue; if(it.t==='idol'&&G.round<4) continue; w[it.t]=it.w; } return weightedPick(w); }
 function tickBoosts(){ for(const b of G.boosts) b.rounds--; G.boosts=G.boosts.filter(b=>b.rounds>0); }
@@ -92,62 +97,40 @@ function openInterlude(t){
   if(t==='chest'){
     const gold=goldReward()*rnd(2,4); p.gold+=gold; I.lines.push(`+${gold} gold`);
     const r=Math.random();
-    if(r<0.4){ I.cards=offerPool('chest',3); I.lines.push('and a card to choose'); I.auto=false; }
-    else if(r<0.65){ const pot=pick(CARDS.filter(x=>x.type==='potion')).id; const res=addCard(pot); I.lines.push(res==='evolved'?`${CARD[pot].name} evolved to ${TIERS[curTier(pot)]}`:`${CARD[pot].name}`); }
+    if(r<0.35){ const id=forgeRandom(); if(id) I.lines.push(`${CARD[id].name} evolved to ${TIERS[curTier(id)]}`); else { p.gold+=gold; I.lines.push(`and another +${gold} gold`); } }
+    else if(r<0.6){ const pot=pick(CARDS.filter(x=>x.type==='potion')).id; const res=addCard(pot); I.lines.push(res==='evolved'?`${CARD[pot].name} evolved to ${TIERS[curTier(pot)]}`:`${CARD[pot].name}`); }
     else if(r<0.85){ const stats=['maxHp','attack','spell','armor','dodge','counter','crit','luck']; const k=pick(stats); const v=k==='maxHp'?8:['dodge','counter','crit'].includes(k)?4:k==='luck'?2:1; p[k]+=v; if(k==='maxHp') p.hp+=v; I.lines.push(`+${v} ${STATNAMES[k]} permanently`); }
     else { const id=forgeRandom(); if(id) I.lines.push(`${CARD[id].name} evolved to ${TIERS[curTier(id)]}`); else { p.gold+=gold; I.lines.push(`and another +${gold} gold`); } }
   }
   else if(t==='boost'){ const active=G.boosts.map(b=>b.id); const b=pick(BOOSTS.filter(x=>!active.includes(x.id))); G.boosts.push({id:b.id,name:b.name,icon:b.icon,el:b.el,stat:b.stat,v:b.v,rounds:b.rounds+1}); if(b.charge){ p.ultCharge=100; } I.boost=b.id; I.lines.push(`${b.name}: ${b.text} Lasts ${b.rounds} rounds.`); }
   else if(t==='shrine'){ const h=heal(Math.round(p.maxHp*0.3)); I.lines.push(`Healed ${h}.`); }
-  else if(t==='forge'){ const id=forgeRandom(); if(id) I.lines.push(`${CARD[id].name} is now ${TIERS[curTier(id)]}.`); else { p.gold+=60; I.lines.push('Nothing left to improve. The smith pays you 60 gold for the trouble.'); } }
+  else if(t==='forge'){ if([...new Set(p.deck)].some(canEvolve)){ I.auto=false; I.lines.push('Pick one card. The smith reforges it one tier higher, free of charge.'); } else { p.gold+=60; I.lines.push('Nothing left to improve. The smith pays you 60 gold for the trouble.'); } }
   else if(t==='trap'){ const d=Math.max(1,Math.round(p.maxHp*0.1)); p.hp=Math.max(1,p.hp-d); const g=goldReward()*3; p.gold+=g; I.lines.push(`-${d} HP, +${g} gold.`); }
   else if(t==='idol'){ const id=randomCardId('idol'); addCard(id); addCard('doom'); I.lines.push(`You gain ${CARD[id].name} (${CARD[id].tier}). A Doom curse joins your deck.`); }
+  else if(t==='camp'){ I.auto=false; I.lines.push(`Rest to heal ${CAMP.healPct}% of your Max HP, or train to raise your Max HP by ${CAMP.toughPct}% for good.`); }
   else if(t==='ambush'){ I.auto=true; }
   else if(t==='treasury'){ const gold=goldReward()*5; p.gold+=gold; I.lines.push(`+${gold} gold`); I.cards=offerPool('treasury',3); I.auto=false; I.lines.push('and a card that remembers its owner'); }
-  G.phase='interlude'; render(); save(); sfx({chest:'chest',treasury:'chest',boost:'blessing',shrine:'shrine',forge:'forge',trap:'trapfall',idol:'idol',ambush:'ambush'}[t]||'click');
+  G.phase='interlude'; render(); save(); sfx({chest:'chest',treasury:'chest',boost:'blessing',shrine:'shrine',forge:'forge',trap:'trapfall',idol:'idol',ambush:'ambush',camp:'shrine'}[t]||'click');
   if(t==='ambush'){ UI.timer=setTimeout(()=>{ startFight({elite:true,goldMult:2,ambush:true}); },1500); }
   else if(I.auto){ UI.timer=setTimeout(nextRound,3200); }
 }
+function forgePick(){ const I=G.inter; if(!I||I.t!=='forge'||I.picked) return; pickDeckCard('Choose a card to reforge',id=>{ if(!canEvolve(id)){ toast('Already ultimate'); render(); return; } evolveCard(id,1); I.picked=true; I.lines.push(`${CARD[id].name} is reforged into ${TIERS[curTier(id)]}.`); sfx('evolve'); render(); save(); UI.timer=setTimeout(nextRound,1600); },id=>canEvolve(id)?`→ ${TIERS[curTier(id)+1]}`:'ultimate'); }
+const CAMP={healPct:40,toughPct:10};
+function campChoose(kind){ const I=G.inter; if(!I||I.t!=='camp'||I.picked) return; const p=G.p; if(kind==='tough'){ const v=Math.max(5,Math.round(p.maxHp*CAMP.toughPct/100)); p.maxHp+=v; p.hp+=v; I.lines.push(`You train by the fire: +${v} Max HP, for good.`); sfx('levelup'); } else { const h=heal(Math.round(p.maxHp*CAMP.healPct/100)); I.lines.push(`You rest by the fire and heal ${h}.`); sfx('heal'); } I.picked=true; render(); save(); UI.timer=setTimeout(nextRound,1600); }
 function forgeRandom(){ const ids=[...new Set(G.p.deck)].filter(canEvolve); if(!ids.length) return null; const id=pick(ids); evolveCard(id,1); return id; }
 function interludePick(id){ const I=G.inter; if(!I||!I.cards||I.picked) return; sfx(G.p.deck.includes(id)&&canEvolve(id)?'evolve':'pick'); const res=addCard(id); I.picked=true; I.lines.push(res==='evolved'?`${CARD[id].name} evolves to ${TIERS[curTier(id)]}.`:`${CARD[id].name} joins your deck.`); render(); save(); UI.timer=setTimeout(nextRound,1200); }
 function interludeSkip(){ const I=G.inter; if(!I||I.picked) return; I.picked=true; I.lines.push('You take no card.'); render(); save(); UI.timer=setTimeout(nextRound,900); }
 function interludeContinue(){ const I=G.inter; if(!I) return; if(I.cards&&!I.picked) return; if(I.t==='ambush') return; clearTimeout(UI.timer); nextRound(); }
 function nextRound(){ clearTimeout(UI.timer); if(!G) return; G.round++; G.inter=null; G.spoils=null; G.fight=null; G.shop=null; startRound(); save(); }
 
-// ---- shop (every 4th round) with the Lucky Coin table ----
-function openShop(){
-  const cards=offerPool('shop',5,x=>x.type!=='potion');
-  const upg=shuffle(UPG.filter(u=>!(u.max&&G.p[u.k]>=u.max))).slice(0,4).map(u=>u.k);
-  const pots=shuffle(CARDS.filter(x=>x.type==='potion').map(x=>x.id)).slice(0,3);
-  G.shop={cards,upg,pots,rerolls:0,tab:'wares',gamble:{bet:0,pot:0,phase:'bet',streak:0,last:null,rounds:0}};
-  G.phase='shop'; render(); save(); sfx('shop');
-}
-function shopBuyCard(id,fromPots){
-  const price=fromPots?Math.round(cardPrice(id)*0.8):cardPrice(id); if(G.p.gold<price){toast('Not enough gold');return;}
-  G.p.gold-=price; sfx('buy'); const r=addCard(id); if(r==='evolved') sfx('evolve'); toast(r==='evolved'?`${CARD[id].name} evolved to ${TIERS[curTier(id)]}`:r==='copied'?`Another ${CARD[id].name} (already ultimate)`:`${CARD[id].name} added`);
-  const list=fromPots?G.shop.pots:G.shop.cards; if(r==='added') list.splice(list.indexOf(id),1);
-  render(); save();
-}
-function shopBuyUpg(k){
-  const u=UPG.find(x=>x.k===k); const price=upgPrice(u); if(G.p.gold<price){toast('Not enough gold');return;}
-  if(u.max&&G.p[k]>=u.max){toast('Maxed out');return;}
-  G.p.gold-=price; G.p[k]+=u.v; if(k==='maxHp') heal(10); G.p.bought[k]=(G.p.bought[k]||0)+1; toast(`+${u.v} ${STATNAMES[k]}`); sfx('buy'); render(); save();
-}
+// ---- merchant (every 7th round): upgrades a card you own for gold, removes a card, heals. New cards only come from levelling up. ----
+function openShop(){ G.shop={}; G.phase='shop'; render(); save(); sfx('shop'); }
+function evolvePrice(id){ return Math.round(TIER[TIERS[Math.min(8,curTier(id)+1)]].price*0.7*(1+0.03*G.round)); }
+function shopUpgrade(id){ if(!G.p.deck.includes(id)) return; if(!canEvolve(id)){toast('Already ultimate');return;} const c=evolvePrice(id); if(G.p.gold<c){toast('Not enough gold');return;} G.p.gold-=c; evolveCard(id,1); toast(`${CARD[id].name} evolved to ${TIERS[curTier(id)]}`); sfx('evolve'); render(); save(); }
 function shopRemoveCost(){ return Math.round(55*(1+0.35*G.removes)*(1+0.02*G.round)); }
 function shopRemove(){ const c=shopRemoveCost(); if(G.p.gold<c){toast('Not enough gold');return;} pickDeckCard('Choose a card to remove',id=>{ G.p.gold-=c; G.removes++; removeCard(id); toast(`${CARD[id].name} removed`); render(); save(); }); }
-function shopEvolve(){ pickDeckCard('Choose a card to evolve',id=>{ if(!canEvolve(id)){toast('Already ultimate');render();return;} const c=evolvePrice(id); if(G.p.gold<c){toast(`Needs ${c} gold`);render();return;} G.p.gold-=c; evolveCard(id,1); toast(`${CARD[id].name} evolved to ${TIERS[curTier(id)]}`); sfx('evolve'); render(); save(); },id=>canEvolve(id)?`${evolvePrice(id)} 🪙 → ${TIERS[curTier(id)+1]}`:'max'); }
 function shopHealCost(){ return Math.round(30*(1+0.03*G.round)); }
 function shopHeal(){ const c=shopHealCost(); if(G.p.gold<c){toast('Not enough gold');return;} if(G.p.hp>=G.p.maxHp){toast('Already at full health');return;} G.p.gold-=c; const h=heal(Math.round(G.p.maxHp*0.3)); toast(`Healed ${h}`); sfx('heal'); render(); save(); }
-function shopRerollCost(){ return 25+15*G.shop.rerolls; }
-function shopReroll(){ const c=shopRerollCost(); if(G.p.gold<c){toast('Not enough gold');return;} G.p.gold-=c; G.shop.rerolls++; G.shop.cards=offerPool('shop',5,x=>x.type!=='potion'); G.shop.upg=shuffle(UPG.filter(u=>!(u.max&&G.p[u.k]>=u.max))).slice(0,4).map(u=>u.k); render(); save(); }
-function gambleChance(){ const g=G.shop.gamble; const base=clamp(50+PS('luck')/2,50,62); return clamp(Math.round(base-6*g.streak),35,62); }
-function gambleFlip(bet){
-  const g=G.shop.gamble; if(g.phase==='double') return; bet=Math.floor(bet); if(bet<=0||bet>G.p.gold){toast('Bet what you have.');return;}
-  G.p.gold-=bet; g.bet=bet; g.streak=0; g.rounds++; const win=Math.random()*100<gambleChance(); g.last=win?'win':'lose'; g.flipping=true; sfx('flip'); setTimeout(()=>sfx(win?'win':'lose'),800);
-  if(win){ g.pot=bet*2; g.phase='double'; } else { g.pot=0; g.phase='lost'; } render(); save();
-}
-function gambleDouble(){ const g=G.shop.gamble; if(g.phase!=='double') return; g.streak++; const win=Math.random()*100<gambleChance(); g.last=win?'win':'lose'; g.flipping=true; sfx('flip'); setTimeout(()=>sfx(win?'win':'lose'),800); if(win) g.pot*=2; else { g.pot=0; g.phase='lost'; } render(); save(); }
-function gambleCashOut(){ const g=G.shop.gamble; if(g.phase!=='double') return; G.p.gold+=g.pot; toast(`+${g.pot} gold`); sfx('coins'); g.phase='done'; render(); save(); }
 
 // ---- death ----
 function gameOver(){ clearTimeout(UI.timer); sfx('defeat'); if(G.fight) G.fight.over=true; G.best=recordBest(); clearSave(); G.phase='gameover'; render(); }

@@ -17,7 +17,7 @@ function stealPassive(e,p){ const F=G.fight; const i=e.passives.indexOf(p); if(i
 function mkEnemy(def,o){
   const s=G.round; const hm=hpMult(s)*(o.scale||1)*(o.elite?1.6:1); const am=atkMult(s)*(o.elite?1.25:1);
   const hp=Math.round(def.hp*hm), atk=Math.round(def.atk*am);
-  const e={uid:UI.uid++, id:def.id, name:(o.elite?'Elite ':'')+def.name, icon:def.icon, el:def.el, hp, maxHp:hp, atk, block:0, armor:Math.floor(s/10)+(o.boss?1:0), thorns:def.thorns?Math.round(def.thorns*am*0.6):0, st:{}, pat:def.pat, pi:o.boss?0:rnd(0,def.pat.length-1), elite:!!o.elite, boss:!!o.boss, ls:!!def.ls, atkScale:am, alive:true, passives:[]};
+  const e={uid:UI.uid++, id:def.id, name:(o.elite?'Elite ':'')+def.name, icon:def.icon, el:def.el, lvl:s+(o.boss?5:o.elite?2:0), hp, maxHp:hp, atk, block:0, armor:Math.floor(s/10)+(o.boss?1:0), thorns:def.thorns?Math.round(def.thorns*am*0.6):0, st:{}, pat:def.pat, pi:o.boss?0:rnd(0,def.pat.length-1), elite:!!o.elite, boss:!!o.boss, ls:!!def.ls, atkScale:am, alive:true, passives:[]};
   for(const pid of (def.passives||[])) addEnemyPassive(e,pid);
   return e;
 }
@@ -49,7 +49,7 @@ function startPlayerTurn(){
   if(F.st.poison){ dmgPlayerRaw(F.st.poison,'Poison'); F.st.poison--; if(F.st.poison<=0) delete F.st.poison; }
   if(F.st.burn&&G.p.hp>0){ dmgPlayerRaw(F.st.burn,'Burn'); F.st.burn=Math.floor(F.st.burn/2); if(F.st.burn<=0) delete F.st.burn; }
   if(checkDeath()) return;
-  const before=F.hand.length; draw(PS('handSize')+pSum('drawPerTurn')); sfx('draw',{n:F.hand.length-before});
+  const before=F.hand.length; draw((F.turn===1?PS('handSize'):1)+pSum('drawPerTurn')); sfx('draw',{n:F.hand.length-before});   // opening hand on turn 1, then one card a turn; unplayed cards stay in hand
   render(); if(G.p.ultCharge>=100){ setTimeout(()=>{ if(G&&G.fight&&!G.fight.over&&!UI.busy) useUltimate(); },350); return; } autoEndCheck();
 }
 function draw(n){ const F=G.fight; for(let i=0;i<n;i++){ if(F.hand.length>=10) break; if(!F.draw.length){ if(!F.discard.length) break; F.draw=shuffle(F.discard); F.discard=[]; } F.hand.push(F.draw.pop()); } }
@@ -217,7 +217,7 @@ async function passivesEndTurn(){
 async function endTurn(){
   const F=G.fight; if(!F||F.over||UI.busy) return; UI.busy=true; clearTimeout(UI.autoTimer);
   for(const inst of F.hand){ const d=CARD[inst.id]; if(d.endTurnDmg) dmgPlayerRaw(d.endTurnDmg,d.name); }
-  F.discard.push(...F.hand.filter(c=>!c.temp)); F.hand=[];
+  { const keep=[]; for(const inst of F.hand){ if(inst.temp) continue; if(CARD[inst.id].unplayable) F.discard.push(inst); else keep.push(inst); } F.hand=keep; }   // hand persists; curses rotate back into the deck, conjured cards fade
   for(const k of ['weak','vuln']) if(F.st[k]){ F.st[k]--; if(F.st[k]<=0) delete F.st[k]; }
   if(checkDeath()){ UI.busy=false; return; }
   render();
@@ -311,11 +311,12 @@ function winFight(){
   G.p.gold+=gold; G.fights++; if(o.boss) G.bossesSlain++;
   const kind=o.boss?'boss':(o.elite||o.mimic)?'elite':'fight';
   let ultOffer=null; if(o.boss){ const notOwned=ULTS.filter(u=>!G.p.ults.includes(u.id)); if(notOwned.length) ultOffer=shuffle(notOwned.slice()).slice(0,2).map(u=>u.id); }
-  G.spoils={gold,xp,cards:offerPool(kind,3),kind,ultOffer,cardTaken:false,ultTaken:false,levelBefore:G.p.level};
-  sfx('victory'); gainXp(xp);
+  const levelBefore=G.p.level; sfx('victory'); const ups=gainXp(xp);
+  const picks=(o.boss?1:0)+ups;   // one pick per level gained, plus the boss's own card
+  G.spoils={gold,xp,kind,ultOffer,ultTaken:false,levelBefore,picks,bossPick:!!o.boss,cards:picks?offerPool(o.boss?'boss':kind,3):null,cardTaken:picks===0,msgs:[]};
   G.phase='spoils'; render(); save();
 }
 function spoilsMaybeContinue(){ const r=G.spoils; if(r.cardTaken&&(!r.ultOffer||r.ultTaken)){ clearTimeout(UI.timer); UI.timer=setTimeout(spoilsContinue,1000); } }
-function spoilsPickCard(id){ const r=G.spoils; if(!r||r.cardTaken) return; sfx(G.p.deck.includes(id)&&canEvolve(id)?'evolve':'pick'); const res=addCard(id); r.cardTaken=true; r.cardMsg=res==='evolved'?`${CARD[id].name} evolves to ${TIERS[curTier(id)]}`:res==='copied'?`Another ${CARD[id].name} joins your deck`:`${CARD[id].name} joins your deck`; render(); save(); spoilsMaybeContinue(); }
-function spoilsSkipCard(){ const r=G.spoils; if(!r||r.cardTaken) return; r.cardTaken=true; r.cardMsg='You take no card.'; render(); save(); spoilsMaybeContinue(); }
+function spoilsPickCard(id){ const r=G.spoils; if(!r||r.cardTaken||!r.cards||!r.cards.includes(id)) return; sfx(G.p.deck.includes(id)&&canEvolve(id)?'evolve':'pick'); const res=addCard(id); r.msgs=r.msgs||[]; r.msgs.push(res==='evolved'?`${CARD[id].name} evolves to ${TIERS[curTier(id)]}`:res==='copied'?`Another ${CARD[id].name} joins your deck`:`${CARD[id].name} joins your deck`); r.picks=(r.picks||1)-1; r.bossPick=false; if(r.picks>0) r.cards=offerPool(r.kind==='boss'?'elite':r.kind,3); else { r.cards=null; r.cardTaken=true; } render(); save(); spoilsMaybeContinue(); }
+function spoilsSkipCard(){ const r=G.spoils; if(!r||r.cardTaken) return; r.picks=0; r.cards=null; r.bossPick=false; r.cardTaken=true; r.msgs=r.msgs||[]; r.msgs.push('You take no card.'); render(); save(); spoilsMaybeContinue(); }
 function spoilsPickUlt(id){ const r=G.spoils; if(!r||r.ultTaken) return; r.ultTaken=true; if(id){ G.p.ults.push(id); G.p.ult=id; r.ultMsg=`${ULT[id].name} is now your Ultimate.`; } else r.ultMsg=`You keep ${ULT[G.p.ult].name}.`; render(); save(); spoilsMaybeContinue(); }
