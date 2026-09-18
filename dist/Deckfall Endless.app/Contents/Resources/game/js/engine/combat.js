@@ -50,8 +50,8 @@ function startFight(o){
 }
 function startPlayerTurn(){
   const F=G.fight; if(F.over) return; F.turn++; G.turnsTotal++;
-  // Mana: every fight starts at 0; each turn you gain 1 (plus any per-turn bonuses), up to MANA_CAP, and unspent Mana carries over.
-  { const gain=1+F.energyBonus+pSum('manaPerTurn')+pSum('sMana'); if(F.st.chill){ delete F.st.chill; log('Chilled: no Mana gained this turn','bad'); } else F.energy=Math.min(MANA_CAP,F.energy+gain); }
+  // Mana: the first turn of every fight starts at 0; from the second turn on you gain 1 (plus any per-turn bonuses), up to MANA_CAP, and unspent Mana carries over.
+  if(F.turn>1){ const gain=1+F.energyBonus+pSum('manaPerTurn')+pSum('sMana'); if(F.st.chill){ delete F.st.chill; log('Chilled: no Mana gained this turn','bad'); } else F.energy=Math.min(MANA_CAP,F.energy+gain); } else if(F.st.chill) delete F.st.chill;
   F.played=0; F.turnAttacks=0; if(!F.retain) F.block=0; F.retain=false; F.dodgeNext=false; F.counterNext=false; F.parry=false;
   const rg=PS('regen')+F.regen+pSum('healPerTurn')+pSum('sHeal'); if(rg>0){ const h=heal(rg); if(h) log(`Regen and allies heal ${h}`,'good'); }
   if(F.st.poison){ dmgPlayerRaw(F.st.poison,'Poison'); F.st.poison--; if(F.st.poison<=0) delete F.st.poison; }
