@@ -45,7 +45,7 @@ One line in `js/data/cards.js`:
 
 ```js
 c('frost_nova','Frost Nova','spell','ice',2,5,'❄️',{dmg:9,v:2},[['dmg','dmg',{aoe:1}],['se','chill','v',{aoe:1}]]);
-//  id          name        type    el   cost tier icon values   effects (first effect = the info box, the rest = extra lines)
+//  id          name        type    el   cost tier icon values   effects (first effect = the main line on the card face, the rest = extra lines)
 // A machine, summon or trap is a card whose effect is ['passive', id]; the id's behaviour lives in js/data/passives.js.
 ```
 

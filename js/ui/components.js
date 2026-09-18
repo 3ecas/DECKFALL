@@ -20,7 +20,7 @@ function fxPart(f,v,base,d){
   if(t==='selfDmg') return {big:`-${n(f[1])}`,unit:'HP',text:'you bleed',short:`Lose ${n(f[1])} HP`};
   if(t==='cleanse') return {big:'✚',unit:'CLEANSE',text:'remove your debuffs',short:'Remove your debuffs'};
   if(t==='stat') return {big:`+${n(f[2])}`,unit:STATNAMES[f[1]].toUpperCase(),text:'permanently',short:`+${n(f[2])} ${STATNAMES[f[1]]} permanently`};
-  if(t==='passive'){ const P=PASSIVES[f[1]]; return {big:P.icon,unit:KIND_LABEL[P.kind].toUpperCase(),text:passiveText(f[1],v),short:P.name}; }
+  if(t==='passive'){ const P=PASSIVES[f[1]]; const txt=passiveText(f[1],v); return {big:P.icon,unit:KIND_LABEL[P.kind].toUpperCase(),text:txt,short:P.name,line:txt}; }
   if(t==='special'){ const s=f[1]; const p=f[2]||{}; const m=p.m?n(p.m):'';
     if(s==='execute') return {big:n('dmg'),unit:'DMG',text:`${elN} · ×2 below ${p.pct||30}% HP`,short:`${n('dmg')} dmg, ×2 below ${p.pct||30}% HP`};
     if(s==='snipe') return {big:n('dmg'),unit:'DMG',text:'pierces Block · +50% crit',short:`${n('dmg')} dmg, pierces, +50% crit`};
@@ -42,7 +42,8 @@ function fxPart(f,v,base,d){
 }
 function cardParts(id,tier){
   const d=CARD[id]; const v=cardVals(id,tier); const base=cardVals(id,tierIdx(id)); const parts=d.fx.map(f=>fxPart(f,v,base,d));
-  let main=parts[0]||(d.unplayable?{big:'☠',unit:'CURSE',text:'unplayable · clogs your hand'}:{big:'',unit:'',text:''});
+  let main=parts[0]||(d.unplayable?{big:'☠',unit:'CURSE',text:'unplayable · clogs your hand',short:'Unplayable · clogs your hand'}:{big:'',unit:'',text:'',short:''});
+  main.line=main.line||main.short||main.text;   // the first description line on the card face
   const extras=parts.slice(1).map(p=>p.short);
   if(d.type==='mecha'||d.type==='summon') extras.push('Takes a passive slot');
   if(d.type==='trap'&&d.fx[0]&&d.fx[0][0]==='passive') extras.push('Armed until an enemy attacks');
@@ -52,17 +53,25 @@ function cardParts(id,tier){
   if(d.endTurnDmg) extras.push(`${d.endTurnDmg} damage at end of turn in hand`);
   return {main,extras};
 }
+// Card face (see CARD REF.png): name box top-left, Mana cost top-right (nothing when the card is free), art panel, dotted info box
+// with the element tag and the effect lines, evolution badge (▲n) bottom-left, card kind (attack, spell, trap…) bottom-right.
+// The whole background is the tier colour.
 function cardHTML(id,o){
-  o=o||{}; const d=CARD[id]; const tier=o.tier!=null?o.tier:(G?curTier(id):tierIdx(id)); const tn=TIERS[tier]; const e=EL[d.el]; const cost=(d.type==='spell'||d.type==='summon')?d.cost:0; const paysMana=d.type==='spell'||d.type==='summon';
-  const cls=['card','t-'+tn,'ty-'+d.type]; if(o.big) cls.push('big'); if(o.mode==='static') cls.push('static'); if(d.unplayable) cls.push('unplayable'); if(o.dim) cls.push('unaff'); if(o.enter) cls.push('enter');
+  o=o||{}; const d=CARD[id]; const tier=o.tier!=null?o.tier:(G?curTier(id):tierIdx(id)); const tn=TIERS[tier]; const e=EL[d.el]; const paysMana=d.type==='spell'||d.type==='summon'; const cost=paysMana?d.cost:0;
+  const cls=['card','t-'+tn,'ty-'+d.type,'el-'+d.el]; if(o.big) cls.push('big'); if(o.mode==='static') cls.push('static'); if(d.unplayable) cls.push('unplayable'); if(o.dim) cls.push('unaff'); if(o.enter) cls.push('enter');
   const evo=tier-tierIdx(id); const {main,extras}=cardParts(id,tier);
+  const nameCls=d.name.length>18?' xl':d.name.length>12?' long':'';
+  const costBox=paysMana?`<div class="ccost" title="Mana cost"><b>${cost}</b></div>`:'';
   return `<div class="${cls.join(' ')}" style="--el:${e.c};--tier:${TIER[tn].c}" ${o.act?`data-act="${o.act}"`:''} ${o.data||''} tabindex="0" title="${tn} ${TYPES[d.type]} · ${TYPE_DESC[d.type]}">
-    <div class="ctop"><span class="ctypelbl">${TYPE_ICON[d.type]} ${TYPES[d.type]}</span>${paysMana?`<span class="cost" title="Mana cost">${cost}</span>`:`<span class="cost free" title="Free to play">free</span>`}</div>
-    <div class="cname">${esc(d.name)}</div>
-    <div class="cicon"><span>${d.icon}</span></div>
-    <div class="cmeta"><span class="tier">${tn}${evo>0?` ▲${evo}`:''}</span><span class="cel">${e.i} ${e.n}</span></div>
-    <div class="cinfo">${main.big!==''?`<div class="bignum">${main.big}<small>${main.unit}</small></div>`:''}<div class="ctext">${main.text}</div></div>
-    ${extras.length?`<div class="cextra">${extras.map(x=>`<span>${x}</span>`).join('')}</div>`:''}
+    <div class="cname${nameCls}">${esc(d.name)}</div>
+    ${costBox}
+    <div class="cart"><span>${d.icon}</span></div>
+    <div class="cbox">
+      <div class="ctags"><span class="ctag" title="Element">${e.n}</span><span class="ctier" title="Tier">${tn}</span></div>
+      <div class="cdesc"><p class="cmain">${main.line}</p>${extras.map(x=>`<p class="cext">${x}</p>`).join('')}</div>
+    </div>
+    ${evo>0?`<div class="cevo" title="Evolved ${evo} tier${evo>1?'s':''} above its base"><i></i>${evo}</div>`:''}
+    <div class="ckind" title="${TYPES[d.type]} · ${TYPE_DESC[d.type]}">${TYPE_ICON[d.type]} ${TYPES[d.type]}</div>
     ${o.price!=null?`<div class="price">${o.price} 🪙${o.priceTag||''}</div>`:''}
     ${o.tag?`<div class="price tagp">${o.tag}</div>`:''}
   </div>`;
@@ -176,7 +185,7 @@ function modalHTML(){
 function helpHTML(){ return `<h2>How to play</h2>
 <p><b>Rounds.</b> Every round is a fight, then spoils, then something automatic on the road: a chest, a blessing that boosts you for a few rounds, a shrine, a forge, a trap, an ambush. Every fourth round a merchant appears with cards, attributes, an evolution forge and the Lucky Coin. Elites every fifth round, a boss every tenth.</p>
 <p><b>Turns.</b> You draw a hand each turn. <b>Attacks, shields, skills, potions, machines and traps are free.</b> Spells and summons cost Mana. When nothing in your hand can be played, the turn ends by itself. End Turn lets every enemy act according to the intent shown on it.</p>
-<p><b>Card face.</b> Top band: the type and its cost. Middle: name, icon, tier and element. The info box shows the main number (damage, block, heal, status). Lines underneath are extra effects. The whole card is coloured by its tier.</p>
+<p><b>Card face.</b> Name top-left. Spells and summons show their Mana cost top-right; a card with no cost box is free to play. The picture in the middle. The dotted box shows the element, the tier and what the card does: the first line is the main effect, the lines underneath are extras. Bottom-right says what kind of card it is (attack, spell, shield, skill, potion, machine, summon, trap). The whole card is coloured by its tier, and a green ▲ badge bottom-left counts how many tiers it has evolved.</p>
 <p><b>Tiers.</b> Basic cards do one plain thing. Common, uncommon, medium, good, great, rare, perfect and ultimate cards add effects and grow. Getting a card you already own <b>evolves</b> it one tier, multiplying its numbers. Some cards are born ultimate.</p>
 <p><b>Passives.</b> Machines, summons and armed traps take one of your passive slots and stay for the fight. Machines give bonuses (double first attack, block per machine, damage per attack played). Summons act every turn. Traps spring on the next enemy attack. Enemies have passives too, and some can destroy yours. Sabotage, EMP and Pilfer destroy or steal theirs.</p>
 <p><b>Elements.</b> Ten elements with combos: Fire burns and detonates, Ice chills, freezes and shatters, Lightning shocks and multi-hits, Water soaks, Grass grows, Poison stacks and doubles, Earth turns Block into damage, Shadow steals life, Holy heals and smites. Hit a weakness for <b>2×</b>. Open <b>Types</b> for the chart.</p>
