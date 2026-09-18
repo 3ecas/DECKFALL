@@ -1,7 +1,7 @@
 'use strict';
 // ===================== SCREENS =====================
 function render(){
-  const app=document.getElementById('app'); if(!app) return;
+  const app=document.getElementById('app'); if(!app) return; if(typeof hideTip==='function') hideTip();
   if(UI.screen==='library'){ app.innerHTML=libraryHTML()+modalHTML(); return; }
   if(!G){ app.innerHTML=titleHTML()+modalHTML(); return; }
   if(G.phase==='battle'&&G.fight){ const cur=app.querySelector('#battle'); if(cur&&cur.dataset.key==String(G.fight.key)){ patchBattle(); const mm=app.querySelector('.modal'); if(mm) mm.remove(); app.insertAdjacentHTML('beforeend',modalHTML()); return; } }
@@ -44,9 +44,9 @@ function titleHTML(){
         </div>
         ${best&&best.round?`<div class="kv"><span>Best round <b>${best.round}</b></span><span>Kills <b>${best.kills}</b></span><span>Level <b>${best.level}</b></span><span>Bosses <b>${best.bosses}</b></span><span>Runs <b>${best.runs}</b></span></div>`:''}
       </div>
-      <div class="menu-r"><div class="fan3">${fan.map(id=>cardHTML(id,{mode:'static',tier:tierIdx(id),big:true})).join('')}</div></div>
+      <div class="menu-r"><div class="fan3">${fan.map(id=>cardHTML(id,{mode:'static',tier:tierIdx(id),big:true,data:'data-fan="1"'})).join('')}</div></div>
     </div>
-    <div class="muted small">${total} cards · ${Object.keys(EL).length-1} elements · ${TIERS.length} tiers · ${ENEMIES.length} enemies · ${BOSSES.length} bosses · ${ULTS.length} ultimates</div>
+    <div class="muted small">${total} cards · ${Object.keys(EL).length-1} elements · ${TIERS.length} tiers · ${ENEMIES.length} enemies · ${BOSSES.length} bosses</div>
   </div>`;
 }
 // ---- Card Library: every card, revealed once discovered on a run; filters on the side ----
@@ -90,7 +90,7 @@ function battleHTML(){
   const F=G.fight; UI.handUids=[];
   return `<div id="battle" data-key="${F.key}" class="battle">
     ${hudHTML({bars:false})}
-    <div class="arena"><div class="field">${F.enemies.map((e,i)=>enemyHTML(e,i)).join('')}</div>${logHTML()}</div>
+    <div class="arena ${UI.intro?'intro':''}"><div class="field">${F.enemies.map((e,i)=>enemyHTML(e,i)).join('')}</div>${logHTML()}</div>
     <div class="handwrap"><div class="handbar">${handbarHTML()}</div><div class="hand">${handHTML()}</div></div>
     ${playerHTML()}
   </div>`;
@@ -107,8 +107,6 @@ function spoilsHTML(){
     ${msgs}
     ${!r.cardTaken&&r.cards?`<div class="eyebrow">${r.bossPick?'The boss drops a card':`Level ${lvlOfPick} · choose a new card`}</div><div class="cardgrid fan">${r.cards.map((id,i)=>cardHTML(id,{big:true,act:'spoils-card',data:`data-id="${id}" style="--i:${i}"`,enter:true,tag:p.deck.includes(id)?(canEvolve(id)?`Owned · evolve to ${TIERS[curTier(id)+1]}`:'Owned · copy'):null})).join('')}</div><button class="btn ghost sm" data-act="spoils-skip">Skip</button>`:''}
     ${r.cardTaken&&r.drop&&!r.dropTaken?`<div class="eyebrow">☠ ${esc(r.drop.from)} dropped one of its abilities</div><div class="cardgrid fan">${cardHTML(r.drop.id,{big:true,act:'spoils-drop',data:`data-id="${r.drop.id}" style="--i:0"`,enter:true,tag:p.deck.includes(r.drop.id)?(canEvolve(r.drop.id)?`Owned · evolve to ${TIERS[curTier(r.drop.id)+1]}`:'Owned · copy'):null})}</div><button class="btn ghost sm" data-act="spoils-drop-skip">Leave it</button>`:''}
-    ${r.ultOffer&&!r.ultTaken?`<div class="eyebrow">The boss's power is yours</div><div class="upgrades narrow">${r.ultOffer.map(id=>{const u=ULT[id];return `<div class="upg"><div class="uname">${u.icon} ${u.name} ${elPill(u.el)}</div><div class="udesc">${u.desc}</div><button class="btn sm primary" data-act="spoils-ult" data-id="${id}">Learn</button></div>`;}).join('')}</div><button class="btn ghost sm" data-act="spoils-ult">Keep ${ULT[p.ult].name}</button>`:''}
-    ${r.ultTaken&&r.ultMsg?`<p class="msg">${esc(r.ultMsg)}</p>`:''}
     ${done?`<div class="autobar"><i></i></div><button class="btn sm ghost" data-act="spoils-next">Continue now</button>`:''}
   </div>`;
 }
@@ -132,8 +130,8 @@ function shopHTML(){
   const grid=deckSummary().map(x=>{const ok=canEvolve(x.id); const c=ok?evolvePrice(x.id):0; return cardHTML(x.id,{act:'shop-upgrade',data:`data-id="${x.id}"`,price:ok?c:null,priceTag:ok?` → ${TIERS[curTier(x.id)+1]}`:'',tag:ok?null:'Ultimate',dim:!ok||p.gold<c});}).join('');
   return `<div class="scene shop">
     <div class="row between"><h2>⚒️ Merchant · Round ${G.round}</h2><button class="btn primary" data-act="shop-leave">Continue the climb →</button></div>
-    <div class="eyebrow">Upgrade a card · one tier higher, priced by the tier it becomes</div>
-    <div class="shopcards">${grid}</div>
+    ${G.shop.used?`<div class="eyebrow">Done for this visit</div><p class="msg good">${esc(G.shop.used)}. The merchant packs up; come back in seven rounds.</p>`:`<div class="eyebrow">Upgrade one card · one tier higher, priced by the tier it becomes</div>
+    <div class="shopcards">${grid}</div>`}
   </div>`;
 }
 function gameoverHTML(){

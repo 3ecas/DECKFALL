@@ -38,13 +38,14 @@ function startingDeck(){
 }
 function newGame(){
   G={ phase:'battle', round:1, kills:0, fights:0, bossesSlain:0, removes:0, evolves:0, turnsTotal:0, lastInter:null,
-      p:{ hp:15,maxHp:15,level:1,xp:0,xpNext:40, attack:0,spell:0,armor:0,dodge:0,counter:0,crit:0,lifesteal:0,thorns:0,ultPower:100,luck:0,energyMax:3,handSize:2,regen:0,slots:3,
-          gold:40, ultCharge:0, ult:'bladestorm', ults:['bladestorm'], deck:startingDeck(), evo:{}, bought:{} },
+      p:{ hp:15,maxHp:15,level:1,xp:0,xpNext:40, attack:0,spell:0,armor:0,dodge:0,counter:0,crit:0,lifesteal:0,thorns:0,luck:0,energyMax:3,handSize:5,regen:0,slots:3,
+          gold:40, deck:startingDeck(), evo:{}, bought:{} },
       boosts:[], fight:null, spoils:null, inter:null, shop:null, log:[] };
   markSeen(G.p.deck); sfx('start'); startRound();
 }
 // ---- scaling & rewards ----
 // Enemy curve: round 1 foes are level 1 (3-5 HP, 1 attack); growth is gentle early and keeps climbing forever.
+const MANA_CAP=10;   // the Mana bar has ten cells
 const hpMult=s=>0.17+0.09*(s-1)+0.008*(s-1)*(s-1);
 const atkMult=s=>0.25+0.07*(s-1)+0.004*(s-1)*(s-1);
 function goldReward(){ return Math.round((12+4*G.round)*(1+PS('luck')/100)); }
@@ -57,7 +58,6 @@ function gainXp(x){
   return ups;
 }
 function heal(n){ if(!G) return 0; const b=G.p.hp; G.p.hp=Math.min(G.p.maxHp,G.p.hp+Math.max(0,Math.round(n))); return G.p.hp-b; }
-function gainUlt(n){ G.p.ultCharge=clamp(G.p.ultCharge+n,0,100); }
 function log(msg,cls){ if(!G) return; G.log.push({m:msg,c:cls||''}); if(G.log.length>60) G.log.shift(); }
 
 // ---- cards, tiers, evolution ----
@@ -102,7 +102,7 @@ function openInterlude(t){
     else if(r<0.85){ const stats=['maxHp','attack','spell','armor','dodge','counter','crit','luck']; const k=pick(stats); const v=k==='maxHp'?8:['dodge','counter','crit'].includes(k)?4:k==='luck'?2:1; p[k]+=v; if(k==='maxHp') p.hp+=v; I.lines.push(`+${v} ${STATNAMES[k]} permanently`); }
     else { const id=forgeRandom(); if(id) I.lines.push(`${CARD[id].name} evolved to ${TIERS[curTier(id)]}`); else { p.gold+=gold; I.lines.push(`and another +${gold} gold`); } }
   }
-  else if(t==='boost'){ const active=G.boosts.map(b=>b.id); const b=pick(BOOSTS.filter(x=>!active.includes(x.id))); G.boosts.push({id:b.id,name:b.name,icon:b.icon,el:b.el,stat:b.stat,v:b.v,rounds:b.rounds+1}); if(b.charge){ p.ultCharge=100; } I.boost=b.id; I.lines.push(`${b.name}: ${b.text} Lasts ${b.rounds} rounds.`); }
+  else if(t==='boost'){ const active=G.boosts.map(b=>b.id); const b=pick(BOOSTS.filter(x=>!active.includes(x.id))); G.boosts.push({id:b.id,name:b.name,icon:b.icon,el:b.el,stat:b.stat,v:b.v,rounds:b.rounds+1}); I.boost=b.id; I.lines.push(`${b.name}: ${b.text} Lasts ${b.rounds} rounds.`); }
   else if(t==='shrine'){ const h=heal(Math.round(p.maxHp*0.3)); I.lines.push(`Healed ${h}.`); }
   else if(t==='forge'){ if([...new Set(p.deck)].some(canEvolve)){ I.auto=false; I.lines.push('Pick one card. The smith reforges it one tier higher, free of charge.'); } else { p.gold+=60; I.lines.push('Nothing left to improve. The smith pays you 60 gold for the trouble.'); } }
   else if(t==='trap'){ const d=Math.max(1,Math.round(p.maxHp*0.1)); p.hp=Math.max(1,p.hp-d); const g=goldReward()*3; p.gold+=g; I.lines.push(`-${d} HP, +${g} gold.`); }
@@ -126,7 +126,7 @@ function nextRound(){ clearTimeout(UI.timer); if(!G) return; G.round++; G.inter=
 // ---- merchant (every 7th round): upgrades a card you own for gold. New cards only come from levelling up. ----
 function openShop(){ G.shop={}; G.phase='shop'; render(); save(); sfx('shop'); }
 function evolvePrice(id){ return Math.round(TIER[TIERS[Math.min(8,curTier(id)+1)]].price*0.7*(1+0.03*G.round)); }
-function shopUpgrade(id){ if(!G.p.deck.includes(id)) return; if(!canEvolve(id)){toast('Already ultimate');return;} const c=evolvePrice(id); if(G.p.gold<c){toast('Not enough gold');return;} G.p.gold-=c; evolveCard(id,1); toast(`${CARD[id].name} evolved to ${TIERS[curTier(id)]}`); sfx('evolve'); render(); save(); }
+function shopUpgrade(id){ if(!G.p.deck.includes(id)) return; if(G.shop&&G.shop.used){toast('The merchant only upgrades one card per visit');return;} if(!canEvolve(id)){toast('Already ultimate');return;} const c=evolvePrice(id); if(G.p.gold<c){toast('Not enough gold');return;} G.p.gold-=c; evolveCard(id,1); G.shop.used=CARD[id].name+' → '+TIERS[curTier(id)]; toast(`${CARD[id].name} evolved to ${TIERS[curTier(id)]}`); sfx('evolve'); render(); save(); }   // one upgrade per visit
 
 // ---- death ----
 function gameOver(){ clearTimeout(UI.timer); sfx('defeat'); if(G.fight) G.fight.over=true; G.best=recordBest(); clearSave(); G.phase='gameover'; render(); }

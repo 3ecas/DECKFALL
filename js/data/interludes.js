@@ -22,7 +22,6 @@ const BOOSTS = [
   {id:'s_luck', name:'Fortune', icon:'🍀', stat:'luck', v:10, rounds:3, text:'Coins land the way you want. +10 Luck.'},
   {id:'s_energy', name:'Vigor', icon:'🔋', stat:'energyMax', v:1, rounds:2, text:'Your heart beats twice as fast. +1 Energy per turn.'},
   {id:'s_regen', name:'Spring Water', icon:'💚', stat:'regen', v:3, rounds:3, text:'Wounds knit as you walk. +3 Regen.'},
-  {id:'s_ult', name:'Overdrive', icon:'🌟', stat:'ultPower', v:50, rounds:2, charge:100, text:'Power you cannot hold for long. +50% Ultimate Power and your Ultimate is charged.'},
   {id:'s_thorns', name:'Iron Bristles', icon:'🌵', stat:'thorns', v:4, rounds:3, text:'Touch you and bleed. +4 Thorns.'},
 ];
 const BOOST = Object.fromEntries(BOOSTS.map(b=>[b.id,b]));

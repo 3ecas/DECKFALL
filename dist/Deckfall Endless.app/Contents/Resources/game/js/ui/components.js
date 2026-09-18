@@ -16,7 +16,6 @@ function fxPart(f,v,base,d){
   if(t==='draw') return {big:n(f[1]),unit:'DRAW',text:'cards',short:`Draw ${n(f[1])}`};
   if(t==='energy') return {big:`+${n(f[1])}`,unit:'MANA',text:'this turn',short:`+${n(f[1])} Mana`};
   if(t==='maxEnergy') return {big:`+${n(f[1])}`,unit:'MANA',text:'every turn this fight',short:`+${n(f[1])} Mana every turn`};
-  if(t==='ult') return {big:`+${n(f[1])}`,unit:'ULT',text:'ultimate charge',short:`+${n(f[1])} Ultimate charge`};
   if(t==='selfDmg') return {big:`-${n(f[1])}`,unit:'HP',text:'you bleed',short:`Lose ${n(f[1])} HP`};
   if(t==='cleanse') return {big:'✚',unit:'CLEANSE',text:'remove your debuffs',short:'Remove your debuffs'};
   if(t==='stat') return {big:`+${n(f[2])}`,unit:STATNAMES[f[1]].toUpperCase(),text:'permanently',short:`+${n(f[2])} ${STATNAMES[f[1]]} permanently`};
@@ -59,11 +58,11 @@ function cardParts(id,tier){
 // The whole background is the tier colour.
 function cardHTML(id,o){
   o=o||{}; const d=CARD[id]; const tier=o.tier!=null?o.tier:(G?curTier(id):tierIdx(id)); const tn=TIERS[tier]; const e=EL[d.el]; const paysMana=d.type==='spell'||d.type==='summon'; const cost=paysMana?d.cost:0;
-  const cls=['card','t-'+tn,'ty-'+d.type,'el-'+d.el]; if(o.big) cls.push('big'); if(o.mode==='static') cls.push('static'); if(d.unplayable) cls.push('unplayable'); if(o.dim) cls.push('unaff'); if(o.enter) cls.push('enter');
+  const cls=['card','t-'+tn,'ty-'+d.type,'el-'+d.el]; if(o.data&&o.data.includes('data-sel')) cls.push('sel'); if(o.data&&o.data.includes('data-fan')) cls.push('fanc'); if(o.big) cls.push('big'); if(o.mode==='static') cls.push('static'); if(d.unplayable) cls.push('unplayable'); if(o.dim) cls.push('unaff'); if(o.enter) cls.push('enter');
   const evo=tier-tierIdx(id); const {main,extras}=cardParts(id,tier);
   const nameCls=d.name.length>18?' xl':d.name.length>12?' long':'';
   const costBox=paysMana?`<div class="ccost" title="Mana cost"><b>${cost}</b></div>`:'';
-  return `<div class="${cls.join(' ')}" style="--el:${e.c};--tier:${TIER[tn].c}" ${o.act?`data-act="${o.act}"`:''} ${o.data||''} tabindex="0" title="${tn} ${TYPES[d.type]} · ${TYPE_DESC[d.type]}${d.drop?` · ability of the ${esc(foeName(d.drop))}`:''}">
+  return `<div class="${cls.join(' ')}" style="--el:${e.c};--tier:${TIER[tn].c}" ${o.act?`data-act="${o.act}"`:''} ${o.data||''} data-card="${id}" data-tier="${tier}" tabindex="0">
     <div class="cname${nameCls}">${esc(d.name)}</div>
     ${costBox}
     <div class="cart"><span>${d.icon}</span></div>
@@ -93,17 +92,18 @@ function enemyHTML(e,i){
   const res=ch.resist.map(x=>`<span title="Resists ${EL[x].n} (½ damage)">${EL[x].i}</span>`).join('')||'—';
   const rank=e.boss?'boss':e.elite?'elite':'foe'; const body={foe:'#aab4bf',elite:'#e2b45c',boss:'#e0667a'}[rank];
   const nameCls=e.name.length>18?' xl':e.name.length>12?' long':'';
-  return `<div class="card enemy el-${e.el} r-${rank} ${sel?'sel':''} ${e.alive?'':'dead'} ${e.boss?'isboss':''}" data-act="target" data-i="${i}" data-uid="${e.uid}" style="--el:${el.c};--tier:${body}" tabindex="0" title="${esc(e.name)} · ${el.n}${e.boss?' · Boss':e.elite?' · Elite':''} · tap to target">
+  return `<div class="card enemy el-${e.el} r-${rank} ${sel?'sel':''} ${e.alive?'':'dead'} ${e.boss?'isboss':''}" data-act="target" data-i="${i}" data-uid="${e.uid}" style="--el:${el.c};--tier:${body}" tabindex="0">
     <div class="cname${nameCls}">${esc(e.name)}</div>
     <div class="ccost elv" title="Enemy level"><small>Lv</small><b>${e.lvl||G.round}</b></div>
     <div class="cart"><span>${e.icon}</span></div>
     <div class="bar ehp"><i style="width:${e.hp/e.maxHp*100}%"></i><b class="num">${e.hp} / ${e.maxHp}</b></div>
     <div class="cbox">
-      <div class="ctags"><span class="ctag" title="Element">${el.n}</span><span class="ctier"><span title="Weak to (2× damage)">Weak ${weak}</span><span title="Resists (½ damage)">Res ${res}</span></span></div>
+      <div class="ctags"><span class="ctag">${el.n}</span><span class="ctier">${e.boss?'Boss':e.elite?'Elite':''}</span></div>
       <div class="intent">${enemyIntentHTML(e)}</div>
-      ${NATURE[e.el]?`<div class="etrait" title="${esc(NATURE[e.el].text)}">${NATURE[e.el].icon} ${NATURE[e.el].name}${e.armor?` · ${e.armor} armor`:''}</div>`:''}
+      ${NATURE[e.el]?`<div class="etrait">${NATURE[e.el].icon} ${NATURE[e.el].name}${e.armor?` · ${e.armor} armor`:''}</div>`:''}
       <div class="statuses">${enemyStatusesHTML(e)}</div>
       <div class="epassives">${enemyPassivesHTML(e)}</div>
+      <div class="ewr"><span class="weak">Weak ${weak}</span><span class="res">Res ${res}</span></div>
     </div>
     <div class="ckind">${e.boss?'☠ Boss':e.elite?'★ Elite':'⚔ Enemy'}</div>
   </div>`;
@@ -120,8 +120,7 @@ function boostsHTML(){ return G.boosts.map(b=>`<span class="boost" title="${b.na
 function gaugesHTML(){
   const p=G.p;
   return `<div class="bar hp" title="Health"><i style="width:${p.hp/p.maxHp*100}%"></i><b class="num">❤ ${p.hp} / ${p.maxHp}</b></div>
-      <div class="bar xp" title="Experience: ${p.xp} / ${p.xpNext}"><i style="width:${p.xp/p.xpNext*100}%"></i><b class="num">Lv ${p.level}</b></div>
-      <div class="bar ult" title="Ultimate: ${ULT[p.ult].name} · fires by itself when the meter is full. ${ULT[p.ult].desc}"><i style="width:${p.ultCharge}%"></i><b class="num">${ULT[p.ult].icon} ${p.ultCharge}%</b></div>`;
+      <div class="bar xp" title="Experience: ${p.xp} / ${p.xpNext}"><i style="width:${p.xp/p.xpNext*100}%"></i><b class="num">Lv ${p.level}</b></div>`;
 }
 function hudHTML(o){
   o=o||{}; const p=G.p;
@@ -144,12 +143,12 @@ function playerStatusesHTML(){
   return out.join('');
 }
 function playerHTML(){
-  const F=G.fight; const p=G.p; const bonus=F.energyBonus+pSum('manaPerTurn')+pSum('sMana'); const max=PS('energyMax')+bonus;
+  const F=G.fight; const p=G.p; const gain=1+F.energyBonus+pSum('manaPerTurn')+pSum('sMana'); const max=MANA_CAP;
   const stat=(i,v,l,t)=>`<span class="stat" title="${t}"><i>${i}</i><b>${v}</b><small>${l}</small></span>`;
   // The stat chips always show the current value, in-fight bonuses included (no separate icons for them).
   const armor=PS('armor')+F.armorT, block=F.block||0;
   const stats=[stat('⚔️',PS('attack')+F.str+pSum('atkBonus'),'Atk','Attack: added to every attack card, summon and machine (Strength included)'),stat('🔮',PS('spell')+F.spellT+pSum('spellBonus'),'Spell','Spell Power: added to every spell (Focus included)'),stat('🎯',(PS('crit')+F.critT)+'%','Crit','Critical chance: 50% bonus damage'),stat('🛡️',armor+block,'Armor',`Damage reduction you will receive: ${block} Block this turn (absorbs damage) + ${armor} Armor (off every hit)`),stat('💨',(PS('dodge')+F.dodgeT)+'%','Dodge','Dodge: chance to avoid an attack'),stat('🗡️',PS('counter')+'%','Counter','Counter: chance to strike back when hit'),stat('🩸',PS('lifesteal')+'%','Steal','Life steal: heal a share of every attack'),stat('🌵',PS('thorns')+F.thornsT+pSum('thorns'),'Thorns','Thorns: attackers take this much damage')];
-  const cells=Array.from({length:10},(_,k)=>`<i class="mcell ${k<F.energy?'on':k<max?'cap':''}"></i>`).join('');
+  const cells=Array.from({length:MANA_CAP},(_,k)=>`<i class="mcell ${k<F.energy?'on':''}"></i>`).join('');
   const sts=playerStatusesHTML();
   return `<div class="player">
     <div class="slots" data-act="passives" title="Your machines, summons and armed traps · hover or tap to open">${slotsHTML()}</div>
@@ -158,12 +157,13 @@ function playerHTML(){
       <div class="pstats">${stats.join('')}</div>
     </div>
     ${sts?`<div class="statuses pstatuses">${sts}</div>`:''}
-    <div class="manabar" title="Mana: spells and summons cost Mana, everything else is free. Refills to ${max} every turn."><span class="mlbl">Mana</span><div class="mcells">${cells}</div><span class="mval num">${F.energy}<small>/${max}</small></span><button class="btn primary endbtn" data-act="end" ${UI.busy?'disabled':''}>End Turn</button></div>
+    <div class="manabar" title="Mana: spells and summons cost Mana, everything else is free. Every fight starts at 0; you gain ${gain} at the start of each turn, up to ${max}, and unspent Mana carries over."><span class="mlbl">Mana</span><div class="mcells">${cells}</div><span class="mval num">${F.energy}<small>/${max}</small></span><button class="btn primary endbtn" data-act="end" ${UI.busy?'disabled':''}>End Turn</button></div>
   </div>`;
 }
 function handHTML(){
   const F=G.fight; const prev=UI.handUids; const uids=F.hand.map(c=>c.uid);
-  const html=F.hand.map((inst,i)=>cardHTML(inst.id,{act:'play',data:`data-i="${i}" style="--i:${i}"`,dim:!canPlay(inst),enter:!prev.includes(inst.uid)})).join('');
+  if(UI.sel!=null&&UI.sel>=F.hand.length) UI.sel=F.hand.length?F.hand.length-1:null;
+  const html=F.hand.map((inst,i)=>cardHTML(inst.id,{act:'play',data:`data-i="${i}" style="--i:${i}"${i===UI.sel?' data-sel="1"':''}`,dim:!canPlay(inst),enter:!prev.includes(inst.uid)})).join('');
   UI.handUids=uids;
   return html||'<div class="muted small emptyhand">No cards in hand.</div>';
 }
@@ -176,16 +176,14 @@ function toast(msg){ const d=document.createElement('div'); d.className='toast';
 function openModal(m){ UI.modal={type:m}; render(); }
 function closeModal(){ UI.modal=null; render(); }
 function pickDeckCard(title,cb,labelFn){ UI.modal={type:'pick',title,cb,labelFn}; render(); }
-function offerUltimates(cb){ UI.modal={type:'ults',cb}; render(); }
 function deckSummary(){ const m=deckCounts(); return Object.keys(m).sort((a,b)=>curTier(b)-curTier(a)||CARD[a].cost-CARD[b].cost||a.localeCompare(b)).map(id=>({id,count:m[id]})); }
 function modalHTML(){
   const m=UI.modal; if(!m) return '';
   let body='';
   if(m.type==='deck'){ body=`<h2>Your Deck · ${G.p.deck.length} cards</h2><p class="muted small">Getting a card you already own evolves it one tier. Gold numbers are evolved values.</p><div class="cardgrid">${deckSummary().map(x=>cardHTML(x.id,{mode:'static',tag:x.count>1?`×${x.count}`:null})).join('')}</div>`; }
   else if(m.type==='pick'){ body=`<h2>${esc(m.title)}</h2><div class="cardgrid">${deckSummary().map(x=>cardHTML(x.id,{act:'pick-card',data:`data-id="${x.id}"`,tag:m.labelFn?m.labelFn(x.id):(x.count>1?`×${x.count}`:null)})).join('')}</div>`; }
-  else if(m.type==='ults'){ body=`<h2>Choose an Ultimate</h2><div class="upgrades">${ULTS.map(u=>`<div class="upg"><div class="uname">${u.icon} ${u.name} ${elPill(u.el)}</div><div class="udesc">${u.desc}</div><button class="btn sm ${u.id===G.p.ult?'':'primary'}" data-act="pick-ult" data-id="${u.id}">${u.id===G.p.ult?'Keep':'Choose'}</button></div>`).join('')}</div>`; }
-  else if(m.type==='stats'){ const p=G.p; const rows=[['Level',p.level],['Max HP',p.maxHp],['Attack',PS('attack')],['Spell Power',PS('spell')],['Armor',PS('armor')],['Dodge',PS('dodge')+'%'],['Counter',PS('counter')+'%'],['Crit',PS('crit')+'%'],['Life Steal',PS('lifesteal')+'%'],['Thorns',PS('thorns')],['Regen',PS('regen')],['Ultimate Power',PS('ultPower')+'%'],['Luck',PS('luck')],['Mana per turn',PS('energyMax')],['Hand size',PS('handSize')],['Passive slots',PS('slots')],['Gold',p.gold],['Enemies slain',G.kills],['Bosses slain',G.bossesSlain],['Cards evolved',G.evolves]];
-    body=`<h2>Stats</h2><table class="stats">${rows.map(r=>`<tr><td>${r[0]}</td><td class="num">${r[1]}</td></tr>`).join('')}</table>${G.boosts.length?`<h3>Active boosts</h3><div class="boosts">${boostsHTML()}</div>`:''}<h3>Ultimate</h3><div class="upgrades">${G.p.ults.map(id=>{const u=ULT[id];return `<div class="upg"><div class="uname">${u.icon} ${u.name} ${elPill(u.el)}</div><div class="udesc">${u.desc}</div><button class="btn sm" data-act="set-ult" data-id="${id}" ${id===G.p.ult?'disabled':''}>${id===G.p.ult?'Equipped':'Equip'}</button></div>`;}).join('')}</div>`; }
+  else if(m.type==='stats'){ const p=G.p; const rows=[['Level',p.level],['Max HP',p.maxHp],['Attack',PS('attack')],['Spell Power',PS('spell')],['Armor',PS('armor')],['Dodge',PS('dodge')+'%'],['Counter',PS('counter')+'%'],['Crit',PS('crit')+'%'],['Life Steal',PS('lifesteal')+'%'],['Thorns',PS('thorns')],['Regen',PS('regen')],['Luck',PS('luck')],['Mana per turn','+1'],['Hand size',PS('handSize')],['Passive slots',PS('slots')],['Gold',p.gold],['Enemies slain',G.kills],['Bosses slain',G.bossesSlain],['Cards evolved',G.evolves]];
+    body=`<h2>Stats</h2><table class="stats">${rows.map(r=>`<tr><td>${r[0]}</td><td class="num">${r[1]}</td></tr>`).join('')}</table>${G.boosts.length?`<h3>Active boosts</h3><div class="boosts">${boostsHTML()}</div>`:''}`; }
   else if(m.type==='chart'){ body=`<h2>Card types</h2><div class="typegrid">${Object.keys(TYPES).map(t=>`<div class="typerow ty-${t}"><span class="ctypelbl">${TYPE_ICON[t]} ${TYPES[t]}</span><span class="muted small">${TYPE_DESC[t]}</span></div>`).join('')}</div>
     <h2>Type Chart</h2><p class="muted small">Super effective hits deal <b>2×</b>, resisted hits <b>½</b>. Wet targets take +50% Lightning and Ice and half Fire. Attacks, summons and machines scale with Attack; spells with Spell Power.</p><div class="chart"><span class="h">Enemy</span><span class="h">Weak to (2×)</span><span class="h">Resists (½)</span>${Object.keys(TYPE_CHART).filter(k=>k!=='phys').map(k=>`${elPill(k)}<span>${TYPE_CHART[k].weak.map(x=>EL[x].i+' '+EL[x].n).join(', ')||'—'}</span><span>${TYPE_CHART[k].resist.map(x=>EL[x].i+' '+EL[x].n).join(', ')||'—'}</span>`).join('')}</div><h3>Enemy natures</h3><p class="muted small">Every enemy fights by its nature. The trait is written on its card.</p><table class="stats">${Object.keys(NATURE).map(k=>`<tr><td>${NATURE[k].icon} ${NATURE[k].name} <span class="muted">· ${EL[k].n}</span></td><td class="left">${NATURE[k].text}</td></tr>`).join('')}</table><h3>Card tiers</h3><div class="tierrow">${TIERS.map(t=>`<span class="tierchip" style="--tier:${TIER[t].c}">${t} ×${TIER[t].mult}</span>`).join('')}</div><h3>Status effects</h3><table class="stats">${Object.keys(ST).map(k=>`<tr><td>${ST[k].i} ${ST[k].n}</td><td class="left">${ST[k].d}</td></tr>`).join('')}</table>`; }
   else if(m.type==='help'){ body=helpHTML(); }
@@ -193,13 +191,13 @@ function modalHTML(){
   return `<div class="modal" data-act="close"><div class="box" data-act="noop">${body}<div class="row end"><button class="btn" data-act="close">Close</button></div></div></div>`;
 }
 function helpHTML(){ return `<h2>How to play</h2>
-<p><b>Rounds.</b> Every round is a fight, then spoils, then something on the road, in a cycle of seven. Rounds 1 to 3 and 5 to 6 bring a random encounter: a chest, a blessing that boosts you for a few rounds, a shrine, a dwarven forge where you choose a card to reforge, a campfire, a trap, a cursed idol, an ambush. Round 4 is always a campfire: rest to heal a share of your Max HP, or train to raise it for good. Round 7 is the merchant, who upgrades your cards for gold. Elites every fifth round, a boss every tenth: you pick one of the boss's cards, then another from its treasury.</p>
+<p><b>Rounds.</b> Every round is a fight, then spoils, then something on the road, in a cycle of seven. Rounds 1 to 3 and 5 to 6 bring a random encounter: a chest, a blessing that boosts you for a few rounds, a shrine, a dwarven forge where you choose a card to reforge, a campfire, a trap, a cursed idol, an ambush. Round 4 is always a campfire: rest to heal a share of your Max HP, or train to raise it for good. Round 7 is the merchant, who upgrades one card per visit for gold. Elites every fifth round, a boss every tenth: you pick one of the boss's cards, then another from its treasury.</p>
 <p><b>New cards.</b> Fights give gold and XP. Every level you gain lets you choose one of three new cards; that is the only way new cards come to you, apart from bosses and the odd cursed idol. Taking a card you already own evolves it instead.</p>
-<p><b>Turns.</b> Every fight opens with two cards in hand and you draw one more at the start of each turn; what you do not play stays in your hand (curses rotate back into the deck). <b>Attacks, shields, skills, potions, machines and traps are free.</b> Spells and summons cost Mana: the blue bar above your hand, refilled every turn. Your Ultimate fires by itself the moment its meter fills. When nothing in your hand can be played, the turn ends by itself. End Turn lets every enemy act according to the intent shown on its card.</p>
+<p><b>Turns.</b> Every fight opens with five cards in hand; at the start of each turn you draw one more, or two if your hand is empty. What you do not play stays in your hand (curses rotate back into the deck). <b>Attacks, shields, skills, potions, machines and traps are free.</b> Spells and summons cost Mana, the blue bar under your hand: every fight starts at 0, you gain 1 at the start of each turn (up to 10), and unspent Mana carries over. When nothing in your hand can be played, the turn ends by itself. End Turn lets every enemy act according to the intent shown on its card.</p>
 <p><b>Card face.</b> Name top-left. Spells and summons show their Mana cost top-right; a card with no cost box is free to play. The picture in the middle. The dotted box shows the element, the tier and what the card does: the first line is the main effect, the lines underneath are extras. Bottom-right says what kind of card it is (attack, spell, shield, skill, potion, machine, summon, trap). The whole card is coloured by its tier, and a green ▲ badge bottom-left counts how many tiers it has evolved.</p>
 <p><b>Tiers.</b> Basic cards do one plain thing. Common, uncommon, medium, good, great, rare, perfect and ultimate cards add effects and grow. Getting a card you already own <b>evolves</b> it one tier, multiplying its numbers. Some cards are born ultimate.</p>
 <p><b>Passives.</b> Machines, summons and armed traps take one of your passive slots and stay for the fight. Machines give bonuses (double first attack, block per machine, damage per attack played). Summons act every turn. Traps spring on the next enemy attack. Enemies have passives too, and some can destroy yours. Sabotage, EMP and Pilfer destroy or steal theirs. Yours are listed on the tab above the stats bar; hover or tap it to open the drawer and see their cards.</p>
 <p><b>Elements.</b> Ten elements with combos: Fire burns and detonates, Ice chills, freezes and shatters, Lightning shocks and multi-hits, Water soaks, Grass grows, Poison stacks and doubles, Earth turns Block into damage, Shadow steals life, Holy heals and smites. Hit a weakness for <b>2×</b>. Enemies fight by their nature too: fire ones burn you, ice ones chill your Mana, shadow ones drain and fade, earth ones wear stone skin. Each trait is written on the enemy's card; open <b>Types</b> for the full list and the chart.</p>
 <p><b>Creature abilities.</b> Every creature has its own moves, played between plain attacks and shown on its card as its next intent. Slay it and it may drop one of them: a real card for your deck, and the only way to get it.</p>
 <p><b>Death is final.</b> Enemies scale every round. When HP hits zero the run ends and you start over with basic cards.</p>
-<p class="muted small">Keyboard: 1–9 plays a card, E ends the turn, Space continues, Esc closes windows.</p>`; }
+<p class="muted small">Keyboard: in a fight, A and D (or the arrows) move the highlight along your hand, W jumps up to the enemies where A and D choose who to strike and S comes back down, Space plays the highlighted card, Tab ends the turn, E opens and closes the passives drawer, 1–9 play a card directly. Everywhere else, W A S D (or the arrows) move the highlight over the choices and Space picks it; Esc closes windows.</p>`; }

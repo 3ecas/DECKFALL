@@ -43,20 +43,22 @@ function startFight(o){
   const drawPile=shuffle(G.p.deck.map(id=>({uid:UI.uid++,id})));
   G.fight={key:UI.fightKey++, enemies, turn:0, energy:0, energyBonus:0, hand:[], draw:drawPile, discard:[], exhaust:[], passives:[], block:0, st:{}, str:0, spellT:0, thornsT:0, critT:0, armorT:0, regen:0, dodgeT:0, elBoost:{}, dodgeNext:false, counterNext:false, parry:false, retain:false, target:0, played:0, turnAttacks:0, o, over:false};
   G.log=[]; log(o.boss?`BOSS: ${enemies[0].name} blocks the way!`:o.elite?`An elite ${enemies[0].name} appears!`:`${enemies.map(e=>e.name).join(' and ')} appear${enemies.length>1?'':'s'}!`, o.boss?'bad':'');
-  G.phase='battle'; G.spoils=null; G.inter=null; G.shop=null; UI.handUids=[]; save();
+  G.phase='battle'; G.spoils=null; G.inter=null; G.shop=null; UI.handUids=[]; UI.sel=null; UI.kbRow='hand'; save();
+  UI.intro=true; clearTimeout(UI.introTimer); UI.introTimer=setTimeout(()=>{ UI.intro=false; const a=document.querySelector('.arena'); if(a) a.classList.remove('intro'); },1500);   // the creature steps in first; its details are revealed when the fight starts
   const f=fx(); if(f) setTimeout(()=>f.banner(o.boss?`Boss: ${enemies[0].name}`:o.elite?`Elite: ${enemies[0].name}`:`Round ${G.round}`, o.boss?'boss':o.elite?'elite':''),50); sfx(o.boss?'boss':o.elite?'elite':'battle');
   startPlayerTurn();
 }
 function startPlayerTurn(){
   const F=G.fight; if(F.over) return; F.turn++; G.turnsTotal++;
-  F.energy=PS('energyMax')+F.energyBonus+pSum('manaPerTurn')+pSum('sMana'); if(F.st.chill){ F.energy=Math.max(1,F.energy-1); delete F.st.chill; log('Chilled: 1 less Mana this turn','bad'); }
+  // Mana: every fight starts at 0; each turn you gain 1 (plus any per-turn bonuses), up to MANA_CAP, and unspent Mana carries over.
+  { const gain=1+F.energyBonus+pSum('manaPerTurn')+pSum('sMana'); if(F.st.chill){ delete F.st.chill; log('Chilled: no Mana gained this turn','bad'); } else F.energy=Math.min(MANA_CAP,F.energy+gain); }
   F.played=0; F.turnAttacks=0; if(!F.retain) F.block=0; F.retain=false; F.dodgeNext=false; F.counterNext=false; F.parry=false;
   const rg=PS('regen')+F.regen+pSum('healPerTurn')+pSum('sHeal'); if(rg>0){ const h=heal(rg); if(h) log(`Regen and allies heal ${h}`,'good'); }
   if(F.st.poison){ dmgPlayerRaw(F.st.poison,'Poison'); F.st.poison--; if(F.st.poison<=0) delete F.st.poison; }
   if(F.st.burn&&G.p.hp>0){ dmgPlayerRaw(F.st.burn,'Burn'); F.st.burn=Math.floor(F.st.burn/2); if(F.st.burn<=0) delete F.st.burn; }
   if(checkDeath()) return;
-  const before=F.hand.length; draw((F.turn===1?PS('handSize'):1)+pSum('drawPerTurn')); sfx('draw',{n:F.hand.length-before});   // opening hand on turn 1, then one card a turn; unplayed cards stay in hand
-  render(); if(G.p.ultCharge>=100){ setTimeout(()=>{ if(G&&G.fight&&!G.fight.over&&!UI.busy) useUltimate(); },350); return; } autoEndCheck();
+  const before=F.hand.length; draw((F.turn===1?PS('handSize'):(F.hand.length===0?2:1))+pSum('drawPerTurn')); sfx('draw',{n:F.hand.length-before});   // opening hand on turn 1, then one card a turn (two if your hand is empty); unplayed cards stay in hand
+  render(); autoEndCheck();
 }
 function draw(n){ const F=G.fight; for(let i=0;i<n;i++){ if(F.hand.length>=10) break; if(!F.draw.length){ if(!F.discard.length) break; F.draw=shuffle(F.discard); F.discard=[]; } F.hand.push(F.draw.pop()); } }
 function addBlock(n){ const F=G.fight; F.block+=n; floatP(`🛡️ +${n}`,'block'); log(`You gain ${n} Block`); sfx('block'); const f=fx(); if(f) f.player('phys',1); }
@@ -75,7 +77,7 @@ async function playCard(idx){
   let target=null;
   if(needsTarget(d)){ target=F.enemies[F.target]; if(!target||!target.alive){ target=F.enemies.find(e=>e.alive); F.target=F.enemies.indexOf(target); } }
   UI.busy=true; sfx('play',{type:d.type,el:d.el}); const f=fx(); if(f){ f.playCard(idx,target); await sleep(200); }
-  F.energy-=cost; F.hand.splice(idx,1); F.played++; if(d.type==='attack') F.turnAttacks++; gainUlt(8);
+  F.energy-=cost; F.hand.splice(idx,1); F.played++; if(d.type==='attack') F.turnAttacks++;
   log(`You play ${d.name}${curTier(inst.id)>tierIdx(inst.id)?' ('+TIERS[curTier(inst.id)]+')':''}`);
   try{ await runEffects(d,cardVals(inst.id),target,inst); }catch(err){ console.error(err); }
   if(inst.inPlay){ /* sits in a passive slot */ }
@@ -99,9 +101,8 @@ async function runEffects(d,v,target,inst){
     else if(t==='heal'){ const h=heal(v[f[1]]); floatP(`+${h}`,'heal'); log(`${src} heals ${h}`,'good'); sfx('heal'); { const x=fx(); if(x) x.player(d.el==='holy'?'holy':d.el,1); } }
     else if(t==='healPct'){ const h=heal(Math.round(G.p.maxHp*v[f[1]]/100)); floatP(`+${h}`,'heal'); log(`${src} heals ${h}`,'good'); sfx('heal'); { const x=fx(); if(x) x.player('holy',1); } }
     else if(t==='draw') draw(v[f[1]]);
-    else if(t==='energy'){ F.energy+=v[f[1]]; log(`+${v[f[1]]} Mana`,'good'); floatP(`+${v[f[1]]} Mana`,'mana'); sfx('mana'); }
-    else if(t==='maxEnergy'){ F.energyBonus+=v[f[1]]; F.energy+=v[f[1]]; log(`+${v[f[1]]} Mana every turn this fight`,'good'); }
-    else if(t==='ult'){ gainUlt(v[f[1]]); log(`+${v[f[1]]} Ultimate charge`,'good'); }
+    else if(t==='energy'){ F.energy=Math.min(MANA_CAP,F.energy+v[f[1]]); log(`+${v[f[1]]} Mana`,'good'); floatP(`+${v[f[1]]} Mana`,'mana'); sfx('mana'); }
+    else if(t==='maxEnergy'){ F.energyBonus+=v[f[1]]; F.energy=Math.min(MANA_CAP,F.energy+v[f[1]]); log(`+${v[f[1]]} Mana every turn this fight`,'good'); }
     else if(t==='selfDmg') dmgPlayerRaw(v[f[1]],src);
     else if(t==='cleanse'){ for(const k of ['burn','poison','weak','vuln','chill','shock']) delete F.st[k]; log('Your debuffs are removed','good'); }
     else if(t==='stat'){ G.p[f[1]]+=v[f[2]]; if(f[1]==='maxHp') G.p.hp+=v[f[2]]; log(`Permanently +${v[f[2]]} ${STATNAMES[f[1]]}!`,'good'); }
@@ -166,11 +167,11 @@ function damageEnemy(e,amount,o){
   if(!o.pierce&&dmg>0) dmg=Math.max(0,dmg-(e.armor||0));
   e.hp-=dmg;
   if(dmg>0&&e.st.shock>0){ const x=e.st.shock; e.hp-=x; dmg+=x; e.st.shock--; if(e.st.shock<=0) delete e.st.shock; log(`Shock adds ${x} damage`); }
-  gainUlt(2); const f=fx(); if(f) f.hit(e,o.el||'phys');
-  if(e.hp<=0){ e.hp=0; e.alive=false; G.kills++; gainUlt(15); log(`${e.name} is slain!`,'good'); if(f) f.death(e); sfx('death'); if(e.el==='fire'&&G.p.hp>0){ const c=Math.max(1,e.lvl||1); dmgPlayerRaw(c,`${e.name}'s cinders`); if(f) f.player('fire',2); } }
+  const f=fx(); if(f) f.hit(e,o.el||'phys');
+  if(e.hp<=0){ e.hp=0; e.alive=false; G.kills++; log(`${e.name} is slain!`,'good'); if(f) f.death(e); sfx('death'); if(e.el==='fire'&&G.p.hp>0){ const c=Math.max(1,e.lvl||1); dmgPlayerRaw(c,`${e.name}'s cinders`); if(f) f.player('fire',2); } }
   return dmg;
 }
-function damageEnemyRaw(e,amount,el,src){ if(!e.alive) return; const d=Math.max(0,Math.round(amount)); e.hp-=d; floatE(e,`${d}`,'dmg'); log(`${src} deals ${d} to ${e.name}`); const f=fx(); if(f) f.hit(e,el); sfx('tick',{el}); if(e.hp<=0){ e.hp=0; e.alive=false; G.kills++; gainUlt(15); log(`${e.name} is slain!`,'good'); if(f) f.death(e); sfx('death'); } }
+function damageEnemyRaw(e,amount,el,src){ if(!e.alive) return; const d=Math.max(0,Math.round(amount)); e.hp-=d; floatE(e,`${d}`,'dmg'); log(`${src} deals ${d} to ${e.name}`); const f=fx(); if(f) f.hit(e,el); sfx('tick',{el}); if(e.hp<=0){ e.hp=0; e.alive=false; G.kills++; log(`${e.name} is slain!`,'good'); if(f) f.death(e); sfx('death'); } }
 function applyStatusEnemy(e,s,val){ { const f=fx(); if(f&&e&&e.alive) f.status(e,s); }
   if(!e.alive) return;
   if(s==='frozen'){ e.st.frozen=1; log(`${e.name} is Frozen and will skip its turn!`,'se'); floatE(e,'Frozen!','se'); sfx('freeze'); return; }
@@ -190,7 +191,6 @@ async function afterAction(){
   const F=G.fight; if(!F||F.over) return;
   if(checkDeath()) return;
   if(F.enemies.every(e=>!e.alive)){ render(); await sleep(500); winFight(); return; }
-  if(G.p.ultCharge>=100&&!UI.busy){ render(); await sleep(250); await useUltimate(); return; }   // the Ultimate fires by itself when its meter is full
   render(); autoEndCheck();
 }
 function intentInfo(e){
@@ -328,12 +328,12 @@ async function enemyHitPlayer(e,d,o){
     render(); await sleep(300);
     if(pv_(trap,'tNegate')){ log(`${o.src||e.name}'s attack is negated`,'good'); return false; }
   }
-  if(Math.random()*100<(F.dodgeNext?100:PS('dodge')+F.dodgeT)){ F.dodgeNext=false; log(`You dodge ${o.src||e.name}'s attack!`,'good'); floatP('Dodge!','miss'); gainUlt(5); sfx('dodge'); if(o.counter&&e.alive&&(F.counterNext||Math.random()*100<PS('counter')+30)) await counterAttack(e); return false; }
+  if(Math.random()*100<(F.dodgeNext?100:PS('dodge')+F.dodgeT)){ F.dodgeNext=false; log(`You dodge ${o.src||e.name}'s attack!`,'good'); floatP('Dodge!','miss'); sfx('dodge'); if(o.counter&&e.alive&&(F.counterNext||Math.random()*100<PS('counter')+30)) await counterAttack(e); return false; }
   if(F.st.wet&&(e.el==='light'||e.el==='ice')) d=Math.round(d*1.5);   // Wet: lightning and ice bite harder
   if(F.st.shock){ d+=F.st.shock; log(`Shock adds ${F.st.shock} damage`,'bad'); F.st.shock--; if(F.st.shock<=0) delete F.st.shock; }
   let blocked=0; if(F.block>0&&!o.pierce){ const usable=o.radiant?Math.ceil(F.block/2):F.block; blocked=Math.min(usable,d); F.block-=blocked; d-=blocked; if(o.radiant&&blocked<d+blocked) log('Radiant: the blow passes part of your Block','bad'); } else if(o.pierce&&F.block>0) log('The blow pierces your Block','bad');
   if(d>0) d=Math.max(0,d-(PS('armor')+F.armorT));
-  G.p.hp-=d; gainUlt(8); const f=fx(); if(f&&d>0){ f.playerHit(); if(o.el) f.player(o.el,0); }
+  G.p.hp-=d; const f=fx(); if(f&&d>0){ f.playerHit(); if(o.el) f.player(o.el,0); }
   if(d>0){ floatP(`-${d}`,'dmg'); sfx('hurt'); } else { floatP('Blocked','block'); sfx('blocked'); }
   log(`${o.src||e.name} hits you for ${d}${blocked?` (${blocked} blocked)`:''}`,'bad');
   const th=PS('thorns')+F.thornsT+pSum('thorns'); if(th>0&&e.alive) damageEnemyRaw(e,th,'phys','Thorns');
@@ -346,44 +346,22 @@ async function counterAttack(e){
   const r=calcDmg(4+Math.floor(G.round/6),'phys','phys',e,{}); const dealt=damageEnemy(e,r.d*mult,{el:'phys'});
   floatE(e,`Counter ${dealt}`,'se'); log(`Counter attack! ${dealt} damage to ${e.name}`,'good'); sfx('counter'); render(); await sleep(200);
 }
-async function useUltimate(){
-  const F=G.fight; if(!F||F.over||UI.busy||G.p.ultCharge<100) return; UI.busy=true; G.p.ultCharge=0; clearTimeout(UI.autoTimer);
-  const u=ULT[G.p.ult]; const pw=PS('ultPower')/100; log(`ULTIMATE: ${u.name}!`,'se'); sfx('ultimate'); const f=fx(); if(f){ f.flash('ult'); f.banner(`${u.icon} ${u.name}`,'ult'); await sleep(1100); }
-  const alive=()=>F.enemies.filter(e=>e.alive); const tgt=()=>(F.enemies[F.target]&&F.enemies[F.target].alive)?F.enemies[F.target]:alive()[0];
-  const o=(kind,el,ls)=>({kind,el,ls,src:u.name});
-  switch(u.id){
-    case 'bladestorm': for(let i=0;i<5;i++){ const a=alive(); if(!a.length) break; hitEnemy(pick(a),Math.round(8*pw),o('phys','phys')); render(); await sleep(130); } break;
-    case 'dragonbreath': for(const e of alive()){ hitEnemy(e,Math.round(30*pw),o('spell','fire')); if(e.alive) applyStatusEnemy(e,'burn',Math.round(6*pw)); } break;
-    case 'timestop': for(const e of alive()) applyStatusEnemy(e,'frozen',1); F.energy+=2; draw(3); break;
-    case 'divine': { const h=heal(Math.round(G.p.maxHp*0.4*pw)); floatP(`+${h}`,'heal'); for(const k of ['burn','poison','weak','vuln','chill','shock']) delete F.st[k]; addBlock(Math.round(20*pw)); } break;
-    case 'thundergod': for(let h=0;h<3;h++){ for(const e of alive()) hitEnemy(e,Math.round(14*pw),o('spell','light')); render(); await sleep(130); } for(const e of alive()) applyStatusEnemy(e,'shock',Math.round(5*pw)); break;
-    case 'plaguelord': for(const e of alive()){ applyStatusEnemy(e,'poison',Math.round(15*pw)); applyStatusEnemy(e,'vuln',3); } break;
-    case 'avalanche': for(const e of alive()){ hitEnemy(e,Math.round(34*pw),o('spell','ice')); if(e.alive) applyStatusEnemy(e,'frozen',1); } break;
-    case 'soulreaper': { const e=tgt(); if(e) hitEnemy(e,Math.round(45*pw),o('phys','shadow',100)); } break;
-    case 'tidal': for(const e of alive()){ hitEnemy(e,Math.round(26*pw),o('spell','water')); if(e.alive) applyStatusEnemy(e,'wet',3); } { const h=heal(Math.round(15*pw)); floatP(`+${h}`,'heal'); } break;
-    case 'earthfury': for(const e of alive()){ hitEnemy(e,Math.round(40*pw),o('phys','earth')); if(e.alive) applyStatusEnemy(e,'weak',2); } break;
-    case 'gaia': for(const e of alive()) hitEnemy(e,Math.round(30*pw),o('spell','grass')); applySelf('regen',Math.round(5*pw)); applySelf('thornsT',Math.round(4*pw)); applySelf('str',Math.round(3*pw)); break;
-  }
-  UI.busy=false; await afterAction();
-}
 function winFight(){
   const F=G.fight; if(!F||F.over) return; F.over=true; clearTimeout(UI.autoTimer); const o=F.o||{};
   const mult=(o.boss?4:o.elite?2:1)*(o.goldMult||1);
   const gold=Math.round(goldReward()*mult*(0.85+Math.random()*0.3)); const xp=Math.round(xpReward()*(o.boss?4:o.elite?2:1));
   G.p.gold+=gold; G.fights++; if(o.boss) G.bossesSlain++;
   const kind=o.boss?'boss':(o.elite||o.mimic)?'elite':'fight';
-  let ultOffer=null; if(o.boss){ const notOwned=ULTS.filter(u=>!G.p.ults.includes(u.id)); if(notOwned.length) ultOffer=shuffle(notOwned.slice()).slice(0,2).map(u=>u.id); }
   const levelBefore=G.p.level; sfx('victory'); const ups=gainXp(xp);
   // a slain creature may drop one of its own ability cards: bosses always, elites often, the rest sometimes
   let drop=null; { const dead=F.enemies.filter(x=>!x.alive&&(FOE_MOVES[x.id]||[]).length); if(dead.length){ const x=dead.find(z=>z.boss)||dead.find(z=>z.elite)||pick(dead); const chance=x.boss?1:x.elite?0.6:0.3; if(Math.random()<chance){ const id=pick(FOE_MOVES[x.id]); drop={id,from:x.name}; markSeen(id); } } }
   const picks=(o.boss?1:0)+ups;   // one pick per level gained, plus the boss's own card
-  G.spoils={gold,xp,kind,ultOffer,ultTaken:false,levelBefore,picks,bossPick:!!o.boss,cards:picks?offerPool(o.boss?'boss':kind,3):null,cardTaken:picks===0,msgs:[],drop,dropTaken:!drop};
+  G.spoils={gold,xp,kind,levelBefore,picks,bossPick:!!o.boss,cards:picks?offerPool(o.boss?'boss':kind,3):null,cardTaken:picks===0,msgs:[],drop,dropTaken:!drop};
   G.phase='spoils'; render(); save();
 }
-function spoilsDone(r){ return !!r&&r.cardTaken&&(!r.ultOffer||r.ultTaken)&&(!r.drop||r.dropTaken); }
+function spoilsDone(r){ return !!r&&r.cardTaken&&(!r.drop||r.dropTaken); }
 function spoilsMaybeContinue(){ const r=G.spoils; if(spoilsDone(r)){ clearTimeout(UI.timer); UI.timer=setTimeout(spoilsContinue,1000); } }
 function spoilsTakeDrop(){ const r=G.spoils; if(!r||!r.drop||r.dropTaken) return; const id=r.drop.id; sfx(G.p.deck.includes(id)&&canEvolve(id)?'evolve':'pick'); const res=addCard(id); r.msgs=r.msgs||[]; r.msgs.push(res==='evolved'?`${CARD[id].name} evolves to ${TIERS[curTier(id)]}`:`${CARD[id].name}, taken from ${r.drop.from}, joins your deck`); r.dropTaken=true; render(); save(); spoilsMaybeContinue(); }
 function spoilsSkipDrop(){ const r=G.spoils; if(!r||!r.drop||r.dropTaken) return; r.dropTaken=true; r.msgs=r.msgs||[]; r.msgs.push(`You leave ${CARD[r.drop.id].name} behind.`); render(); save(); spoilsMaybeContinue(); }
 function spoilsPickCard(id){ const r=G.spoils; if(!r||r.cardTaken||!r.cards||!r.cards.includes(id)) return; sfx(G.p.deck.includes(id)&&canEvolve(id)?'evolve':'pick'); const res=addCard(id); r.msgs=r.msgs||[]; r.msgs.push(res==='evolved'?`${CARD[id].name} evolves to ${TIERS[curTier(id)]}`:res==='copied'?`Another ${CARD[id].name} joins your deck`:`${CARD[id].name} joins your deck`); r.picks=(r.picks||1)-1; r.bossPick=false; if(r.picks>0) r.cards=offerPool(r.kind==='boss'?'elite':r.kind,3); else { r.cards=null; r.cardTaken=true; } render(); save(); spoilsMaybeContinue(); }
 function spoilsSkipCard(){ const r=G.spoils; if(!r||r.cardTaken) return; r.picks=0; r.cards=null; r.bossPick=false; r.cardTaken=true; r.msgs=r.msgs||[]; r.msgs.push('You take no card.'); render(); save(); spoilsMaybeContinue(); }
-function spoilsPickUlt(id){ const r=G.spoils; if(!r||r.ultTaken) return; r.ultTaken=true; if(id){ G.p.ults.push(id); G.p.ult=id; r.ultMsg=`${ULT[id].name} is now your Ultimate.`; } else r.ultMsg=`You keep ${ULT[G.p.ult].name}.`; render(); save(); spoilsMaybeContinue(); }

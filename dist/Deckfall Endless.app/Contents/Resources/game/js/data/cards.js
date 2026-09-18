@@ -3,7 +3,7 @@
 // c(id, name, type, element, cost, tier 0-8, icon, values, effects, options)
 // types: attack (free, +Attack) spell (Mana, +Spell Power) shield skill potion (free) mecha trap (free, passive slot) summon (Mana, passive slot) curse
 // effects: ['dmg',key,{hits,aoe,pierce,ls,bv:status}] ['block',key] ['armor',key] ['se',status,key,{aoe}] ['ss',status,key] ['heal',key] ['healPct',key]
-//   ['draw',key] ['energy',key] ['maxEnergy',key] ['ult',key] ['selfDmg',key] ['cleanse'] ['stat',stat,key] ['passive',id]
+//   ['draw',key] ['energy',key] ['maxEnergy',key] ['selfDmg',key] ['cleanse'] ['stat',stat,key] ['passive',id]
 //   ['special',name,{...}]  execute{pct} stDmg{s,m,consume,aoe} doubleSt{s,aoe} spread blockDmg{m} playedDmg{m} elBoost{el,v} retaliation{m} snipe parry redraw{n} sabotage emp pilfer pilferAll mimic
 // Basic tier cards do exactly one plain thing. Extras start at common.
 const CARDS = [];
@@ -77,7 +77,7 @@ c('jolt','Jolt','spell','light',1,0,'🔌',{dmg:4},[['dmg','dmg']]);
 c('static','Static','spell','light',1,0,'🌐',{v:3},[['se','shock','v']]);
 c('lightning_arrow','Lightning Arrow','attack','light',0,1,'🏹',{dmg:4,v:3},[['dmg','dmg'],['se','shock','v']]);
 c('storm_blade','Storm Blade','attack','light',0,1,'🗡️',{dmg:6,v:2},[['dmg','dmg'],['se','shock','v']]);
-c('charge','Charge','skill','light',0,1,'🔋',{e:1,u:15},[['energy','e'],['ult','u']]);
+c('charge','Charge','skill','light',0,1,'🔋',{e:1,d:1},[['energy','e'],['draw','d']]);
 c('chain_lightning','Chain Lightning','spell','light',2,2,'🔗',{dmg:5,v:2},[['dmg','dmg',{aoe:1}],['se','shock','v',{aoe:1}]]);
 c('conduct','Conduct','spell','light',1,2,'🧲',{m:3},[['special','stDmg',{s:'shock',m:'m'}]]);
 c('flicker','Flicker','spell','light',1,2,'✨',{dmg:2,hits:2},[['dmg','dmg',{hits:'hits'}]]);
@@ -244,8 +244,8 @@ c('battle_cry','Battle Cry','skill','phys',0,1,'📣',{v:2},[['ss','str','v']]);
 c('insight','Insight','skill','phys',0,2,'👁️',{d:2},[['draw','d']]);
 c('parry','Parry','skill','phys',0,2,'🤺',{b:3},[['block','b'],['ss','counterNext',null],['special','parry']]);
 c('adrenaline','Adrenaline','skill','phys',0,2,'💉',{e:1,d:1},[['energy','e'],['draw','d']],{exhaust:true});
-c('meditation','Meditation','skill','phys',0,2,'🧘',{u:25},[['ult','u']]);
-c('rally','Rally','skill','phys',0,2,'🚩',{b:4,u:15},[['block','b'],['ult','u']]);
+c('meditation','Meditation','skill','phys',0,2,'🧘',{d:2},[['draw','d']]);
+c('rally','Rally','skill','phys',0,2,'🚩',{b:4,v:2},[['block','b'],['ss','str','v']]);
 c('second_wind','Second Wind','skill','phys',0,3,'🌬️',{h:6,e:1},[['heal','h'],['energy','e']],{exhaust:true});
 c('mana_crystal','Mana Crystal','skill','phys',0,4,'💎',{e:1},[['maxEnergy','e']],{exhaust:true});
 c('war_drums','War Drums','skill','phys',0,4,'🥁',{v:3},[['ss','str','v'],['ss','spellT','v']]);
@@ -308,7 +308,7 @@ c('potion_defense','Potion of Defense','potion','earth',0,1,'🧪',{a:3},[['armo
 c('potion_sorcery','Potion of Sorcery','potion','shadow',0,1,'🧪',{v:3},[['ss','spellT','v']],{exhaust:true});
 c('healing_potion','Healing Potion','potion','holy',0,1,'🧪',{h:12},[['heal','h']],{exhaust:true});
 c('potion_vigor','Potion of Vigor','potion','light',0,2,'🧪',{e:2},[['energy','e']],{exhaust:true});
-c('potion_ultimate','Potion of Ultimate Power','potion','holy',0,2,'🧪',{u:50},[['ult','u']],{exhaust:true});
+c('potion_haste','Potion of Haste','potion','holy',0,2,'🧪',{d:2,e:1},[['draw','d'],['energy','e']],{exhaust:true});
 c('elixir','Elixir','potion','water',0,2,'⚗️',{h:8},[['cleanse'],['heal','h']],{exhaust:true});
 c('potion_giant','Potion of the Giant','potion','earth',0,4,'🍶',{v:6},[['stat','maxHp','v']],{consume:true});
 c('potion_might','Potion of Might','potion','fire',0,4,'🍶',{v:1},[['stat','attack','v']],{consume:true});
@@ -320,21 +320,6 @@ c('wound','Wound','curse','shadow',0,0,'🩹',{},[],{unplayable:true});
 c('doom','Doom','curse','shadow',0,0,'💀',{},[],{unplayable:true,endTurnDmg:3});
 const CARD = Object.fromEntries(CARDS.map(x=>[x.id,x]));
 
-// ===================== ULTIMATES =====================
-const ULTS = [
-  {id:'bladestorm', name:'Blade Storm', icon:'🌪️', el:'phys', desc:'Deal 8 (+Attack) physical damage 5 times to random enemies.'},
-  {id:'dragonbreath', name:"Dragon's Breath", icon:'🐉', el:'fire', desc:'Deal 30 (+Spell Power) fire damage to all enemies and apply 6 Burn.'},
-  {id:'timestop', name:'Time Stop', icon:'⏳', el:'ice', desc:'Freeze all enemies, gain 2 Mana and draw 3 cards.'},
-  {id:'divine', name:'Divine Restoration', icon:'🕊️', el:'holy', desc:'Heal 40% Max HP, remove your debuffs and gain 20 Block.'},
-  {id:'thundergod', name:'Wrath of Storms', icon:'🌩️', el:'light', desc:'Deal 14 (+Spell Power) lightning damage 3 times to all enemies and apply 5 Shock.'},
-  {id:'plaguelord', name:'Plague Lord', icon:'☣️', el:'poison', desc:'Apply 15 Poison and 3 Vulnerable to all enemies.'},
-  {id:'avalanche', name:'Avalanche', icon:'🏔️', el:'ice', desc:'Deal 34 (+Spell Power) ice damage to all enemies and Freeze them.'},
-  {id:'soulreaper', name:'Soul Reaper', icon:'💀', el:'shadow', desc:'Deal 45 (+Attack) shadow damage to one enemy and heal for all of it.'},
-  {id:'tidal', name:'Tidal Judgment', icon:'🌊', el:'water', desc:'Deal 26 (+Spell Power) water damage to all enemies, apply 3 Wet and heal 15.'},
-  {id:'earthfury', name:"Earth's Fury", icon:'🌋', el:'earth', desc:'Deal 40 (+Attack) earth damage to all enemies and apply 2 Weak.'},
-  {id:'gaia', name:"Gaia's Wrath", icon:'🌳', el:'grass', desc:'Deal 30 (+Spell Power) grass damage to all enemies, gain 5 Regen, 4 Thorns and 3 Strength.'},
-];
-const ULT = Object.fromEntries(ULTS.map(u=>[u.id,u]));
 // ===================== SHOP ATTRIBUTE UPGRADES =====================
 const UPG = [
   {k:'maxHp', v:10, p:60, d:'More room for mistakes. Also heals 10.'},
@@ -346,7 +331,6 @@ const UPG = [
   {k:'crit', v:4, p:80, max:100, d:'Chance to deal 50% bonus damage.'},
   {k:'lifesteal', v:3, p:100, max:100, d:'Heal a share of every attack you land.'},
   {k:'thorns', v:2, p:70, d:'Attackers take damage when they hit you.'},
-  {k:'ultPower', v:15, p:90, d:'Your Ultimate deals and heals more.'},
   {k:'luck', v:2, p:70, max:30, d:'Better odds at the coin and higher-tier cards everywhere.'},
   {k:'regen', v:1, p:110, d:'Heal at the start of every turn.'},
   {k:'slots', v:1, p:300, max:5, d:'One more passive slot for machines, summons and traps.'},

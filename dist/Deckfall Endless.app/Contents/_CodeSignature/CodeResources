@@ -10,19 +10,19 @@
 		</data>
 		<key>Resources/game/css/style.css</key>
 		<data>
-		WBaeWq7ke0X+6icP3I/GlT4m820=
+		Obl8P2dQOx4EAn69pawCQZV1DuE=
 		</data>
 		<key>Resources/game/index.html</key>
 		<data>
-		IwNDhpfOyNqDrqLAVIOdFcxqTWg=
+		6FbYNvrXnndh+0XQYLxNVMzzK7g=
 		</data>
 		<key>Resources/game/js/data/cards.js</key>
 		<data>
-		gujs84n/AFuStO/fngtI1L1pepA=
+		dCumU5a2RxAhdPuxedSqYAz17Lc=
 		</data>
 		<key>Resources/game/js/data/elements.js</key>
 		<data>
-		mcPvKxW/KXEBGsyO1xmPoEhqUrQ=
+		y0CLE2B64xL2/rFSegrZkbY8HNc=
 		</data>
 		<key>Resources/game/js/data/enemies.js</key>
 		<data>
@@ -34,7 +34,7 @@
 		</data>
 		<key>Resources/game/js/data/interludes.js</key>
 		<data>
-		V3+P3ktmK1MfsBWVnRNInlS3Zdg=
+		iaxEcwML7Vhek81i34JTW2/OCao=
 		</data>
 		<key>Resources/game/js/data/passives.js</key>
 		<data>
@@ -42,19 +42,19 @@
 		</data>
 		<key>Resources/game/js/engine/combat.js</key>
 		<data>
-		CMbizxjUovX4NkuRKwnSes44Lwg=
+		YUyvwjHMEryk0fMwdmZRTfAiXIY=
 		</data>
 		<key>Resources/game/js/engine/state.js</key>
 		<data>
-		XNaQ7yl0xgoLgFOoJ2pW3Q82AKg=
+		WyYYLdKNaGdmY/ZfGOochPADExQ=
 		</data>
 		<key>Resources/game/js/main.js</key>
 		<data>
-		j+7ifw11ko6B2g0lc4SK71JqIlk=
+		xqhPzoFrmkV27X1jEz9mHEcMUhI=
 		</data>
 		<key>Resources/game/js/ui/components.js</key>
 		<data>
-		6B4hU8ZbnRF2RWgY8qWm7i3sGd8=
+		TDhGqDMZ+UUmGDqLAQbcY1dlCII=
 		</data>
 		<key>Resources/game/js/ui/fx.js</key>
 		<data>
@@ -62,11 +62,15 @@
 		</data>
 		<key>Resources/game/js/ui/screens.js</key>
 		<data>
-		YbVIfBSHvJ5x4YP/WKyy0uuKD74=
+		sIlmgnCqTOkh2iHQrfTbSLEnTpc=
 		</data>
 		<key>Resources/game/js/ui/sound.js</key>
 		<data>
 		6zeDDwDuySLoDvthiYn7S4/WNjs=
+		</data>
+		<key>Resources/game/js/ui/tips.js</key>
+		<data>
+		5nh88TD8nM3IY9wo2PB7aE/Ip04=
 		</data>
 	</dict>
 	<key>files2</key>
@@ -82,28 +86,28 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			nokaSftotsM/mwdp8avf6DGREyWyT/JWU4Qruw1lFPg=
+			vEjO6Q0uf9BmrJUM4sJgrYKOFpl+WBUkoShEvyrDKPs=
 			</data>
 		</dict>
 		<key>Resources/game/index.html</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			Tn9djV4ve5NuUqDLyqxXcUDa9ViQsI4k2ipR6bVkzg4=
+			tRJ9WaFd3UlHci/6Ij7qMzXLgSmMS9DJWnGAIP0eexg=
 			</data>
 		</dict>
 		<key>Resources/game/js/data/cards.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			83LwlPn0FD0B1rH3oDktQQORUzLFnLbz7A23ouk1uS0=
+			rKP59OgEI1bTOkW1SDgvfN2tL6HOlh4AuylcEgrMTAk=
 			</data>
 		</dict>
 		<key>Resources/game/js/data/elements.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			776KJruDTk+QaLWbEL9i8LGrO58vkJKQtqGWWbiWWwQ=
+			hEG+ywNC1pKw2nxrZ1jUMxCgpRS4LaThJI8O4sshfTU=
 			</data>
 		</dict>
 		<key>Resources/game/js/data/enemies.js</key>
@@ -124,7 +128,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			bpLZ/qJBSy6x3sdS29V5cu0poYca0GXG2V3FEi1v1/4=
+			Px+/iVJ7EZUxxVRnG9Ib4f/phUTOaJZ049pZ7+fM8Yk=
 			</data>
 		</dict>
 		<key>Resources/game/js/data/passives.js</key>
@@ -138,28 +142,28 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			lTCGMFSCnbxdQ17A69zaN2wGybGCNpdASLbhdWHyh4Y=
+			Brex9xwik0B+/hKtOrKqEpll1e7Ma84tyvmolSXqyJM=
 			</data>
 		</dict>
 		<key>Resources/game/js/engine/state.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			YrgmnhsvH+RXhmuYcTPa+F0E9Wymw6Bn4pMupae35hg=
+			TGE8HcFziBQU8FyfVCC60l+5KnAi9dAxOOQ22og7p20=
 			</data>
 		</dict>
 		<key>Resources/game/js/main.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			CC3Hxnsc1qjhfqD8G9TIxC3g8C+55gfLjU5QXhzSm+Y=
+			AznMQqEQfqb7dkx+dU+z+APWHZruNcYh48p527za51A=
 			</data>
 		</dict>
 		<key>Resources/game/js/ui/components.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			IZJI0e+uQkjowF3BvHoQnwpr2DDFCpK0YZZLcuYdyHY=
+			ti7Agx6Pkc0PKMRTXLKDRczRwH1Ng/A4qQR+7fU9gII=
 			</data>
 		</dict>
 		<key>Resources/game/js/ui/fx.js</key>
@@ -173,7 +177,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			7Ftq2W+11sgB/uq0OkQtdI0A6VHKfjb4sBH6PPAga2Y=
+			GAQ88Tl8APcOemRUmWiZeE4LVruZu+HXruYOd22zWx4=
 			</data>
 		</dict>
 		<key>Resources/game/js/ui/sound.js</key>
@@ -181,6 +185,13 @@
 			<key>hash2</key>
 			<data>
 			kTqF0Edb1O1QvD05qNzzKjn4K/ntl7iGgXlZWkQaFnQ=
+			</data>
+		</dict>
+		<key>Resources/game/js/ui/tips.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			pxNFiShTb/pxzkVY7axhExRJq0A2OqVNjWgbJQCBbM8=
 			</data>
 		</dict>
 	</dict>

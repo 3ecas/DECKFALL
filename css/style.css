@@ -40,7 +40,6 @@ h3{font-size:1rem;font-weight:700;color:var(--ink)}
 .bar>b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;letter-spacing:.03em;text-shadow:0 1px 2px #000;color:#fff}
 .bar.hp>i{background:linear-gradient(180deg,#ff7a8a,#c2233d 60%,#8a1428)}
 .bar.xp>i{background:linear-gradient(180deg,#a99cff,#6a5ad0 60%,#40348f)}
-.bar.ult>i{background:linear-gradient(180deg,#ffc477,#e0801f 60%,#9a4f0e)}
 .bar.ehp>i{background:linear-gradient(180deg,#ff8577,#c8382a 60%,#7d1d16)}
 .boosts{display:flex;flex-wrap:wrap;gap:6px}
 .boost{font-size:.74rem;padding:3px 9px;border-radius:6px;background:rgba(0,0,0,.35);border:1px solid rgba(93,224,210,.45);color:var(--ink);white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
@@ -63,6 +62,16 @@ h3{font-size:1rem;font-weight:700;color:var(--ink)}
 .card.enemy .ctier{display:flex;gap:2cqw;letter-spacing:.02em;font-size:4cqw;color:rgba(0,0,0,.7)}
 .card.enemy .intent{font-family:var(--body);font-weight:800;text-transform:uppercase;font-size:5.4cqw;line-height:1.2;color:#0b0e12;display:flex;gap:1.5cqw;align-items:center}
 .card.enemy .intent b{color:#8a1225}
+.card.enemy .ewr{margin-top:auto;display:flex;justify-content:space-between;gap:2cqw;font-family:var(--body);font-weight:800;font-size:4cqw;letter-spacing:.04em;text-transform:uppercase;color:rgba(0,0,0,.62)}
+.card.enemy .ewr .res{text-align:right}
+.card.enemy .cbox,.card.enemy .ehp,.card.enemy .ckind,.card.enemy .ccost{transition:opacity .45s}
+.arena.intro .card.enemy .cbox,.arena.intro .card.enemy .ehp,.arena.intro .card.enemy .ckind,.arena.intro .card.enemy .ccost{opacity:0}
+.arena.intro .card.enemy .cname{animation:pop .5s cubic-bezier(.2,.9,.3,1.3) both}
+.tip{position:fixed;z-index:90;max-width:320px;padding:10px 13px 11px;border-radius:10px;background:linear-gradient(180deg,rgba(43,75,80,.98),rgba(21,44,48,.98));border:1px solid rgba(0,0,0,.6);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(220,178,91,.3),0 12px 30px rgba(0,0,0,.55);color:var(--ink);font-size:.8rem;line-height:1.35;pointer-events:none;opacity:0;transition:opacity .12s}
+.tip.on{opacity:1}
+.tip h4{margin:0 0 3px;font-family:var(--display);color:var(--gold);font-size:.95rem;letter-spacing:.02em}
+.tip .sub{color:var(--ink2);font-size:.74rem} .tip .k{color:var(--teal);font-weight:800} .tip b{color:#fff}
+.tip ul{margin:6px 0 0;padding-left:16px} .tip li{margin:3px 0} .tip .nx{margin-top:6px}
 .card.enemy .etrait{font-family:var(--body);font-weight:800;font-size:3.9cqw;letter-spacing:.06em;text-transform:uppercase;color:rgba(0,0,0,.62);cursor:help}
 .card.enemy .statuses{min-height:0;gap:1cqw} .card.enemy .epassives{margin-top:0;gap:1cqw}
 .card.enemy .st,.card.enemy .epc{font-size:4.1cqw;padding:.4cqw 1.4cqw;border-radius:.5cqw;color:var(--ink);background:linear-gradient(180deg,var(--plq1),var(--plq2));box-shadow:inset 0 max(1px,.3cqw) 0 rgba(255,255,255,.14)}
@@ -108,8 +117,8 @@ h3{font-size:1rem;font-weight:700;color:var(--ink)}
 .float.dmg{color:#ff6b5b}.float.heal{color:var(--heal)}.float.block{color:#9bd}.float.se{color:var(--warn);font-size:1.7rem}.float.miss{color:#cfe}.float.mana{color:var(--mana)}
 .banner{position:absolute;left:50%;top:18%;transform:translateX(-50%);font-family:var(--display);font-weight:900;font-size:clamp(1.4rem,4vw,2.6rem);color:var(--gold);text-shadow:0 0 30px rgba(242,192,105,.6),0 2px 6px #000;letter-spacing:.08em;animation:bannerIn 1.7s forwards;white-space:nowrap;padding:8px 26px;border-radius:999px;background:rgba(10,13,28,.55);border:1px solid rgba(242,192,105,.35);backdrop-filter:blur(6px)}
 .banner.boss{color:#ff8a9a;border-color:rgba(255,90,106,.5);text-shadow:0 0 30px rgba(255,90,106,.7),0 2px 6px #000}
-.banner.elite{color:var(--warn)} .banner.ult{color:#ffd9a0;font-size:clamp(1.6rem,5vw,3rem)} .banner.dim{font-size:1rem;color:var(--ink2);top:12%;border-color:var(--line)}
-.flash{position:absolute;inset:0;animation:fadeOut .8s forwards} .flash.ult{background:radial-gradient(circle,rgba(255,220,150,.75),rgba(255,120,40,.2) 60%,transparent)}
+.banner.elite{color:var(--warn)} .banner.dim{font-size:1rem;color:var(--ink2);top:12%;border-color:var(--line)}
+.flash{position:absolute;inset:0;animation:fadeOut .8s forwards}
 #app.hurt::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:40;box-shadow:inset 0 0 140px rgba(255,60,80,.55);animation:fadeOut .55s forwards}
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--glass2);border:1px solid var(--gold2);color:var(--ink);padding:8px 16px;border-radius:999px;z-index:70;animation:floatUp 2.2s forwards;font-weight:700;backdrop-filter:blur(8px)}
 /* scenes: title, spoils, interlude, shop, game over */
@@ -189,7 +198,10 @@ table.stats td{padding:5px 8px;border-bottom:1px solid var(--line)} table.stats 
 .card::before{content:'';position:absolute;inset:0;border:2cqw solid color-mix(in srgb,var(--tier) 18%,#161a30);border-radius:inherit;box-shadow:inset 0 0 0 max(1px,.35cqw) rgba(255,255,255,.34),inset 0 0 0 calc(max(1px,.35cqw)*2) rgba(0,0,0,.22);pointer-events:none;z-index:3}
 /* shared plaque finish for the dark boxes: gradient, dark edge, light top bevel */
 .card .cname,.card .ctag,.card .cevo,.card .ckind{background:linear-gradient(180deg,#2b4b50,#1a3438 60%,#152c30);border:max(1px,.3cqw) solid rgba(0,0,0,.55);box-shadow:inset 0 max(1px,.3cqw) 0 rgba(255,255,255,.16),0 1px 2px rgba(0,0,0,.45)}
-.card:hover,.card.enter:hover{transform:scale(1.07);transform-origin:50% 100%;z-index:2;animation:hoverGlow 1.6s ease-in-out infinite}
+.card:hover,.card.enter:hover,.hand .card.sel{transform:scale(1.07);transform-origin:50% 100%;z-index:2;animation:hoverGlow 1.6s ease-in-out infinite}
+.hand .card.sel::before{border-color:#f2c069;box-shadow:inset 0 0 0 max(1px,.35cqw) rgba(255,244,214,.6)}
+.kbf{outline:3px solid var(--gold);outline-offset:3px;box-shadow:0 0 18px rgba(242,192,105,.55)!important}
+.card.kbf{transform:scale(1.05);transform-origin:50% 100%;z-index:2} .card.kbf::before{border-color:#f2c069}
 @keyframes hoverGlow{0%,100%{box-shadow:0 14px 28px rgba(0,0,0,.55),0 0 18px color-mix(in srgb,var(--tier) 60%,transparent)}50%{box-shadow:0 18px 32px rgba(0,0,0,.6),0 0 32px color-mix(in srgb,var(--tier) 90%,transparent)}}
 .card.static{cursor:default} .card.static:hover{transform:none;box-shadow:0 6px 16px rgba(0,0,0,.45);animation:none}
 .card.unaff{opacity:.45} .card.unplayable{opacity:.6;filter:grayscale(.5)}
