@@ -1,20 +1,19 @@
 // ===================== BALANCE SIMULATOR =====================
-// A greedy bot that plays whole runs through the real engine (newGame, playCard, endTurn, spoils, interludes, shop), with the
-// UI silenced and every animation delay removed, so hundreds of runs take seconds. Nothing here touches the game's own files.
+// A greedy bot that plays whole runs through the real engine (newGame, the dungeons, playCard, endTurn, spoils, events,
+// the keeper), with the UI silenced and every delay removed, so hundreds of runs take seconds. Nothing here touches the game.
 //
-// How to use: serve the folder over http (any static server; file:// blocks script injection), open index.html in a browser,
-// then paste this file into the developer console (or add it as a <script> after main.js). Then:
-//   SIM.start(200, {stopAfterBoss:true})            // play 200 runs up to and including the round-10 boss
-//   SIM.summary()                                    // reach rate, boss win rate, fight lengths, deaths by round, ...
-//   SIM.variant({hp:45, atk:6, buffet:3, breath:8, burn:3, block:8, thorns:2})   // retune the first boss in memory
-//   await SIM.compare({a:{hp:45,atk:6}, b:{hp:60,atk:7}}, 200, {stopAfterBoss:true})   // several tunings side by side
-//   SIM.deathLogs(8, 3)                              // the last log lines of three runs that died at round 8
-// Reload the page to get the real numbers back. The bot is a weak player (it loses about one ordinary round-9 fight in six),
-// so read its win rates as a floor, not as what a human gets.
+// How to use: serve the folder over http (any static server; file:// blocks script injection), open index.html in a
+// browser, then paste this file into the developer console (or add it as a <script> after main.js). Then:
+//   SIM.start(100, {maxDungeon:9})                   // 100 runs, each until death or the ninth dungeon
+//   SIM.summary()                                     // dungeons reached, deaths by danger, fights by danger, lairs, ...
+//   SIM.variant({hp:45, atk:6, buffet:3, breath:8, burn:3, block:8, thorns:2})   // retune the Inferno Drake in memory
+//   await SIM.compare({a:{hp:45,atk:6}, b:{hp:60,atk:7}}, 100, {maxDungeon:9})   // several tunings side by side
+//   SIM.deathLogs(5, 3)                               // the last log lines of three runs that died at danger 5
+// Reload the page to get the real numbers back. The bot is a weak player (it loses fights a human would win), so read
+// its results as a floor, not as what a human gets.
 (function(){
   if (window.SIM) { console.log('SIM already installed'); return; }
-  // ---- instant timers (with real cancellation) so engine sleeps cost nothing ----
-  const _setTimeout = window.setTimeout.bind(window);
+  // ---- instant timers (with real cancellation) so engine sleeps and walks cost nothing ----
   const pending = new Map(); let nextId = 1;
   const ch = new MessageChannel();
   ch.port1.onmessage = ev => { const fn = pending.get(ev.data); if (fn) { pending.delete(ev.data); try { fn(); } catch (e) { console.error('timer error', e); } } };
@@ -28,7 +27,7 @@
   pickDeckCard = (title, cb) => { UI.modal = { type: 'pick', cb }; };
   autoEndCheck = () => {};
 
-  // ---- card valuation (used for picks, forge/shop choices and play order) ----
+  // ---- card valuation (picks, forge and blacksmith choices, pack swaps, play order) ----
   function cardValue(id) {
     const d = CARD[id]; if (!d) return -100;
     if (d.type === 'curse') return -30;
@@ -93,29 +92,60 @@
     }
     if (G.phase === 'battle' && !F.over) await endTurn();
   }
+  // ---- exploring a dungeon: score every known hex, walk to the best, otherwise push the fog back, otherwise leave ----
+  function frontier(t) { for (const [x, y] of hexNeighbors(t.x, t.y)) { const n = tileAt(x, y); if (n && !n.seen) return true; } return false; }
+  function tileScore(t) {
+    const p = G.p; const hpFrac = p.hp / p.maxHp; const lvl = p.level; const dng = G.round; const dist = hexDist(t.x, t.y, G.pos.x, G.pos.y); let v = 0;
+    if (t.k === 'chest') v = 30; else if (t.k === 'shrine') v = hpFrac < 0.8 ? 35 : 5; else if (t.k === 'boost') v = 20; else if (t.k === 'forge') v = 25; else if (t.k === 'camp') v = hpFrac < 0.7 ? 30 : 12; else if (t.k === 'trap') v = 8; else if (t.k === 'idol') v = -5; else if (t.k === 'event') v = 15;
+    else if (t.k === 'creature') v = hpFrac > 0.45 ? 20 - Math.max(0, dng - lvl - 2) * 6 : -20;
+    else if (t.k === 'nest') v = (hpFrac > 0.7 && lvl >= dng - 1) ? 18 - Math.max(0, dng - lvl) * 6 : -30;
+    else if (t.k === 'lair') v = (hpFrac > 0.8 && lvl >= dng) ? 25 : -50;
+    else if (t.k === 'exit') v = 6 + G.dungeon.entered * 3 + (hpFrac < 0.5 ? 25 : 0);
+    return v - dist * 1.2;
+  }
+  function explore() {
+    if (UI.walk && UI.walk.length) return true;   // a walk in progress is progress
+    const D = G.dungeon; const hot = hotTiles(); const tiles = D.t.filter(t => t.seen && !t.wall && t.k && t.k !== 'entry' && !S.skip.has(t)); let best = null, bs = 0;
+    for (const t of tiles) { const s = tileScore(t); if (s > bs) { bs = s; best = t; } }
+    if (best) { walkTo(best.x, best.y); if (!UI.walk) S.skip.add(best); return true; }
+    const pool = D.t.filter(t => t.seen && !t.wall && !t.k && frontier(t) && !S.skip.has(t) && !hot.has(t.y * D.w + t.x));
+    if (pool.length) { pool.sort((a, b) => hexDist(a.x, a.y, G.pos.x, G.pos.y) - hexDist(b.x, b.y, G.pos.x, G.pos.y)); walkTo(pool[0].x, pool[0].y); if (!UI.walk) S.skip.add(pool[0]); return true; }
+    const out = D.t.find(t => t.seen && (t.k === 'exit' || t.k === 'lair')); if (out && !S.skip.has(out)) { walkTo(out.x, out.y); if (!UI.walk) S.skip.add(out); return true; }
+    const foes = D.t.filter(t => t.seen && (t.k === 'creature' || t.k === 'nest' || t.k === 'lair') && !S.skip.has(t)).sort((a, b) => hexDist(a.x, a.y, G.pos.x, G.pos.y) - hexDist(b.x, b.y, G.pos.x, G.pos.y));   // nothing else left: fight whatever blocks the way
+    if (foes.length) { walkTo(foes[0].x, foes[0].y); if (!UI.walk) S.skip.add(foes[0]); return true; }
+    return false;
+  }
+  function atKeeper() {
+    const p = G.p; const K = G.keeper; if (!K) return;
+    if (!K.used.rest && p.hp < p.maxHp * 0.75 && p.gold >= restCost()) keeperRest();
+    const stash = (p.stash || []).slice().sort((a, b) => cardValue(b) - cardValue(a));
+    for (const id of stash) { const worst = [...new Set(p.deck)].filter(x => !(p.kit.passives || []).some(q => q.inst && q.inst.id === x)).sort((a, b) => cardValue(a) - cardValue(b))[0]; if (p.deck.length < DECK_MAX) unstashCard(id); else if (worst && cardValue(id) > cardValue(worst) + 3) { stashCard(worst); unstashCard(id); } }
+    if (!K.used.buy) { const best = K.offers.slice().sort((a, b) => cardValue(b) - cardValue(a))[0]; if (best && p.gold >= cardPrice(best) + restCost()) keeperBuy(best); }
+    if (!K.used.smith) { const ids = [...new Set(p.deck)].filter(canEvolve).filter(id => p.gold >= evolvePrice(id)); if (ids.length) { keeperSmith(); if (G.phase === 'shop') { shopUpgrade(ids.sort((a, b) => cardValue(b) - cardValue(a))[0]); G.shop = null; G.phase = 'keeper'; } } }
+    keeperDescend();
+  }
   // ---- one full run ----
   async function runOne(opts) {
-    opts = opts || {}; const maxRound = opts.maxRound || 12;
-    const rec = { fights: [], boss: null, diedRound: null, result: null, error: null };
-    clearTimeout(UI.timer); UI.busy = false; UI.modal = null;
+    opts = opts || {}; const maxDungeon = opts.maxDungeon || 9; const maxSteps = opts.maxSteps || 3000;
+    const rec = { fights: [], boss: null, lairs: 0, diedDanger: null, result: null, error: null };
+    clearTimeout(UI.timer); clearTimeout(UI.walkTimer); UI.walk = null; UI.busy = false; UI.modal = null; S.skip = new Set();
     newGame();
-    let guard = 0, lastKey = null;
+    let guard = 0, lastKey = null, stuck = 0, lastTime = -1, lastDungeon = 0;
     try {
-      while (guard++ < 20000) {
+      while (guard++ < 80000) {
         if (!G) break;
-        if (G.round > maxRound) { rec.result = 'survived'; break; }
-        if (G.phase === 'gameover') { rec.diedRound = G.round; rec.result = 'died'; rec.lastLog = G.log.slice(-10).map(l => l.m); break; }
+        if (G.dungeon && G.dungeon.n !== lastDungeon) { lastDungeon = G.dungeon.n; S.skip = new Set(); }
+        if (G.phase === 'gameover') { rec.diedDanger = G.round; rec.diedDungeon = G.dungeon.n; rec.result = 'died'; rec.lastLog = G.log.slice(-10).map(l => l.m); break; }
         if (G.phase === 'battle') {
           const F = G.fight; if (!F || F.over) { await tick(); continue; }
-          if (F.turn > 80) { rec.result = 'stalemate'; break; }   // the bot can get stuck against a foe it cannot out-damage
-          if (F.key !== lastKey) { lastKey = F.key; const e0 = F.enemies[0]; rec.fights.push({ round: G.round, kind: F.o.boss ? 'boss' : F.o.elite ? 'elite' : 'fight', n: F.enemies.length, ids: F.enemies.map(e => e.id).join("+"), hp0: G.p.hp, maxHp: G.p.maxHp, ehp: F.enemies.reduce((a, e) => a + e.maxHp, 0), eatk: e0.atk, turns: 0, level: G.p.level }); if (F.o.boss) rec.boss = rec.fights[rec.fights.length - 1]; }
+          if (F.key !== lastKey) { lastKey = F.key; const e0 = F.enemies[0]; rec.fights.push({ danger: G.round, dungeon: G.dungeon.n, kind: F.o.boss ? 'boss' : F.o.elite ? 'elite' : 'fight', forced: !!F.o.forced, ids: F.enemies.map(e => e.id).join('+'), hp0: G.p.hp, maxHp: G.p.maxHp, ehp: F.enemies.reduce((a, e) => a + e.maxHp, 0), eatk: e0.atk, turns: 0, level: G.p.level }); if (F.o.boss) rec.boss = rec.fights[rec.fights.length - 1]; }
           rec.fights[rec.fights.length - 1].turns = F.turn;
+          if (F.turn > 80) { rec.result = 'stalemate'; break; }
           await playTurn(); continue;
         }
-        const last = rec.fights[rec.fights.length - 1]; if (last && last.hp1 == null && G.phase !== 'battle') { last.hp1 = G.p.hp; last.won = true; }
+        const last = rec.fights[rec.fights.length - 1]; if (last && last.hp1 == null) { last.hp1 = G.p.hp; last.won = true; if (last.kind === 'boss') rec.lairs++; S.skip = new Set(); }
         if (G.phase === 'spoils') {
           const r = G.spoils;
-          if (r.kind === 'boss' && opts.stopAfterBoss) { rec.result = 'boss_won'; break; }
           if (!r.cardTaken && r.cards) { const best = r.cards.slice().sort((a, b) => cardValue(b) - cardValue(a))[0]; spoilsPickCard(best); }
           else if (r.drop && !r.dropTaken) { if (cardValue(r.drop.id) > 0) spoilsTakeDrop(); else spoilsSkipDrop(); }
           else if (spoilsDone(r)) spoilsMaybeContinue();
@@ -124,64 +154,61 @@
         if (G.phase === 'interlude') {
           const I = G.inter;
           if (I && !I.picked) {
-            if (I.t === 'forge' && !I.auto) { forgePick(); const m = UI.modal; if (m && m.cb) { UI.modal = null; const ids = [...new Set(G.p.deck)].filter(canEvolve); const best = ids.sort((a, b) => cardValue(b) - cardValue(a))[0]; m.cb(best); } }
+            if (I.t === 'event') eventChoose(0);
+            else if (I.t === 'forge' && !I.auto) { forgePick(); const m = UI.modal; if (m && m.cb) { UI.modal = null; const ids = [...new Set(G.p.deck)].filter(canEvolve); const best = ids.sort((a, b) => cardValue(b) - cardValue(a))[0]; m.cb(best); } }
             else if (I.t === 'camp') campChoose(G.p.hp < G.p.maxHp * 0.65 ? 'rest' : 'tough');
             else if (I.t === 'treasury' && I.cards) { const best = I.cards.slice().sort((a, b) => cardValue(b) - cardValue(a))[0]; interludePick(best); }
           }
           await tick(); continue;
         }
-        if (G.phase === 'shop') {
-          if (!G.shop.used) { const ids = [...new Set(G.p.deck)].filter(canEvolve).filter(id => G.p.gold >= evolvePrice(id)); if (ids.length) shopUpgrade(ids.sort((a, b) => cardValue(b) - cardValue(a))[0]); }
-          nextRound(); await tick(); continue;
+        if (G.phase === 'shop') { const ids = [...new Set(G.p.deck)].filter(canEvolve).filter(id => G.p.gold >= evolvePrice(id)); if (ids.length) shopUpgrade(ids.sort((a, b) => cardValue(b) - cardValue(a))[0]); if (G.keeper) { G.shop = null; G.phase = 'keeper'; } else backToMap(); await tick(); continue; }
+        if (G.phase === 'keeper') { if (G.dungeon.n >= maxDungeon) { rec.result = 'survived'; break; } atKeeper(); await tick(); continue; }
+        if (G.phase === 'map') {
+          if ((G.time || 0) >= maxSteps) { rec.result = 'survived'; break; }
+          if (G.time === lastTime) { if (++stuck > 300) { rec.result = 'stuck'; break; } } else { stuck = 0; lastTime = G.time; }
+          if (G.dungeon.entered !== S.lastRoom) { S.lastRoom = G.dungeon.entered; S.skip = new Set(); } if (!explore()) { stuck += 50; }
+          await tick(); continue;
         }
         await tick();
       }
     } catch (e) { rec.error = String(e && e.stack || e); console.error(e); }
     const lastF = rec.fights[rec.fights.length - 1];
     if (lastF && lastF.hp1 == null) { lastF.hp1 = G ? G.p.hp : 0; lastF.won = rec.result !== 'died'; if (rec.result === 'died' && G && G.fight) lastF.ehpLeft = G.fight.enemies.filter(e => e.alive).reduce((a, e) => a + e.hp, 0); }
-    rec.level = G ? G.p.level : null; rec.maxHp = G ? G.p.maxHp : null; rec.attack = G ? G.p.attack : null; rec.deck = G ? G.p.deck.slice() : null; rec.finalRound = G ? G.round : null;
+    rec.level = G ? G.p.level : null; rec.maxHp = G ? G.p.maxHp : null; rec.deck = G ? G.p.deck.slice() : null; rec.dungeon = G && G.dungeon ? G.dungeon.n : null; rec.rooms = G && G.dungeon ? G.dungeon.entered : null; rec.time = G ? G.time : null; rec.kills = G ? G.kills : null;
     return rec;
   }
-  const S = window.SIM = { results: [], running: false, label: 'base', cardValue, estDmg, runOne, tick };
+  const S = window.SIM = { results: [], running: false, label: 'base', skip: new Set(), cardValue, estDmg, runOne, tick, explore, tileScore };
   S.reset = label => { S.results = []; S.label = label || 'base'; };
   S.start = async function (n, opts) { S.running = true; const t0 = performance.now(); for (let i = 0; i < n; i++) { const r = await runOne(opts); r.label = S.label; S.results.push(r); } S.running = false; S.ms = performance.now() - t0; return S.summary(); };
   S.summary = function (label) {
     const rs = S.results.filter(r => !label || r.label === label); const n = rs.length; if (!n) return 'no runs';
     const avg = a => a.length ? +(a.reduce((x, y) => x + y, 0) / a.length).toFixed(1) : null;
-    const deaths = {}; for (const r of rs) if (r.result === 'died') deaths[r.diedRound] = (deaths[r.diedRound] || 0) + 1;
-    const reached = rs.filter(r => r.boss); const won = reached.filter(r => r.boss.won);
-    const lost = reached.filter(r => !r.boss.won);
-    const reg = rs.flatMap(r => r.fights.filter(f => f.kind === 'fight' && f.round >= 8 && f.round <= 9 && f.hp1 != null));
-    const elite5 = rs.flatMap(r => r.fights.filter(f => f.kind === 'elite' && f.round === 5 && f.hp1 != null));
+    const deaths = {}; for (const r of rs) if (r.result === 'died') deaths[r.diedDanger] = (deaths[r.diedDanger] || 0) + 1;
+    const dungeons = {}; for (const r of rs) dungeons[r.dungeon] = (dungeons[r.dungeon] || 0) + 1;
+    const results = {}; for (const r of rs) results[r.result] = (results[r.result] || 0) + 1;
+    const fights = rs.flatMap(r => r.fights.filter(f => f.hp1 != null));
+    const byDanger = {}; for (const f of fights) { const k = Math.min(24, f.danger); const b = byDanger[k] = byDanger[k] || { n: 0, won: 0, turns: 0, hpLost: 0 }; b.n++; if (f.won) b.won++; b.turns += f.turns; b.hpLost += f.hp0 - f.hp1; }
+    for (const k in byDanger) { const b = byDanger[k]; byDanger[k] = `${b.n} fights · win ${(b.won / b.n).toFixed(2)} · ${(b.turns / b.n).toFixed(1)} turns · -${(b.hpLost / b.n).toFixed(1)} hp`; }
+    const lairFights = fights.filter(f => f.kind === 'boss');
     return {
-      label: label || S.label, runs: n, errors: rs.filter(r => r.error).length,
-      deathsByRound: deaths,
-      reachedBoss: reached.length, bossWins: won.length, killedBossButDiedToCinders: lost.filter(r => r.boss.ehpLeft === 0).length, bossWinRate: reached.length ? +(won.length / reached.length).toFixed(2) : null,
-      bossFight: { turnsWon: avg(won.map(r => r.boss.turns)), turnsLost: avg(lost.map(r => r.boss.turns)), hpBefore: avg(reached.map(r => r.boss.hp0)), maxHp: avg(reached.map(r => r.boss.maxHp)), level: avg(reached.map(r => r.boss.level)), hpAfterWin: avg(won.map(r => r.boss.hp1)), bossHpLeftWhenLost: avg(lost.map(r => r.boss.ehpLeft)), bossHp: avg(reached.map(r => r.boss.ehp)), bossAtk: avg(reached.map(r => r.boss.eatk)) },
-      regularR8to9: { fights: reg.length, winRate: reg.length ? +(reg.filter(f => f.won).length / reg.length).toFixed(2) : null, avgTurns: avg(reg.map(f => f.turns)), avgHpLost: avg(reg.map(f => f.hp0 - f.hp1)), avgEnemyHp: avg(reg.map(f => f.ehp)) },
-      eliteR5: { fights: elite5.length, winRate: elite5.length ? +(elite5.filter(f => f.won).length / elite5.length).toFixed(2) : null, avgTurns: avg(elite5.map(f => f.turns)), avgHpLost: avg(elite5.map(f => f.hp0 - f.hp1)) },
+      label: label || S.label, runs: n, errors: rs.filter(r => r.error).length, results,
+      dungeonReached: avg(rs.map(r => r.dungeon || 0)), dungeonsReachedCount: dungeons, rooms: avg(rs.map(r => r.rooms || 0)), steps: avg(rs.map(r => r.time || 0)), level: avg(rs.map(r => r.level || 0)), kills: avg(rs.map(r => r.kills || 0)), lairsCleared: avg(rs.map(r => r.lairs || 0)),
+      deathsByDanger: deaths, fightsByDanger: byDanger,
+      lairs: { fights: lairFights.length, wins: lairFights.filter(f => f.won).length, avgDanger: avg(lairFights.map(f => f.danger)), avgLevel: avg(lairFights.map(f => f.level)) },
+      forcedShare: fights.length ? +(fights.filter(f => f.forced).length / fights.length).toFixed(2) : null,
       ms: Math.round(S.ms || 0),
     };
   };
+  S.variant = function (v) {
+    const b = BOSSES[0];
+    if (v.hp) b.hp = v.hp; if (v.atk) b.atk = v.atk;
+    if (v.buffet) CARD.f_wing_buffet.n.dmg = v.buffet;
+    if (v.breath) CARD.f_dragon_breath.n.dmg = v.breath; if (v.burn) CARD.f_dragon_breath.n.v = v.burn;
+    if (v.block) CARD.f_molten_scales.n.b = v.block; if (v.thorns) CARD.f_molten_scales.n.t = v.thorns;
+    if (v.patch) v.patch();
+    return { hp: b.hp, atk: b.atk };
+  };
+  S.compare = async function (variants, n, opts) { const out = []; for (const [label, v] of Object.entries(variants)) { S.variant(v); S.reset(label); await S.start(n, opts); out.push(Object.assign({ label }, S.summary())); } return out; };
+  S.deathLogs = function (danger, k) { return S.results.filter(r => r.result === 'died' && r.diedDanger === danger).slice(0, k || 3).map(r => ({ fight: r.fights[r.fights.length - 1], log: r.lastLog })); };
   console.log('SIM installed');
 })();
-
-SIM.variant = function (v) {
-  const b = BOSSES[0];
-  if (v.hp) b.hp = v.hp; if (v.atk) b.atk = v.atk;
-  if (v.buffet) CARD.f_wing_buffet.n.dmg = v.buffet;
-  if (v.breath) CARD.f_dragon_breath.n.dmg = v.breath; if (v.burn) CARD.f_dragon_breath.n.v = v.burn;
-  if (v.block) CARD.f_molten_scales.n.b = v.block; if (v.thorns) CARD.f_molten_scales.n.t = v.thorns;
-  if (v.patch) v.patch();
-  return { hp: b.hp, atk: b.atk, buffet: CARD.f_wing_buffet.n.dmg, breath: CARD.f_dragon_breath.n.dmg, burn: CARD.f_dragon_breath.n.v, block: CARD.f_molten_scales.n.b, thorns: CARD.f_molten_scales.n.t };
-};
-SIM.compare = async function (variants, n, opts) {
-  const out = [];
-  for (const [label, v] of Object.entries(variants)) {
-    const applied = SIM.variant(v); SIM.reset(label); await SIM.start(n, opts); const s = SIM.summary();
-    out.push({ label, applied, reached: s.reachedBoss, wins: s.bossWins, winRate: s.bossWinRate, cinderDeaths: s.killedBossButDiedToCinders, turnsWon: s.bossFight.turnsWon, turnsLost: s.bossFight.turnsLost, hpAfterWin: s.bossFight.hpAfterWin, bossHpLeft: s.bossFight.bossHpLeftWhenLost, bossHp: s.bossFight.bossHp, bossAtk: s.bossFight.bossAtk, hpBefore: s.bossFight.hpBefore, deaths: s.deathsByRound });
-  }
-  return out;
-};
-SIM.deathLogs = function (round, k) { return SIM.results.filter(r => r.result === 'died' && r.diedRound === round).slice(0, k || 3).map(r => ({ fight: r.fights[r.fights.length - 1], log: r.lastLog })); };
-console.log('SIM extras installed');

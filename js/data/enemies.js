@@ -75,16 +75,16 @@ e('mimic','Mimic','🧰','phys',40,7,1,null,{special:true});
 const ENEMY = Object.fromEntries(ENEMIES.map(x=>[x.id,x]));
 // Bosses ride the same curve as enemies (hp × hpMult(round), atk × atkMult(round)) and on top of that get +1 armor, +5 levels, ×1.2 basic attacks
 // and their own tier-7 moves (foecards.js), so their base numbers stay close to the ordinary foes of their round. The first boss (round 10) is tuned
-// for a round-10 deck: about twice an ordinary enemy's HP and an elite's bite, a six-turn fight. Bosses 2-10 have not been retuned on this curve yet.
+// for the danger it appears at: about twice an ordinary enemy's HP and an elite's bite, a six-turn fight; every boss sits on the same proportions.
 const BOSSES = [
   {id:'inferno_drake', name:'Inferno Drake', icon:'🐲', el:'fire', hp:45, atk:6, pat:[AS(1,'burn',5),D(12),A(.6,3),A(1.6)]},
-  {id:'lich_king', name:'Lich King', icon:'👑', el:'shadow', hp:150, atk:9, pat:[S('vuln',2),A(1.3),X(),SU('skeleton_horde'),AS(1,'poison',5),A(1.5)], ls:true, passives:['skeleton_horde']},
-  {id:'frost_titan', name:'Frost Titan', icon:'🧊', el:'ice', hp:180, atk:10, pat:[D(15),A(1.4),AS(1,'chill',2),A(.6,3)]},
-  {id:'storm_colossus', name:'Storm Colossus', icon:'🌩️', el:'light', hp:170, atk:11, pat:[AS(1,'shock',5),A(.5,4),X(),B(3),A(1.6)], passives:['aegis_core']},
-  {id:'elder_treant', name:'Elder Treant', icon:'🌳', el:'grass', hp:190, atk:10, pat:[D(16),A(1.4),H(.15),SU('ent'),AS(1,'poison',6),A(.6,3)], thorns:4, passives:['ent']},
-  {id:'hydra_matriarch', name:'Hydra Matriarch', icon:'🐉', el:'poison', hp:200, atk:10, pat:[A(.6,3),AS(1,'poison',8),H(.15),S('weak',2),A(1.5)]},
-  {id:'leviathan', name:'Leviathan', icon:'🐋', el:'water', hp:210, atk:11, pat:[D(18),A(1.4),S('weak',2),A(.6,4)]},
-  {id:'earthshaker', name:'Earthshaker', icon:'🌋', el:'earth', hp:230, atk:12, pat:[D(20),A(1.6),S('vuln',2),X(),A(1.2)], passives:['clay_golem']},
-  {id:'seraph', name:'Seraph of Judgment', icon:'😇', el:'holy', hp:200, atk:12, pat:[H(.15),A(1.4),X(),S('weak',2),A(.5,4),B(3)], passives:['valkyrie']},
-  {id:'chaos_beast', name:'Chaos Beast', icon:'👾', el:'beast', hp:220, atk:13, pat:[A(1.5),AS(1,'burn',5),SU('bear'),A(.6,3),B(4)], passives:['bear']},
+  {id:'lich_king', name:'Lich King', icon:'👑', el:'shadow', hp:50, atk:6, pat:[S('vuln',2),A(1.3),X(),SU('skeleton_horde'),AS(1,'poison',5),A(1.5)], ls:true, passives:['skeleton_horde']},
+  {id:'frost_titan', name:'Frost Titan', icon:'🧊', el:'ice', hp:55, atk:7, pat:[D(15),A(1.4),AS(1,'chill',2),A(.6,3)]},
+  {id:'storm_colossus', name:'Storm Colossus', icon:'🌩️', el:'light', hp:52, atk:7, pat:[AS(1,'shock',5),A(.5,4),X(),B(3),A(1.6)], passives:['aegis_core']},
+  {id:'elder_treant', name:'Elder Treant', icon:'🌳', el:'grass', hp:58, atk:6, pat:[D(16),A(1.4),H(.15),SU('ent'),AS(1,'poison',6),A(.6,3)], thorns:4, passives:['ent']},
+  {id:'hydra_matriarch', name:'Hydra Matriarch', icon:'🐉', el:'poison', hp:55, atk:6, pat:[A(.6,3),AS(1,'poison',8),H(.15),S('weak',2),A(1.5)]},
+  {id:'leviathan', name:'Leviathan', icon:'🐋', el:'water', hp:60, atk:7, pat:[D(18),A(1.4),S('weak',2),A(.6,4)]},
+  {id:'earthshaker', name:'Earthshaker', icon:'🌋', el:'earth', hp:62, atk:7, pat:[D(20),A(1.6),S('vuln',2),X(),A(1.2)], passives:['clay_golem']},
+  {id:'seraph', name:'Seraph of Judgment', icon:'😇', el:'holy', hp:55, atk:7, pat:[H(.15),A(1.4),X(),S('weak',2),A(.5,4),B(3)], passives:['valkyrie']},
+  {id:'chaos_beast', name:'Chaos Beast', icon:'👾', el:'beast', hp:58, atk:7, pat:[A(1.5),AS(1,'burn',5),SU('bear'),A(.6,3),B(4)], passives:['bear']},
 ];
