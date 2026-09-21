@@ -48,7 +48,7 @@ function startFight(o){
   G.log=[]; log(o.boss?`BOSS: ${enemies[0].name} guards its lair!`:o.forced?`${enemies[0].name} has caught your scent. There is no running.`:o.elite?`An elite ${enemies[0].name} appears!`:`${enemies.map(e=>e.name).join(' and ')} appear${enemies.length>1?'':'s'}!`, (o.boss||o.forced)?'bad':'');
   G.phase='battle'; G.spoils=null; G.inter=null; G.shop=null; UI.handUids=[]; UI.sel=null; UI.kbRow='hand'; save();
   UI.intro=true; clearTimeout(UI.introTimer); UI.introTimer=setTimeout(()=>{ UI.intro=false; const a=document.querySelector('.arena'); if(a) a.classList.remove('intro'); },1500);   // the creature steps in first; its details are revealed when the fight starts
-  const f=fx(); if(f) setTimeout(()=>f.banner(o.boss?`Boss: ${enemies[0].name}`:o.forced?`Ambush! ${enemies[0].name}`:o.elite?`Elite: ${enemies[0].name}`:`${enemies[0].name} · danger ${G.round}`, o.boss?'boss':(o.elite||o.forced)?'elite':''),50); sfx(o.boss?'boss':o.forced?'ambush':o.elite?'elite':'battle');
+  const f=fx(); if(f) setTimeout(()=>f.banner(o.boss?`Boss: ${enemies[0].name}`:o.forced?`Ambush! ${enemies[0].name}`:o.elite?`Elite: ${enemies[0].name}`:`${enemies[0].name}`, o.boss?'boss':(o.elite||o.forced)?'elite':''),50); sfx(o.boss?'boss':o.forced?'ambush':o.elite?'elite':'battle');
   startPlayerTurn();
 }
 function startPlayerTurn(){

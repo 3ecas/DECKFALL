@@ -65,9 +65,16 @@ function tierIdx(id){ return TIERS.indexOf(CARD[id].tier); }
 function curTier(id){ return Math.min(8, tierIdx(id)+(G.p.evo[id]||0)); }
 function canEvolve(id){ return CARD[id].type!=='curse'&&curTier(id)<8; }
 function evolveCard(id,n){ const before=curTier(id); G.p.evo[id]=Math.min(8-tierIdx(id),(G.p.evo[id]||0)+(n||1)); if(curTier(id)>before) G.evolves++; return curTier(id)>before; }
-// Values at a tier: the base value times the tier ratio, and every tier above the card's own adds at least +1 to each scaling value,
-// so an upgrade always shows a bigger number (small values used to round to the same figure two tiers in a row).
-function cardVals(id,tier){ const d=CARD[id]; const cur=tier!=null?tier:(G?curTier(id):tierIdx(id)); const b=tierIdx(id); const v={}; for(const k in d.n){ if(!SCALE_KEYS.includes(k)){ v[k]=d.n[k]; continue; } let x=Math.max(1,d.n[k]); for(let t=b+1;t<=cur;t++) x=Math.max(x+1,Math.round(d.n[k]*TIER[TIERS[t]].mult/TIER[d.tier].mult)); v[k]=x; } return v; }
+// Values at a tier. Damage, block, heal, status and the other SCALE_KEYS: the base value times the tier ratio, and every tier above the card's own
+// adds at least +1, so an upgrade always shows a bigger number. Mana (e), draw (d) and redraw (n): exactly +1 per tier. Hits: +1 every two tiers
+// (the damage of each hit already grows). Self-damage (s) is a cost and stays where it is. Every card gets stronger with every tier.
+function cardVals(id,tier){ const d=CARD[id]; const cur=tier!=null?tier:(G?curTier(id):tierIdx(id)); const b=tierIdx(id); const up=Math.max(0,cur-b); const v={};
+  for(const k in d.n){ const base=d.n[k];
+    if(SCALE_KEYS.includes(k)){ let x=Math.max(1,base); for(let t=b+1;t<=cur;t++) x=Math.max(x+1,Math.round(base*TIER[TIERS[t]].mult/TIER[d.tier].mult)); v[k]=x; }
+    else if(k==='e'||k==='d'||k==='n') v[k]=base+up;
+    else if(k==='hits') v[k]=base+Math.floor(up/2);
+    else v[k]=base; }
+  return v; }
 function cardCost(id){ const d=CARD[id]; return (d.type==='spell'||d.type==='summon')?d.cost:0; }
 // One deck of at most DECK_MAX cards travels with you; anything more waits in the pack until a town lets you swap. Curses always squeeze in.
 function addCard(id){ markSeen(id); if(CARD[id].type==='curse'){ G.p.deck.push(id); kitAdd(id); return 'added'; } const owned=G.p.deck.includes(id)||(G.p.stash||[]).includes(id); if(owned&&canEvolve(id)){ evolveCard(id,1); return 'evolved'; } if(G.p.deck.length>=DECK_MAX){ (G.p.stash=G.p.stash||[]).push(id); return 'packed'; } G.p.deck.push(id); kitAdd(id); return owned?'copied':'added'; }

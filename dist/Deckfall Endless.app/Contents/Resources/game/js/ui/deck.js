@@ -12,7 +12,7 @@ function cardFxTags(id){
   return s;
 }
 function dkState(){ return UI.dk||(UI.dk={els:[],types:[],tiers:[],costs:[],fx:[],q:'',sort:'tier'}); }
-function dkCanSwap(){ return !!G&&G.phase==='keeper'; }
+function dkCanSwap(){ return !!G&&(G.phase==='keeper'||(G.phase==='shop'&&!!G.keeper)); }   // at the keeper, and at his smith
 // id -> where each copy of it is right now (hand, draw pile, discard, exhausted, in play)
 function dkLocations(){ const P=G.fight||G.p.kit||newKit(); const m={}; const add=(id,l)=>{ (m[id]=m[id]||[]).push(l); }; for(const c of P.hand) add(c.id,'in hand'); for(const c of P.draw) add(c.id,'draw pile'); for(const c of P.discard) add(c.id,'discard'); for(const c of P.exhaust) add(c.id,'exhausted'); for(const p of P.passives) if(p.inst) add(p.inst.id,'in play'); return m; }
 function dkCounts(){ const counts={}; for(const id of G.p.deck) (counts[id]=counts[id]||{d:0,s:0}).d++; for(const id of (G.p.stash||[])) (counts[id]=counts[id]||{d:0,s:0}).s++; return counts; }

@@ -136,12 +136,13 @@ function gaugesHTML(){
 function hudHTML(o){
   o=o||{}; const p=G.p;
   return `<div class="hud">
-    <div class="hud-l"><span class="round">${G.dungeon?`${themeNow().i} ${esc(themeNow().n)} · Dungeon ${G.dungeon.n} · Room ${G.dungeon.entered} · Danger ${G.round}`:`Round ${G.round}`}</span><span class="gold num" id="goldv">${p.gold}</span></div>
+    <div class="hud-l"><span class="round">${G.dungeon?`${themeNow().i} ${esc(themeNow().n)} · Dungeon ${G.dungeon.n} · Room ${G.dungeon.entered} of ${G.dungeon.rooms}`:`Round ${G.round}`}</span><span class="gold num" id="goldv">${p.gold}</span></div>
     ${o.bars===false?'':`<div class="bars">${gaugesHTML()}</div>`}
     <div class="boosts">${boostsHTML()}</div>
-    <div class="tools"><button class="btn sm" data-act="deck" title="Your deck and your pack">Deck ${p.deck.length}</button><button class="btn sm" data-act="modal" data-m="stats">Stats</button><button class="btn sm" data-act="modal" data-m="chart">Types</button><button class="btn sm" data-act="sound" title="Sound on/off" aria-label="Sound">${SFX.enabled?'🔊':'🔇'}</button><button class="btn sm" data-act="modal" data-m="menu" aria-label="Menu">☰</button></div>
+    <div class="tools">${toolsHTML()}</div>
   </div>`;
 }
+function toolsHTML(){ const p=G.p; return `<button class="btn sm" data-act="deck" title="Your deck and your pack">Deck ${p.deck.length}</button><button class="btn sm" data-act="modal" data-m="stats">Stats</button><button class="btn sm" data-act="modal" data-m="chart">Types</button><button class="btn sm" data-act="sound" title="Sound on/off" aria-label="Sound">${SFX.enabled?'🔊':'🔇'}</button><button class="btn sm" data-act="modal" data-m="menu" aria-label="Menu">☰</button>`; }
 function logHTML(){ return `<div class="log">${G.log.slice(-8).map(l=>`<div class="${l.c}">${esc(l.m)}</div>`).join('')}</div>`; }
 function playerStatusesHTML(){
   // Only conditions that are not a base stat: the stat chips already show Block, Strength, Focus, Armor, Thorns, Crit, Dodge and Life Steal as current values.

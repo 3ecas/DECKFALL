@@ -40,7 +40,7 @@ const TIER={
   perfect:  {c:'#ff5fa8', mult:3.5,  price:320, min:22},
   ultimate: {c:'#ffd166', mult:4.2,  price:450, min:30},
 };
-const SCALE_KEYS=['dmg','b','a','h','v','k','t','u','r','w','m'];   // values that grow with tier; hits/draw/energy/self-damage do not
+const SCALE_KEYS=['dmg','b','a','h','v','k','t','u','r','w','m'];   // values that grow with the tier multiplier; Mana/draw/redraw grow +1 per tier, hits +1 per two tiers, self-damage stays (cardVals in state.js)
 const ST = {
   burn:  {n:'Burn', i:'🔥', d:'Takes X fire damage at the start of its turn, then the stacks halve.'},
   poison:{n:'Poison', i:'☠️', d:'Takes X poison damage at the start of its turn, then loses 1 stack.'},

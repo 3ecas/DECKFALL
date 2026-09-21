@@ -47,7 +47,7 @@ h3{font-size:1rem;font-weight:700;color:var(--ink)}
 .hud .tools{display:flex;gap:6px;margin-left:auto}
 /* battle: the felt table, enemy cards (same anatomy as the player's cards), corner log */
 .battle{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;position:relative}
-.arena{position:relative;flex:1 1 auto;min-height:0;overflow:auto;display:flex;align-items:center;justify-content:center;border-radius:14px;background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,rgba(0,0,0,.05) 0 1px,transparent 1px 3px),radial-gradient(70% 60% at 50% 40%,rgba(70,130,115,.30),transparent 70%),radial-gradient(90% 40% at 50% 110%,rgba(242,192,105,.10),transparent 70%),linear-gradient(180deg,#163634,#0b1d1f);box-shadow:inset 0 0 0 1px rgba(220,178,91,.28),inset 0 0 0 3px rgba(0,0,0,.35),inset 0 0 70px rgba(0,0,0,.6)}
+.arena{position:relative;flex:1 1 auto;min-height:0;overflow:auto;display:flex;align-items:center;justify-content:center}   /* the enemy stands on the table itself: no box */
 .field{display:flex;flex-wrap:nowrap;gap:16px;justify-content:center;align-items:center;padding:14px 12px;width:100%;overflow-x:auto}
 .card.enemy{flex:0 0 190px;width:190px;height:285px;cursor:pointer;animation:sceneIn .4s backwards}
 .card.enemy.isboss{flex-basis:206px;width:206px;height:309px}
@@ -380,8 +380,15 @@ table.stats td{border-bottom:1px dotted rgba(255,255,255,.25)}
 @media (max-width:760px){ .libbody{flex-direction:column} .libside{flex:none;max-height:40%} }
 
 /* ===================== THE WORLD MAP ===================== */
-.mapwrap{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
-.mapview{flex:1;min-height:0;position:relative;overflow:hidden;border-radius:14px;background:rgba(0,0,0,.38);border:1px solid var(--line)}
+.mapwrap{position:fixed;inset:0;z-index:0}   /* the dungeon takes the whole screen; title, tools and status float over it */
+.mapview{position:absolute;inset:0;overflow:hidden}
+.maptitle{position:absolute;left:50%;top:16px;transform:translateX(-50%);text-align:center;pointer-events:none;z-index:5;white-space:nowrap}
+.maptitle .mtn{font-family:var(--display);font-weight:900;font-size:2rem;line-height:1.1;letter-spacing:.04em;color:var(--gold);text-shadow:0 2px 0 rgba(0,0,0,.6),0 0 28px rgba(242,192,105,.3)}
+.maptitle .mts{margin-top:5px;font-family:var(--body);font-weight:800;font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2);text-shadow:0 1px 0 rgba(0,0,0,.6)}
+.maptools{position:absolute;right:18px;top:16px;display:flex;gap:6px;z-index:5}
+.mapstatus{position:absolute;left:18px;bottom:16px;display:flex;align-items:center;gap:14px;z-index:5}
+.mapstatus .bars{display:flex;gap:8px} .mapstatus .bar{width:180px}
+.mapstatus .gold{color:var(--gold);font-weight:800;white-space:nowrap;text-shadow:0 1px 0 rgba(0,0,0,.6)} .mapstatus .gold::before{content:'🪙 '}
 .mapview.pan{cursor:grab} .mapview.panning{cursor:grabbing} .mapview.panning .hex{pointer-events:none}
 .map{display:grid;grid-template-columns:repeat(var(--cols),var(--ts));grid-auto-rows:var(--ts);gap:2px;--ts:44px}
 .tile{position:relative;width:var(--ts);height:var(--ts);border-radius:6px;background:var(--bc);display:flex;align-items:center;justify-content:center;font-size:calc(var(--ts)*.55);line-height:1;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.35);transition:filter .2s;user-select:none}
@@ -446,3 +453,65 @@ table.stats td{border-bottom:1px dotted rgba(255,255,255,.25)}
 #dkzoom.on{opacity:1;transform:scale(1)}
 #dkzoom .card{width:100%;height:auto;aspect-ratio:2/3;flex:none;box-shadow:0 22px 60px rgba(0,0,0,.75),0 0 0 2px rgba(242,192,105,.5);cursor:default}
 @media (max-width:760px){ .dkbody{flex-direction:column} .dkside{flex:none;max-height:38%;border-right:0;border-bottom:1px solid var(--line);padding:0 0 6px} }
+
+/* ===================== BETWEEN-ROUND PANELS AND THE KEEPER =====================
+   One frame, the panel itself. Inside it nothing else is boxed: an art panel with the scene's icon, a title, the words, the choices,
+   all centred on one axis with room between them. */
+.pair .pc .card{flex:none}   /* a column flex would size the card by its flex-basis and cut it */
+.center.scene{padding:26px 34px 28px;gap:14px}
+.center.scene.inter{max-width:600px}
+.iart{position:relative;width:100%;height:140px;border-radius:12px;background-image:var(--ifx,none),radial-gradient(55% 70% at 50% 58%,var(--ig,rgba(93,224,210,.35)),transparent 72%),var(--ib,linear-gradient(180deg,#1b3539,#12262b));box-shadow:inset 0 0 40px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.center.scene.spoils .iart{height:110px}
+.iart .ii{font-size:4.4rem;line-height:1;filter:drop-shadow(0 0 16px var(--ig,rgba(93,224,210,.6))) drop-shadow(0 10px 14px rgba(0,0,0,.7));animation:bob 3s ease-in-out infinite}
+.iart.chest .ii{animation:chestOpen 1.2s cubic-bezier(.3,1.4,.4,1) both}
+.stitle{margin:6px 0 0;font-family:var(--display);font-weight:700;font-size:1.7rem;line-height:1.1;color:var(--gold);letter-spacing:.02em;text-shadow:0 2px 0 rgba(0,0,0,.5),0 0 24px rgba(242,192,105,.25)}
+.itext{margin:0;max-width:52ch;color:var(--ink2);font-size:1.02rem;line-height:1.5}
+.lines{gap:6px;align-items:center} .line{font-size:1.05rem;color:var(--ink)}
+.choices{width:min(100%,440px);gap:10px;margin-top:4px} .choices.two{flex-direction:row;justify-content:center;width:min(100%,560px)} .choices.two .choice{flex:1 1 0}
+.choice{display:flex;flex-direction:column;align-items:center;gap:3px;padding:11px 18px 12px;border-radius:8px;border:1px solid rgba(0,0,0,.6);background:linear-gradient(180deg,var(--plq1),var(--plq2) 70%);color:var(--ink);font-weight:700;font-size:.95rem;text-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -1px 0 rgba(220,178,91,.45),0 2px 6px rgba(0,0,0,.4);text-shadow:0 1px 0 rgba(0,0,0,.5);transition:transform .12s,box-shadow .2s,border-color .2s}
+.choice:hover:not([disabled]),.choice.kbf{transform:translateY(-1px);border-color:rgba(242,192,105,.6);border-style:solid;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 -1px 0 var(--gold),0 0 14px rgba(242,192,105,.35),0 4px 10px rgba(0,0,0,.45)}
+.choice small{display:block;color:var(--ink2);font-weight:600;font-size:.8rem}
+/* what each scene looks like */
+.k-chest .iart,.svc.pack .svart{--ib:linear-gradient(180deg,#4a3512,#1d1508);--ig:rgba(242,192,105,.55);--ifx:radial-gradient(circle at 24% 78%,rgba(255,220,120,.9) 0 2px,transparent 4px),radial-gradient(circle at 72% 30%,rgba(255,220,120,.8) 0 2px,transparent 4px),radial-gradient(circle at 86% 70%,rgba(255,220,120,.7) 0 1.5px,transparent 3px)}
+.k-treasury .iart,.k-boss .iart{--ib:linear-gradient(180deg,#5a4416,#22190a);--ig:rgba(255,209,102,.65);--ifx:repeating-conic-gradient(from 0deg at 50% 50%,rgba(255,241,168,.14) 0 5deg,transparent 5deg 16deg)}
+.k-boost .iart{--ib:linear-gradient(180deg,#1f1b3f,#0a0818);--ig:rgba(139,123,255,.55);--ifx:repeating-linear-gradient(-68deg,rgba(255,225,77,.12) 0 2px,transparent 2px 28px),radial-gradient(circle at 30% 30%,rgba(255,255,255,.8) 0 1.5px,transparent 3px),radial-gradient(circle at 70% 70%,rgba(255,255,255,.7) 0 1.5px,transparent 3px)}
+.k-shrine .iart,.svc.rest .svart{--ib:linear-gradient(180deg,#153a3a,#0a1f1f);--ig:rgba(93,224,210,.5);--ifx:repeating-conic-gradient(from 0deg at 50% 50%,rgba(255,241,168,.10) 0 5deg,transparent 5deg 16deg)}
+.k-forge .iart,.svc.smith .svart,.k-camp .iart{--ib:linear-gradient(180deg,#3a150a,#180604);--ig:rgba(255,110,30,.6);--ifx:radial-gradient(75% 55% at 50% 108%,rgba(255,110,30,.6),transparent 70%),radial-gradient(circle at 22% 72%,rgba(255,196,96,.95) 0 2px,transparent 4px),radial-gradient(circle at 71% 28%,rgba(255,196,96,.85) 0 2px,transparent 4px),radial-gradient(circle at 85% 64%,rgba(255,160,60,.85) 0 2px,transparent 4px),radial-gradient(circle at 40% 40%,rgba(255,196,96,.7) 0 1.5px,transparent 3px)}
+.k-camp .iart{--ib:linear-gradient(180deg,#2a1408,#0f0805);--ig:rgba(255,160,60,.6)}
+.k-idol .iart{--ib:linear-gradient(180deg,#221433,#0d0817);--ig:rgba(157,139,255,.45);--ifx:radial-gradient(80% 40% at 50% 110%,rgba(0,0,0,.7),transparent 70%)}
+.k-ambush .iart,.k-bandits .iart,.k-thief .iart,.k-altar .iart{--ib:linear-gradient(180deg,#3a0f18,#180608);--ig:rgba(255,77,106,.5);--ifx:repeating-linear-gradient(118deg,rgba(255,255,255,.05) 0 1px,transparent 1px 14px)}
+.k-gambler .iart,.k-wanderer .iart{--ib:linear-gradient(180deg,#123b1f,#06170c);--ig:rgba(85,214,107,.45);--ifx:radial-gradient(60% 35% at 50% 0%,rgba(190,255,190,.12),transparent 70%)}
+.k-traveler .iart,.k-peddler .iart,.svc.remove .svart{--ib:linear-gradient(180deg,#3b2414,#150b05);--ig:rgba(216,180,138,.5);--ifx:repeating-linear-gradient(118deg,rgba(216,180,138,.12) 0 2px,transparent 2px 18px)}
+.k-well .iart{--ib:linear-gradient(180deg,#0e2f52,#061426);--ig:rgba(120,200,255,.5);--ifx:repeating-radial-gradient(circle at 50% 125%,rgba(120,200,255,.14) 0 6px,transparent 6px 20px)}
+.k-elite .iart{--ib:linear-gradient(180deg,#3b2414,#150b05);--ig:rgba(255,209,102,.5)}
+.k-fight .iart{--ig:rgba(242,192,105,.45)}
+/* the keeper: everything on one centred axis */
+.scene.keeper{width:min(100%,860px);margin:auto;padding:26px 34px 28px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;overflow:auto;max-height:calc(100% - 8px)}
+.kart{width:112px;height:112px;border-radius:50%;background:radial-gradient(circle at 50% 45%,rgba(242,192,105,.35),transparent 70%);display:flex;align-items:center;justify-content:center}
+.kart span{font-size:3.6rem;line-height:1;filter:drop-shadow(0 0 16px rgba(242,192,105,.6)) drop-shadow(0 8px 12px rgba(0,0,0,.7));animation:bob 3s ease-in-out infinite}
+.ksvc{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;width:100%;margin:6px 0 2px}
+.svc{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 12px 16px;border-radius:12px;border:0;background:transparent;color:var(--ink);cursor:pointer;text-align:center;font:inherit;transition:background .2s,transform .12s}
+.svc:hover:not([disabled]),.svc.kbf{background:rgba(255,255,255,.06);transform:translateY(-2px)}
+.svc[disabled]{cursor:default;opacity:.45;filter:grayscale(.5)}
+.svart{width:76px;height:76px;border-radius:50%;background-image:var(--ifx,none),radial-gradient(60% 60% at 50% 50%,var(--ig,rgba(93,224,210,.4)),transparent 72%);display:flex;align-items:center;justify-content:center;margin-bottom:6px}
+.svart span{font-size:2.4rem;line-height:1;filter:drop-shadow(0 0 12px var(--ig,rgba(93,224,210,.6))) drop-shadow(0 6px 10px rgba(0,0,0,.7))}
+.svname{font-family:var(--display);font-weight:700;font-size:1.05rem;color:var(--ink);letter-spacing:.02em}
+.svprice{color:var(--gold);font-weight:800;font-size:.9rem} .svdesc{color:var(--ink2);font-size:.82rem;line-height:1.35;max-width:22ch}
+.svc.used .svname::after{content:' · done';color:var(--ink3);font-family:var(--body);font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+.scene.keeper .shopcards{max-height:none;padding:4px 0 8px}
+.kdesc{margin-top:6px;padding:11px 28px;font-size:1rem}
+@media (max-width:820px){ .ksvc{grid-template-columns:repeat(2,1fr)} }
+
+/* ===================== ROOM TO BREATHE: fewer frames across the rest of the UI ===================== */
+.stat{background:transparent;border:0;box-shadow:none;padding:4px 6px;gap:5px;font-size:.84rem} .stat+.stat{border-left:1px solid rgba(255,255,255,.08);border-radius:0}
+.pstats{gap:0}
+.kit{background:transparent;border:0;border-top:1px solid rgba(255,255,255,.08);border-radius:0;padding:10px 4px 0;gap:18px;align-items:center}
+.kitside{min-width:190px;gap:4px;text-align:left} .kitside .pdi{background:transparent;border:0;padding:0;color:var(--ink)} .kitside .pd{gap:10px}
+.libside{background:transparent;border:0;border-right:1px solid rgba(255,255,255,.08);border-radius:0;padding:6px 12px 6px 0}
+.scene.shop{padding:24px 30px 26px;gap:14px} .scene.shop .row.between{align-items:center}
+/* the smith: the whole deck in view, small cards; the upgraded card sits on top of each and fades in on hover */
+.scene.shop:has(.shopcards.all){width:min(100%,1140px)}
+.shopcards.all{grid-template-columns:repeat(auto-fill,124px);max-height:none;overflow:visible;gap:12px 10px;padding:8px 2px 10px}
+.shopcards.all .card{flex-basis:124px;width:124px;height:186px}
+.upwrap{position:relative} .upwrap .nxt{position:absolute;inset:0;z-index:3;opacity:0;transition:opacity .22s} .upwrap:hover .nxt,.upwrap .nxt:has(.kbf){opacity:1}   /* above the current card's plaques, so hover and the tooltip always belong to the upgraded card */
+.upwrap.poor{opacity:.5}

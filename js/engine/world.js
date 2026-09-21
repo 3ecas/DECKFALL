@@ -81,7 +81,7 @@ function moveStep(dir){ if(!G||G.phase!=='map'||UI.busy) return; clearTimeout(UI
 // One step: the fog moves, a new room raises the danger, then whatever notices you or waits on the hex takes over. Returns true when the walk must stop.
 function moveTo(x,y){
   G.pos={x,y}; G.time=(G.time||0)+1; const D=G.dungeon; const t=tileAt(x,y);
-  if(t.room>=0&&!D.visited.includes(t.room)){ D.visited.push(t.room); D.entered++; G.round=dangerNow(); toast(`Room ${D.entered} · danger ${G.round}`); }
+  if(t.room>=0&&!D.visited.includes(t.room)){ D.visited.push(t.room); D.entered++; G.round=dangerNow(); toast(`Room ${D.entered} of ${D.rooms}`); }
   reveal(); render();
   const hunter=detect(); if(hunter){ startCreatureFight(hunter,true); return true; }
   if(blocks(t)){ resolveTile(t); return true; }
