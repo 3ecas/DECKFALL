@@ -23,9 +23,11 @@ function handle(act,t){
     case 'inter-card': interludePick(t.dataset.id); break;
     case 'inter-skip': interludeSkip(); break;
     case 'inter-next': interludeContinue(); break;
-    case 'shop-upgrade': shopUpgrade(t.dataset.id); break;
+    case 'shop-pick': shopPick(t.dataset.id); break;
+    case 'shop-confirm': case 'shop-upgrade': shopUpgrade(t.dataset.id); break;
+    case 'shop-back': shopBack(); break;
     case 'shop-leave': if(G.keeper){ G.shop=null; G.phase='keeper'; render(); save(); } else nextRound(); break;
-    case 'hex': walkTo(+t.dataset.x,+t.dataset.y); break;
+    case 'hex': if(UI.dragSuppress&&Date.now()-UI.dragSuppress<250) break; walkTo(+t.dataset.x,+t.dataset.y); break;
     case 'keeper-rest': keeperRest(); break;
     case 'keeper-smith': keeperSmith(); break;
     case 'keeper-buy': keeperBuy(t.dataset.id); break;
@@ -40,6 +42,8 @@ function handle(act,t){
     case 'keeper-descend': keeperDescend(); break;
     case 'event-choice': eventChoose(+t.dataset.i); break;
     case 'forge-pick': forgePick(); break;
+    case 'forge-confirm': forgeConfirm(); break;
+    case 'forge-back': forgeBack(); break;
     case 'camp-rest': campChoose('rest'); break;
     case 'camp-tough': campChoose('tough'); break;
     case 'modal': openModal(t.dataset.m); break;

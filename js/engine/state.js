@@ -65,7 +65,9 @@ function tierIdx(id){ return TIERS.indexOf(CARD[id].tier); }
 function curTier(id){ return Math.min(8, tierIdx(id)+(G.p.evo[id]||0)); }
 function canEvolve(id){ return CARD[id].type!=='curse'&&curTier(id)<8; }
 function evolveCard(id,n){ const before=curTier(id); G.p.evo[id]=Math.min(8-tierIdx(id),(G.p.evo[id]||0)+(n||1)); if(curTier(id)>before) G.evolves++; return curTier(id)>before; }
-function cardVals(id,tier){ const d=CARD[id]; const cur=tier!=null?tier:(G?curTier(id):tierIdx(id)); const m=TIER[TIERS[cur]].mult/TIER[d.tier].mult; const v={}; for(const k in d.n) v[k]=SCALE_KEYS.includes(k)?Math.max(1,Math.round(d.n[k]*m)):d.n[k]; return v; }
+// Values at a tier: the base value times the tier ratio, and every tier above the card's own adds at least +1 to each scaling value,
+// so an upgrade always shows a bigger number (small values used to round to the same figure two tiers in a row).
+function cardVals(id,tier){ const d=CARD[id]; const cur=tier!=null?tier:(G?curTier(id):tierIdx(id)); const b=tierIdx(id); const v={}; for(const k in d.n){ if(!SCALE_KEYS.includes(k)){ v[k]=d.n[k]; continue; } let x=Math.max(1,d.n[k]); for(let t=b+1;t<=cur;t++) x=Math.max(x+1,Math.round(d.n[k]*TIER[TIERS[t]].mult/TIER[d.tier].mult)); v[k]=x; } return v; }
 function cardCost(id){ const d=CARD[id]; return (d.type==='spell'||d.type==='summon')?d.cost:0; }
 // One deck of at most DECK_MAX cards travels with you; anything more waits in the pack until a town lets you swap. Curses always squeeze in.
 function addCard(id){ markSeen(id); if(CARD[id].type==='curse'){ G.p.deck.push(id); kitAdd(id); return 'added'; } const owned=G.p.deck.includes(id)||(G.p.stash||[]).includes(id); if(owned&&canEvolve(id)){ evolveCard(id,1); return 'evolved'; } if(G.p.deck.length>=DECK_MAX){ (G.p.stash=G.p.stash||[]).push(id); return 'packed'; } G.p.deck.push(id); kitAdd(id); return owned?'copied':'added'; }
@@ -112,7 +114,9 @@ function openInterlude(t){
   if(t==='ambush'){ UI.timer=setTimeout(()=>{ startFight({elite:true,goldMult:2,ambush:true}); },1500); }
   else if(I.auto){ UI.timer=setTimeout(nextRound,3200); }
 }
-function forgePick(){ const I=G.inter; if(!I||I.t!=='forge'||I.picked) return; pickDeckCard('Choose a card to reforge',id=>{ if(!canEvolve(id)){ toast('Already ultimate'); render(); return; } evolveCard(id,1); I.picked=true; I.lines.push(`${CARD[id].name} is reforged into ${TIERS[curTier(id)]}.`); sfx('evolve'); render(); save(); UI.timer=setTimeout(nextRound,1600); },id=>canEvolve(id)?`→ ${TIERS[curTier(id)+1]}`:'ultimate'); }
+function forgePick(){ const I=G.inter; if(!I||I.t!=='forge'||I.picked) return; pickDeckCard('Choose a card to reforge',id=>{ if(!canEvolve(id)){ toast('Already ultimate'); render(); return; } I.pick=id; render(); save(); },id=>canEvolve(id)?`→ ${TIERS[curTier(id)+1]}`:'ultimate'); }   // shows it before and after first
+function forgeBack(){ const I=G.inter; if(!I||I.t!=='forge'||I.picked) return; I.pick=null; render(); }
+function forgeConfirm(){ const I=G.inter; if(!I||I.t!=='forge'||I.picked||!I.pick) return; const id=I.pick; evolveCard(id,1); I.picked=true; I.lines.push(`${CARD[id].name} is reforged into ${TIERS[curTier(id)]}.`); sfx('evolve'); render(); save(); UI.timer=setTimeout(nextRound,1800); }
 const CAMP={healPct:40,toughPct:10};
 function campChoose(kind){ const I=G.inter; if(!I||I.t!=='camp'||I.picked) return; const p=G.p; if(kind==='tough'){ const v=Math.max(5,Math.round(p.maxHp*CAMP.toughPct/100)); p.maxHp+=v; p.hp+=v; I.lines.push(`You train by the fire: +${v} Max HP, for good.`); sfx('levelup'); } else { const h=heal(Math.round(p.maxHp*CAMP.healPct/100)); I.lines.push(`You rest by the fire and heal ${h}.`); sfx('heal'); } I.picked=true; render(); save(); UI.timer=setTimeout(nextRound,1600); }
 function forgeRandom(){ const ids=[...new Set(G.p.deck)].filter(canEvolve); if(!ids.length) return null; const id=pick(ids); evolveCard(id,1); return id; }
@@ -122,9 +126,11 @@ function interludeContinue(){ const I=G.inter; if(!I) return; if(I.cards&&!I.pic
 function nextRound(){ backToMap(); }   // every road leads back to the map
 
 // ---- blacksmith (at the keeper, between dungeons): upgrades a card you own for gold. ----
-function openShop(){ G.shop={}; G.phase='shop'; render(); save(); sfx('shop'); }
+function openShop(){ G.shop={pick:null}; G.phase='shop'; render(); save(); sfx('shop'); }
+function shopPick(id){ if(!G.shop||G.shop.used||!G.p.deck.includes(id)) return; if(!canEvolve(id)){ toast('Already ultimate'); return; } G.shop.pick=id; render(); save(); }   // show it before and after, then ask
+function shopBack(){ if(!G.shop||G.shop.used) return; G.shop.pick=null; render(); }
 function evolvePrice(id){ return Math.round(TIER[TIERS[Math.min(8,curTier(id)+1)]].price*0.7*(1+0.03*G.round)); }
-function shopUpgrade(id){ if(!G.p.deck.includes(id)) return; if(G.shop&&G.shop.used){toast('The merchant only upgrades one card per visit');return;} if(!canEvolve(id)){toast('Already ultimate');return;} const c=evolvePrice(id); if(G.p.gold<c){toast('Not enough gold');return;} G.p.gold-=c; evolveCard(id,1); G.shop.used=CARD[id].name+' → '+TIERS[curTier(id)]; if(G.keeper) G.keeper.used.smith=true; toast(`${CARD[id].name} evolved to ${TIERS[curTier(id)]}`); sfx('evolve'); render(); save(); }   // one upgrade per visit
+function shopUpgrade(id){ if(!G.p.deck.includes(id)) return; if(G.shop&&G.shop.used){toast('The merchant only upgrades one card per visit');return;} if(!canEvolve(id)){toast('Already ultimate');return;} const c=evolvePrice(id); if(G.p.gold<c){toast('Not enough gold');return;} G.p.gold-=c; evolveCard(id,1); G.shop.used=CARD[id].name+' → '+TIERS[curTier(id)]; G.shop.pick=id; if(G.keeper) G.keeper.used.smith=true; toast(`${CARD[id].name} evolved to ${TIERS[curTier(id)]}`); sfx('evolve'); render(); save(); }   // one upgrade per visit
 
 // ---- death ----
 function gameOver(){ clearTimeout(UI.timer); sfx('defeat'); if(G.fight) G.fight.over=true; G.best=recordBest(); clearSave(); G.phase='gameover'; render(); }

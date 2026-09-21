@@ -54,11 +54,14 @@ h3{font-size:1rem;font-weight:700;color:var(--ink)}
 .card.enemy:hover{transform:scale(1.03);transform-origin:50% 100%;animation:none;box-shadow:0 12px 24px rgba(0,0,0,.5),0 0 16px color-mix(in srgb,var(--el) 45%,transparent)}
 .card.enemy.sel,.card.enemy.sel:hover{box-shadow:0 0 0 3px var(--gold),0 0 28px rgba(242,192,105,.5),0 8px 18px rgba(0,0,0,.5)}
 .card.enemy.dead,.card.enemy.dead:hover{opacity:.3;filter:grayscale(1);cursor:default;transform:scale(.94);box-shadow:none}
-.card.enemy .cart{top:21cqw;height:40cqw} .card.enemy .cart span{animation:bob 3s ease-in-out infinite}
+.card.enemy .cart{top:21cqw;height:37cqw} .card.enemy .cart span{animation:bob 3s ease-in-out infinite}
 .card.enemy .ccost{flex-direction:column;gap:.3cqw} .card.enemy .ccost small{position:relative;font-family:var(--body);font-weight:800;font-size:3.4cqw;letter-spacing:.14em;text-transform:uppercase;color:#dcb25b;line-height:1} .card.enemy .ccost b{font-size:9.5cqw}
-.card.enemy .ehp{position:absolute;left:6.4cqw;top:64cqw;width:87.5cqw;height:7.2cqw;min-width:0;flex:none;border-radius:1cqw;margin:0;z-index:2}
+.card.enemy .ccost.elv{top:auto;bottom:3.9cqw;left:5.5cqw;right:auto}
+.card.enemy .ccost.enat span{position:relative;font-size:10cqw;line-height:1;filter:drop-shadow(0 0 2cqw color-mix(in srgb,var(--el) 80%,transparent)) drop-shadow(0 1px 1px rgba(0,0,0,.8))}
+.card.enemy .ckind{bottom:8.8cqw}
+.card.enemy .ehp{position:absolute;left:6.4cqw;top:61cqw;width:87.5cqw;height:7.2cqw;min-width:0;flex:none;border-radius:1cqw;margin:0;z-index:2}
 .card.enemy .ehp b{font-size:4.4cqw}
-.card.enemy .cbox{top:74.5cqw;height:auto;bottom:12.8cqw;padding:2.6cqw 2.6cqw 2cqw;gap:1.8cqw}
+.card.enemy .cbox{top:71.5cqw;height:auto;bottom:21.5cqw;padding:2.6cqw 2.6cqw 2cqw;gap:1.8cqw}
 .card.enemy .ctier{display:flex;gap:2cqw;letter-spacing:.02em;font-size:4cqw;color:rgba(0,0,0,.7)}
 .card.enemy .intent{font-family:var(--body);font-weight:800;text-transform:uppercase;font-size:5.4cqw;line-height:1.2;color:#0b0e12;display:flex;gap:1.5cqw;align-items:center}
 .card.enemy .intent b{color:#8a1225}
@@ -137,6 +140,11 @@ h3{font-size:1rem;font-weight:700;color:var(--ink)}
 .autobar{width:min(100%,320px);height:4px;background:rgba(255,255,255,.1);border-radius:999px;overflow:hidden}
 .autobar i{display:block;height:100%;background:var(--teal);animation:drain 3.2s linear forwards} .autobar.fast i{animation-duration:1.1s}
 .cardgrid{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;padding:12px 0 16px}
+.pair{display:flex;align-items:center;justify-content:center;gap:18px;padding:8px 0 4px}   /* an upgrade: the card now, an arrow, the card after */
+.pair .pc{display:flex;flex-direction:column;align-items:center;gap:8px}
+.pair .plabel{font-family:var(--body);font-weight:800;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2)}
+.pair .parrow{font-size:2rem;color:var(--gold);text-shadow:0 0 12px rgba(242,192,105,.5)}
+@media (max-height:760px){ .pair .card.big{flex-basis:156px;width:156px;height:234px} }
 .upgrades{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;width:100%} .upgrades.narrow{max-width:720px}
 .upg{background:var(--glass2);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px;text-align:left}
 .upg .uname{font-weight:800;display:flex;gap:6px;align-items:center;flex-wrap:wrap} .upg .udesc{font-size:.84rem;color:var(--ink2)} .upg .btn{align-self:flex-start}
@@ -145,7 +153,7 @@ h3{font-size:1rem;font-weight:700;color:var(--ink)}
 .tierrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center}
 .tierchip{padding:3px 10px;border-radius:999px;border:1px solid var(--tier);color:var(--tier);font-size:.78rem;font-weight:800;text-transform:capitalize}
 /* shop */
-.scene.shop{flex:0 1 auto;margin:auto;width:min(100%,600px);max-height:calc(100% - 8px);display:flex;flex-direction:column;gap:12px;padding:16px 20px 18px;overflow:hidden}   /* a compact merchant panel: three cards across, two rows in view */
+.scene.shop{flex:0 1 auto;margin:auto;width:min(100%,600px);max-height:calc(100% - 8px);display:flex;flex-direction:column;gap:12px;padding:16px 20px 18px;overflow:auto}   /* a compact merchant panel: three cards across, two rows in view */
 .shopcards{display:grid;grid-template-columns:repeat(3,156px);gap:12px;justify-content:center;align-content:start;max-height:calc(2*234px + 12px + 24px);overflow:auto;padding:12px 6px}
 .tabs{display:flex;gap:6px;flex-wrap:wrap}
 .tab{border:1px solid var(--line);background:transparent;padding:7px 14px;border-radius:999px;cursor:pointer;font-weight:700;color:var(--ink2)}
@@ -195,7 +203,27 @@ table.stats td{padding:5px 8px;border-bottom:1px solid var(--line)} table.stats 
    Background = tier colour. Name box top-left, Mana cost top-right, art panel, dotted info box with element/type tags and the
    effect lines, ▲n evolution badge bottom-left, price / owned tag bottom-right. */
 .card{position:relative;flex:0 0 156px;width:156px;height:234px;border-radius:5px;cursor:pointer;user-select:none;container-type:inline-size;color:#0c1015;background:radial-gradient(120% 50% at 18% -4%,rgba(255,255,255,.26),transparent 62%),radial-gradient(110% 55% at 85% 108%,rgba(0,0,0,.30),transparent 62%),linear-gradient(180deg,color-mix(in srgb,var(--tier) 84%,#fff),var(--tier) 42%,color-mix(in srgb,var(--tier) 86%,#000));box-shadow:0 6px 16px rgba(0,0,0,.45);transition:transform .15s,box-shadow .15s;overflow:hidden;text-align:left}
-.card::before{content:'';position:absolute;inset:0;border:2cqw solid color-mix(in srgb,var(--tier) 18%,#161a30);border-radius:inherit;box-shadow:inset 0 0 0 max(1px,.35cqw) rgba(255,255,255,.34),inset 0 0 0 calc(max(1px,.35cqw)*2) rgba(0,0,0,.22);pointer-events:none;z-index:3}
+/* Tier frames. The frame is drawn by ::before from variables the tier sets: width (--fw), colour (--fc), inner light and dark lines (--fl, --fd),
+   corner rivets (--rr radius, colour --fo), corner brackets (--bl length, --bt thickness) and a dashed filigree line inside the frame (--fil).
+   It sits below the plaques and seals (z-index 1) so ornaments never cross them. */
+.card{--fw:1.1cqw;--fc:color-mix(in srgb,var(--tier) 22%,#161a30);--fl:rgba(255,255,255,.26);--fd:rgba(0,0,0,.16);--fo:transparent;--rr:0cqw;--bl:0cqw;--bt:0cqw;--fil:transparent}
+.card::before{content:'';position:absolute;inset:0;border:var(--fw) solid var(--fc);border-radius:inherit;box-shadow:inset 0 0 0 max(1px,.35cqw) var(--fl),inset 0 0 0 calc(max(1px,.35cqw)*2) var(--fd);outline:max(1px,.3cqw) dashed var(--fil);outline-offset:calc(-1*(var(--fw) + 1.7cqw));pointer-events:none;z-index:1;
+  --riv:radial-gradient(circle,var(--fo) 0 var(--rr),transparent calc(var(--rr) + .3cqw));--bh:linear-gradient(var(--fo),var(--fo));--ro:calc(var(--fw) + .5cqw);--rs:calc(var(--rr)*2 + .6cqw);--bo:calc(var(--fw) + .9cqw);
+  background-image:var(--riv),var(--riv),var(--riv),var(--riv),var(--bh),var(--bh),var(--bh),var(--bh),var(--bh),var(--bh),var(--bh),var(--bh);background-repeat:no-repeat;
+  background-size:var(--rs) var(--rs),var(--rs) var(--rs),var(--rs) var(--rs),var(--rs) var(--rs),var(--bl) var(--bt),var(--bl) var(--bt),var(--bl) var(--bt),var(--bl) var(--bt),var(--bt) var(--bl),var(--bt) var(--bl),var(--bt) var(--bl),var(--bt) var(--bl);
+  background-position:left var(--ro) top var(--ro),right var(--ro) top var(--ro),left var(--ro) bottom var(--ro),right var(--ro) bottom var(--ro),left var(--bo) top var(--bo),right var(--bo) top var(--bo),left var(--bo) bottom var(--bo),right var(--bo) bottom var(--bo),left var(--bo) top var(--bo),right var(--bo) top var(--bo),left var(--bo) bottom var(--bo),right var(--bo) bottom var(--bo)}
+.card.t-basic{--fw:1.1cqw;--fl:rgba(255,255,255,.2);--fd:transparent}
+.card.t-common{--fw:1.5cqw}
+.card.t-uncommon{--fw:1.9cqw;--fo:color-mix(in srgb,var(--tier) 30%,#f2d58a);--rr:1.1cqw}
+.card.t-medium{--fw:2.2cqw;--fc:color-mix(in srgb,var(--tier) 30%,#131a2e);--fl:rgba(255,255,255,.4);--fd:rgba(0,0,0,.3);--fo:color-mix(in srgb,var(--tier) 30%,#f2d58a);--rr:1.4cqw}
+.card.t-good{--fw:2.5cqw;--fc:color-mix(in srgb,var(--tier) 34%,#2a2416);--fl:rgba(255,255,255,.42);--fd:rgba(0,0,0,.32);--fo:#e6c374;--rr:1.6cqw;--bl:6cqw;--bt:.6cqw}
+.card.t-great{--fw:2.8cqw;--fc:color-mix(in srgb,var(--tier) 36%,#2e2614);--fl:rgba(255,255,255,.44);--fd:rgba(0,0,0,.34);--fo:#eccb7c;--rr:1.8cqw;--bl:8cqw;--bt:.7cqw;--fil:rgba(255,236,180,.45)}
+.card.t-rare{--fw:3cqw;--fc:color-mix(in srgb,var(--tier) 38%,#33240f);--fl:rgba(255,255,255,.48);--fd:rgba(0,0,0,.36);--fo:#f0cf7e;--rr:2cqw;--bl:10cqw;--bt:.8cqw;--fil:rgba(255,236,180,.55)}
+.card.t-perfect{--fw:3.2cqw;--fc:color-mix(in srgb,var(--tier) 40%,#3a2a14);--fl:rgba(255,255,255,.52);--fd:rgba(0,0,0,.38);--fo:#f5d98a;--rr:2.2cqw;--bl:12cqw;--bt:.9cqw;--fil:rgba(255,240,190,.65)}
+.card.t-ultimate{--fw:3.4cqw;--fc:#c9962f;--fl:rgba(255,246,214,.7);--fd:rgba(80,50,0,.45);--fo:#fff0b8;--rr:2.4cqw;--bl:14cqw;--bt:1cqw;--fil:rgba(255,246,214,.8)}
+.card.enemy{--fw:1.5cqw}
+.card.enemy.r-elite{--fw:2.6cqw;--fc:color-mix(in srgb,var(--tier) 40%,#2a2416);--fl:rgba(255,255,255,.44);--fd:rgba(0,0,0,.34);--fo:#e6c374;--rr:1.7cqw;--bl:8cqw;--bt:.7cqw;--fil:rgba(255,236,180,.45)}
+.card.enemy.r-boss{--fw:3.4cqw;--fc:#8a2a3a;--fl:rgba(255,220,220,.55);--fd:rgba(60,0,10,.45);--fo:#ffd27a;--rr:2.4cqw;--bl:14cqw;--bt:1cqw;--fil:rgba(255,230,180,.7)}
 /* shared plaque finish for the dark boxes: gradient, dark edge, light top bevel */
 .card .cname,.card .ctag,.card .cevo,.card .ckind{background:linear-gradient(180deg,#2b4b50,#1a3438 60%,#152c30);border:max(1px,.3cqw) solid rgba(0,0,0,.55);box-shadow:inset 0 max(1px,.3cqw) 0 rgba(255,255,255,.16),0 1px 2px rgba(0,0,0,.45)}
 .card:hover,.card.enter:hover,.hand .card.sel{transform:scale(1.07);transform-origin:50% 100%;z-index:2;animation:hoverGlow 1.6s ease-in-out infinite}
@@ -219,15 +247,23 @@ table.stats td{padding:5px 8px;border-bottom:1px solid var(--line)} table.stats 
 .card .cart{position:absolute;left:6.4cqw;top:23cqw;width:87.5cqw;height:44.25cqw;border-radius:.9cqw;border:max(1px,.35cqw) solid rgba(0,0,0,.6);background:radial-gradient(48% 62% at 50% 50%,color-mix(in srgb,var(--el) 34%,transparent),transparent 72%),linear-gradient(115deg,rgba(255,255,255,.09),transparent 42%),linear-gradient(180deg,color-mix(in srgb,var(--el) 12%,#1b3539),color-mix(in srgb,var(--el) 5%,#12262b));box-shadow:inset 0 0 0 max(1px,.3cqw) rgba(255,255,255,.10),inset 0 0 9cqw rgba(0,0,0,.55),0 1px 2px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center}
 .card .cart span{font-size:24cqw;line-height:1;filter:drop-shadow(0 1.2cqw 2cqw rgba(0,0,0,.6))}
 /* dotted info box: element tag + tier, then the effect lines */
-.card .cbox{position:absolute;left:6.4cqw;top:78cqw;width:87.5cqw;height:56.7cqw;border:max(1px,.31cqw) dotted rgba(0,0,0,.72);border-radius:1.6cqw;padding:3.4cqw 2.6cqw 2cqw;background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.05));display:flex;flex-direction:column;gap:2.6cqw;overflow:hidden}
+.card .cbox{position:absolute;left:6.4cqw;top:78cqw;width:87.5cqw;height:56.7cqw;border:max(1px,.31cqw) dotted rgba(0,0,0,.72);border-radius:1.6cqw;padding:2.8cqw 2.6cqw 2cqw;background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.05));display:flex;flex-direction:column;gap:2cqw;overflow:hidden}
 .card .ctags{display:flex;flex-wrap:wrap;align-items:center;gap:1.2cqw}
-.card .ctag{font-family:var(--body);font-weight:800;font-size:4.5cqw;line-height:1.25;letter-spacing:.03em;text-transform:uppercase;padding:.4cqw 1.3cqw;color:var(--el);border-radius:.5cqw;white-space:nowrap}
+.card .ctag{font-family:var(--body);font-weight:800;font-size:4.8cqw;line-height:1.25;letter-spacing:.03em;text-transform:uppercase;padding:.4cqw 1.3cqw;color:var(--el);border-radius:.5cqw;white-space:nowrap}
 .card .ctier{margin-left:auto;font-family:var(--body);font-weight:800;font-size:4cqw;letter-spacing:.06em;text-transform:uppercase;color:rgba(0,0,0,.55);white-space:nowrap}
-.card .cdesc{display:flex;flex-direction:column;gap:1cqw;font-family:var(--body);font-weight:800;text-transform:uppercase;color:#0b0e12}
-.card .cdesc p{margin:0} .card .cmain{font-size:5.6cqw;line-height:1.2;letter-spacing:.01em}
-.card .cext{font-size:4.8cqw;line-height:1.2;color:rgba(0,0,0,.74)} .card .cext::before{content:'+ ';color:rgba(0,0,0,.42)}
-.card .cdesc b{color:inherit;font-weight:800}
-.card .up{font-style:normal;color:#0a3d25;background:rgba(255,255,255,.55);border-radius:.3em;padding:0 .22em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+/* The face reads at a glance: a big number, the element or status icon and a short unit; extras are pills of the same shape; keywords are small lines. Hover for the full story. */
+.card .cmain{display:flex;align-items:center;gap:1.6cqw;line-height:1;min-height:11cqw;color:#0b0e12}
+.card .cnum{font-family:var(--display);font-weight:900;font-size:14.5cqw;line-height:1;letter-spacing:-.02em;text-shadow:0 1px 0 rgba(255,255,255,.35)}
+.card .cnum small{font-size:7cqw;font-weight:800;letter-spacing:0;margin-left:.4cqw}
+.card .cico{font-size:9.5cqw;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+.card .cmain:not(:has(.cnum)) .cico{font-size:12cqw}
+.card .cunit{font-family:var(--body);font-weight:800;font-size:5cqw;line-height:1;letter-spacing:.08em;text-transform:uppercase;color:rgba(0,0,0,.72)}
+.card .cmod{margin-top:-.8cqw;font-family:var(--body);font-weight:800;font-size:4.4cqw;line-height:1.2;letter-spacing:.04em;text-transform:uppercase;color:rgba(0,0,0,.62)}
+.card .cxs{display:flex;flex-wrap:wrap;gap:1.3cqw}
+.card .cx{display:inline-flex;align-items:center;gap:1cqw;padding:.7cqw 1.7cqw .7cqw 1.3cqw;border-radius:.9cqw;background:rgba(0,0,0,.09);box-shadow:inset 0 0 0 max(1px,.25cqw) rgba(0,0,0,.26);font-family:var(--body);font-weight:800;font-size:4.4cqw;letter-spacing:.05em;text-transform:uppercase;color:#0b0e12;line-height:1;white-space:nowrap}
+.card .cx b{font-family:var(--display);font-weight:900;font-size:7.2cqw;line-height:1;letter-spacing:-.02em} .card .cx i{font-style:normal;font-size:6cqw;line-height:1} .card .cx small{font-size:4.2cqw;color:rgba(0,0,0,.7)}
+.card .ckw{font-family:var(--body);font-weight:800;font-size:4.2cqw;line-height:1.15;letter-spacing:.04em;text-transform:uppercase;color:rgba(0,0,0,.58)} .card .ckw::before{content:'◆ ';font-size:.8em;color:rgba(0,0,0,.4)}
+.card .up{font-style:normal;color:#0a3d25;background:rgba(255,255,255,.55);border-radius:.3em;padding:0 .22em;box-decoration-break:clone;-webkit-box-decoration-break:clone} .card .cnum .up{background:none;padding:0;color:#0c4f2f}
 /* evolution badge bottom-left, card kind bottom-right, price / owned tag between the art and the info box */
 .card .cevo{position:absolute;left:5.5cqw;bottom:5cqw;height:6.6cqw;padding:0 1.8cqw 0 1.4cqw;display:flex;align-items:center;gap:1cqw;border-radius:.5cqw;font-family:var(--body);font-weight:800;font-size:5.2cqw;line-height:1;color:color-mix(in srgb,var(--tier) 70%,#fff);z-index:2}
 .card .cevo i{display:block;width:0;height:0;border-left:2cqw solid transparent;border-right:2cqw solid transparent;border-bottom:3.6cqw solid #43c285}
@@ -245,7 +281,6 @@ table.stats td{padding:5px 8px;border-bottom:1px solid var(--line)} table.stats 
 /* ---- card finish: linen texture and gilt inner line on the tier body, gold-ruled name plaque, element-themed art panels
    (each element sets --art-bg and --art-fx), glowing icons, gold price ribbon, foil shimmer on rare / perfect / ultimate ---- */
 .card{background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.04) 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,rgba(0,0,0,.035) 0 1px,transparent 1px 3px),radial-gradient(120% 50% at 18% -4%,rgba(255,255,255,.28),transparent 62%),radial-gradient(110% 55% at 85% 108%,rgba(0,0,0,.32),transparent 62%),linear-gradient(180deg,color-mix(in srgb,var(--tier) 84%,#fff),var(--tier) 42%,color-mix(in srgb,var(--tier) 86%,#000))}
-.card::before{box-shadow:inset 0 0 0 max(1px,.35cqw) rgba(255,244,214,.42),inset 0 0 0 calc(max(1px,.35cqw)*2) rgba(0,0,0,.24)}
 .card .cname{box-shadow:inset 0 max(1px,.3cqw) 0 rgba(255,255,255,.16),inset 0 calc(-1*max(1px,.3cqw)) 0 rgba(220,178,91,.6),0 1px 2px rgba(0,0,0,.45)}
 .card .cart{background-image:var(--art-fx,none),radial-gradient(46% 60% at 50% 52%,color-mix(in srgb,var(--el) 38%,transparent),transparent 72%),linear-gradient(115deg,rgba(255,255,255,.10),transparent 42%),var(--art-bg,linear-gradient(180deg,#1b3539,#12262b))}
 .card .cart span{filter:drop-shadow(0 0 2.5cqw color-mix(in srgb,var(--el) 75%,transparent)) drop-shadow(0 1.4cqw 2cqw rgba(0,0,0,.65))}
@@ -343,3 +378,71 @@ table.stats td{border-bottom:1px dotted rgba(255,255,255,.25)}
 .card.back{--tier:#3f4a55;--el:#7d8a99;cursor:default} .card.back .cname{letter-spacing:.2em} .card.back .cart span{opacity:.5;filter:none}
 .card.back .cbox{border-color:rgba(0,0,0,.45)} .card.back .cmain{color:rgba(0,0,0,.6)}
 @media (max-width:760px){ .libbody{flex-direction:column} .libside{flex:none;max-height:40%} }
+
+/* ===================== THE WORLD MAP ===================== */
+.mapwrap{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
+.mapview{flex:1;min-height:0;position:relative;overflow:hidden;border-radius:14px;background:rgba(0,0,0,.38);border:1px solid var(--line)}
+.mapview.pan{cursor:grab} .mapview.panning{cursor:grabbing} .mapview.panning .hex{pointer-events:none}
+.map{display:grid;grid-template-columns:repeat(var(--cols),var(--ts));grid-auto-rows:var(--ts);gap:2px;--ts:44px}
+.tile{position:relative;width:var(--ts);height:var(--ts);border-radius:6px;background:var(--bc);display:flex;align-items:center;justify-content:center;font-size:calc(var(--ts)*.55);line-height:1;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.35);transition:filter .2s;user-select:none}
+.tile.unk{background:rgba(255,255,255,.025);cursor:default;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}
+.tile.mem{filter:brightness(.45) saturate(.5)}
+.tile.vis:hover{filter:brightness(1.25);box-shadow:inset 0 0 0 2px var(--gold)}
+.tile .ti{filter:drop-shadow(0 2px 3px rgba(0,0,0,.7));pointer-events:none}
+.tile.here{box-shadow:inset 0 0 0 2px var(--gold),0 0 14px rgba(242,192,105,.6);z-index:2}
+.tile .hero{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:calc(var(--ts)*.6);animation:bob 2s ease-in-out infinite;pointer-events:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.8))}
+.tile.here .ti{opacity:.35}
+.tile.creature .ti,.tile.nest .ti,.tile.lair .ti{animation:bob 3s ease-in-out infinite}
+.tile.nest::after,.tile.lair::after{content:'';position:absolute;inset:2px;border-radius:5px;border:1px dashed rgba(255,209,102,.75);pointer-events:none}
+.tile.lair::after{border-color:rgba(255,90,106,.85)}
+.tile.city{box-shadow:inset 0 0 0 2px rgba(93,224,210,.75)}
+.maphint{font-size:.8rem;color:var(--ink3);display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between;padding:0 4px}
+.kit{display:flex;gap:10px;align-items:stretch;padding:8px 10px;border-radius:12px;background:var(--glass);border:1px solid var(--line)}
+.kithand{display:flex;gap:6px;overflow-x:auto;flex:1;padding:2px;align-items:center}
+.kit .card{flex:0 0 96px;width:96px;height:144px;cursor:default}
+.kitside{display:flex;flex-direction:column;gap:5px;justify-content:center;min-width:170px;font-size:.85rem;color:var(--ink2)} .kitside b{color:var(--ink)}
+.kitside .pd{display:flex;flex-wrap:wrap;gap:4px} .kitside .pdi{font-size:.75rem;padding:2px 6px;border-radius:6px;background:rgba(0,0,0,.35);border:1px solid var(--line)}
+.choice:disabled{opacity:.5;cursor:not-allowed} .choice:disabled:hover{border-color:var(--line2);border-style:dotted}
+@media (max-width:640px){ .map{--ts:34px} .kit .card{flex-basis:80px;width:80px;height:120px} .kitside{min-width:120px;font-size:.78rem} .maphint span:last-child{display:none} }
+.tile.hot::before{content:'';position:absolute;inset:0;border-radius:6px;background:rgba(255,70,90,.22);box-shadow:inset 0 0 0 1px rgba(255,90,106,.45);pointer-events:none}
+.tile.hot.here::before{display:none}
+
+/* ===================== DUNGEON HEXES ===================== */
+.board{position:absolute;left:0;top:0;margin:0;transition:transform .38s cubic-bezier(.2,.7,.2,1);will-change:transform} .board.nocam{transition:none}
+.hex{position:absolute;width:var(--hw);height:var(--hh);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);display:flex;align-items:center;justify-content:center;font-size:calc(var(--hw)*.52);line-height:1;background:var(--bc);cursor:pointer;user-select:none;transition:filter .15s}
+.hex.corr{filter:brightness(.8)}
+.hex.wall{background:#181c2c;cursor:default}
+.hex.mem{filter:brightness(.62) saturate(.6)} .hex.mem.corr{filter:brightness(.5) saturate(.6)}
+.hex.floor.vis:hover{filter:brightness(1.3)}
+.hex .ti{pointer-events:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.7))}
+.hex.creature.vis .ti,.hex.nest.vis .ti,.hex.lair .ti{animation:bob 3s ease-in-out infinite}
+.hex.hot::before{content:'';position:absolute;inset:0;background:rgba(255,70,90,.26);pointer-events:none}
+.hex.path::after{content:'';position:absolute;left:38%;top:38%;width:24%;height:24%;border-radius:50%;background:rgba(242,192,105,.85);box-shadow:0 0 8px rgba(242,192,105,.8);pointer-events:none}
+.hex.exit{background:#1f6b5a} .hex.lair{background:#7a2a3a} .hex.nest{background:#6a4a26} .hex.entry{filter:brightness(.9)}
+.hero{position:absolute;width:var(--hw);height:var(--hh);display:flex;align-items:center;justify-content:center;font-size:calc(var(--hw)*.62);pointer-events:none;z-index:3;transition:left .16s linear,top .16s linear;filter:drop-shadow(0 3px 5px rgba(0,0,0,.85))}
+.scene.keeper{width:min(100%,860px)} .krow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.scene.keeper .shopcards,.scene.pack .shopcards{flex:0 1 auto}
+
+/* ===================== DECK MANAGER ===================== */
+.scene.dk{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding:12px 16px 14px;overflow:hidden}
+.dkhead h2{margin:0} .dkhead .row{gap:10px;align-items:center}
+.dkdeck{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-height:46%;overflow:auto;padding:4px;border-radius:12px;background:rgba(0,0,0,.25);border:1px solid var(--line)}
+.dkdeck .card{flex:0 0 92px;width:92px;height:138px}
+.card.slot{display:flex;align-items:center;justify-content:center;border:1px dashed var(--line2);background:rgba(255,255,255,.03);color:var(--ink3);font-size:1.6rem;box-shadow:none;cursor:default}
+.dkall{flex:1;min-height:0;overflow:auto;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;padding:4px}
+.dkall .card{flex:0 0 104px;width:104px;height:156px}
+@media (max-width:640px){ .dkdeck .card{flex-basis:72px;width:72px;height:108px} .dkall .card{flex-basis:84px;width:84px;height:126px} .dkhint{display:none} }
+.card.dragging{opacity:.35}
+.dkdeck.over,.dkall.over{outline:2px dashed var(--gold);outline-offset:-3px}
+.dkdeck .card.over{box-shadow:0 0 0 3px var(--gold),0 0 18px rgba(242,192,105,.6)}
+.card[draggable=true]{cursor:grab}
+.dkbody{flex:1;min-height:0;display:flex;gap:14px}
+.dkside{flex:0 0 220px;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:10px;padding:6px 10px 6px 0;border-right:1px solid var(--line)}
+.dkside .lf{display:flex;flex-direction:column;gap:4px} .dkside .lfl{font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;color:var(--teal);font-weight:700} .dkside .lfc{display:flex;flex-wrap:wrap;gap:3px}
+.dkside input{padding:6px 8px;border-radius:8px;border:1px solid var(--line2);background:rgba(0,0,0,.3);color:var(--ink);width:100%}
+.dkmain{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:6px}
+.dk .card:not(.slot):hover{transform:translateY(-4px);z-index:2}
+#dkzoom{position:fixed;z-index:70;pointer-events:none;opacity:0;transform:scale(.94);transition:opacity .12s,transform .12s}
+#dkzoom.on{opacity:1;transform:scale(1)}
+#dkzoom .card{width:100%;height:auto;aspect-ratio:2/3;flex:none;box-shadow:0 22px 60px rgba(0,0,0,.75),0 0 0 2px rgba(242,192,105,.5);cursor:default}
+@media (max-width:760px){ .dkbody{flex-direction:column} .dkside{flex:none;max-height:38%;border-right:0;border-bottom:1px solid var(--line);padding:0 0 6px} }

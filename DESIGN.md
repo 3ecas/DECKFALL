@@ -23,9 +23,11 @@ dungeon crawl, without a Pokemon-style party and without a Slay the Spire route.
 
 ## The dungeon
 
-- **A hex maze on one screen.** Pointy-top hexes, roughly 24 by 17, that always fit the screen: the map never scrolls,
-  nothing moves under the mouse. Rooms are blobs of 7 to 19 hexes, joined by corridors in a spanning tree plus a loop
-  or two. Walls are solid; sight (3 hexes) does not pass through them, so a room reveals itself when you step in.
+- **A hex maze that grows.** Pointy-top hexes. The first dungeon has five or six rooms and fits the screen; every
+  dungeon adds two rooms (up to 30) and the grid grows with them. Hexes never shrink below 44px: a dungeon bigger than
+  the screen slides under the view, which follows you when you come near its edge and can be dragged to look around.
+  Rooms are blobs of 7 to 19 hexes, joined by corridors in a spanning tree plus a loop or two. Walls are solid;
+  sight (3 hexes) does not pass through them, so a room reveals itself when you step in.
 - **Click a hex to walk there;** the path shows while you hover. Q E A D Z C step one hex. Space acts on your hex.
   The walk stops at the edge of a known creature's sense range unless you clicked inside it on purpose.
 - **Find the exit.** The exit is placed in the room farthest, by walking, from where you come in. It is hidden until
@@ -37,8 +39,9 @@ dungeon crawl, without a Pokemon-style party and without a Slay the Spire route.
   (earth, fire), Drowned Sanctum (holy, water), Hydra Marsh (poison, water). A theme decides the creatures, the boss
   and, later, the cards and events. Consecutive dungeons never repeat a theme.
 - **Rooms hold things.** Guards (one or two creatures, sometimes with a chest behind them), a nest (an elite and a
-  chest), a find (chest, shrine, forge, campfire, blessing, idol, trap), an event (a gambler, a blood altar, a wounded
-  wanderer, a whispering well), or nothing. Corridors hide the odd lurker or trap.
+  chest), a find (chest, shrine, forge, campfire, blessing, idol), an event (a gambler, a blood altar, a wounded
+  wanderer, a whispering well, a cutpurse, bandits, a traveler, a peddler), or nothing. Corridors hide the odd lurker
+  or someone on the road. Traps were removed: they paid too much gold for too little decision.
 - **Sense ranges.** Beasts and shadow creatures notice you from 2 hexes, most others from 1, plants and stone from 0.
   Sight is 3, so a creature is always seen a step before it can sense you. Zones show tinted on the map. In the first
   dungeon the rooms near the entrance are timid (no sense). Once a creature has you, there is no fleeing.

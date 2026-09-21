@@ -3,14 +3,18 @@
 function render(){
   const app=document.getElementById('app'); if(!app) return; if(typeof hideTip==='function') hideTip();
   if(UI.screen==='library'){ app.innerHTML=libraryHTML()+modalHTML(); return; }
+  if(UI.screen==='deck'&&G){ app.innerHTML=deckHTML()+modalHTML(); if(typeof afterRender==="function") afterRender(); return; }
   if(!G){ app.innerHTML=titleHTML()+modalHTML(); return; }
   if(G.phase==='battle'&&G.fight){ const cur=app.querySelector('#battle'); if(cur&&cur.dataset.key==String(G.fight.key)){ patchBattle(); const mm=app.querySelector('.modal'); if(mm) mm.remove(); app.insertAdjacentHTML('beforeend',modalHTML()); return; } }
+  if(G.phase==='map'&&G.dungeon&&typeof patchMap==='function'&&patchMap()){ const mm=app.querySelector('.modal'); if(mm) mm.remove(); app.insertAdjacentHTML('beforeend',modalHTML()); if(typeof afterRender==="function") afterRender(); return; }   // the dungeon updates in place so nothing flickers
   let html='';
   switch(G.phase){
     case 'battle': html=battleHTML(); break;
     case 'spoils': html=hudHTML()+spoilsHTML(); break;
     case 'interlude': html=hudHTML()+interludeHTML(); break;
     case 'shop': html=hudHTML()+shopHTML(); break;
+    case 'map': html=hudHTML()+dungeonHTML(); break;
+    case 'keeper': html=hudHTML()+keeperHTML(); break;
     case 'gameover': html=gameoverHTML(); break;
     default: html=hudHTML();
   }
@@ -35,14 +39,14 @@ function titleHTML(){
       <div class="menu-l">
         <div class="eyebrow">An endless deck-building roguelike</div>
         <div class="title-art"><span>Deckfall</span><span>Endless</span></div>
-        <p class="title-sub">Start with five basic cards. Fight, loot, evolve, combo. Ten elements, nine tiers, an endless climb. Die, and start over.</p>
+        <p class="title-sub">Five basic cards and a torch. Crawl through fogged dungeons, find the exit, choose your fights, loot, evolve, combo. Ten elements, nine tiers, dungeons without end. Die, and start over.</p>
         <div class="menu-btns">
-          ${s?`<button class="btn primary big" data-act="continue">Continue · Round ${s.round}</button>`:''}
+          ${s?`<button class="btn primary big" data-act="continue">Continue · dungeon ${s.dungeon?s.dungeon.n:1}</button>`:''}
           <button class="btn ${s?'':'primary'} big" data-act="new">${s?'New run · deletes the save':'Begin a run'}</button>
           <button class="btn big" data-act="library">📚 Card Library <span class="mcount">${known.length} / ${total}</span></button>
           <button class="btn big ghost" data-act="modal" data-m="help">How to play</button>
         </div>
-        ${best&&best.round?`<div class="kv"><span>Best round <b>${best.round}</b></span><span>Kills <b>${best.kills}</b></span><span>Level <b>${best.level}</b></span><span>Bosses <b>${best.bosses}</b></span><span>Runs <b>${best.runs}</b></span></div>`:''}
+        ${best&&best.depth?`<div class="kv"><span>Deepest dungeon <b>${best.depth}</b></span><span>Lairs <b>${best.lairs||0}</b></span><span>Level <b>${best.level}</b></span><span>Steps <b>${best.time||0}</b></span><span>Runs <b>${best.runs}</b></span></div>`:''}
       </div>
       <div class="menu-r"><div class="fan3">${fan.map(id=>cardHTML(id,{mode:'static',tier:tierIdx(id),big:true,data:'data-fan="1"'})).join('')}</div></div>
     </div>
@@ -111,27 +115,34 @@ function spoilsHTML(){
   </div>`;
 }
 function interludeHTML(){
-  const I=G.inter; const T=INTERLUDE_TEXT[I.t]||{icon:'❓',title:'...'}; const b=I.boost?BOOST[I.boost]:null;
-  const waiting=(I.cards||((I.t==='forge'||I.t==='camp')&&!I.auto))&&!I.picked;
+  const I=G.inter; const T=I.t==='event'?(EVENTS[I.ev]||{icon:'❔',title:'...'}):(INTERLUDE_TEXT[I.t]||{icon:'❓',title:'...'}); const b=I.boost?BOOST[I.boost]:null;
+  const waiting=(I.cards||((I.t==='forge'||I.t==='camp'||I.t==='event')&&!I.auto))&&!I.picked;
   return `<div class="center scene inter ${I.t}">
-    <div class="eyebrow">Round ${G.round} · on the road</div>
+    <div class="eyebrow">${esc(themeNow().n)} · dungeon ${G.dungeon.n} · danger ${G.round}</div>
     <div class="sicon ${I.t==='chest'?'chest':''}"><span>${b?b.icon:T.icon}</span></div>
     <h2 class="pop">${b?esc(b.name):esc(T.title)}</h2>
     ${T.text&&!b?`<p class="muted">${esc(T.text)}</p>`:''}
     <div class="lines">${I.lines.map((l,i)=>`<p class="line" style="--i:${i}">${esc(l)}</p>`).join('')}</div>
     ${I.cards&&!I.picked?`<div class="cardgrid fan">${I.cards.map((id,i)=>cardHTML(id,{big:true,act:'inter-card',data:`data-id="${id}" style="--i:${i}"`,enter:true,tag:G.p.deck.includes(id)?(canEvolve(id)?`Owned · evolve to ${TIERS[curTier(id)+1]}`:'Owned · copy'):null})).join('')}</div><button class="btn ghost sm" data-act="inter-skip">Take none</button>`:''}
-    ${I.t==='forge'&&!I.auto&&!I.picked?`<div class="row center"><button class="btn primary" data-act="forge-pick">Choose a card to reforge</button><button class="btn ghost" data-act="inter-next">Leave the forge</button></div>`:''}
+    ${I.t==='forge'&&!I.auto&&!I.picked?(I.pick?`${upgradePairHTML(I.pick)}<div class="row center"><button class="btn primary" data-act="forge-confirm">⚒️ Reforge it</button><button class="btn ghost" data-act="forge-back">Choose another</button></div>`:`<div class="row center"><button class="btn primary" data-act="forge-pick">Choose a card to reforge</button><button class="btn ghost" data-act="inter-next">Leave the forge</button></div>`):''}
+    ${I.t==='forge'&&I.picked&&I.pick?`<div class="pair"><div class="pc"><span class="plabel">Reforged · ${TIERS[curTier(I.pick)]}</span>${cardHTML(I.pick,{big:true,mode:'static'})}</div></div>`:''}
+    ${I.t==='event'&&!I.picked?`<div class="choices">${EVENTS[I.ev].choices.map((c,i)=>`<button class="choice" data-act="event-choice" data-i="${i}">${esc(c.t)}</button>`).join('')}</div>`:''}
     ${I.t==='camp'&&!I.auto&&!I.picked?`<div class="row center"><button class="btn primary" data-act="camp-rest">🛏️ Rest · heal ${CAMP.healPct}% of Max HP</button><button class="btn" data-act="camp-tough">💪 Train · +${CAMP.toughPct}% Max HP for good</button></div>`:''}
     ${I.t==='ambush'?`<p class="msg bad">Prepare yourself.</p>`:waiting?'':`<div class="autobar ${I.picked?'fast':''}"><i></i></div><button class="btn sm ghost" data-act="inter-next">Continue now</button>`}
   </div>`;
 }
+// Before and after of an upgrade: the card as it is now and as it will be one tier up, side by side; the values that grow are marked.
+function upgradePairHTML(id){ const cur=curTier(id), next=Math.min(8,cur+1); return `<div class="pair"><div class="pc"><span class="plabel">Now · ${TIERS[cur]}</span>${cardHTML(id,{big:true,mode:'static',tier:cur,vsTier:cur})}</div><span class="parrow">➜</span><div class="pc"><span class="plabel">After · ${TIERS[next]}</span>${cardHTML(id,{big:true,mode:'static',tier:next,vsTier:cur})}</div></div>`; }
 function shopHTML(){
-  const p=G.p;
-  const grid=deckSummary().map(x=>{const ok=canEvolve(x.id); const c=ok?evolvePrice(x.id):0; return cardHTML(x.id,{act:'shop-upgrade',data:`data-id="${x.id}"`,price:ok?c:null,priceTag:ok?` → ${TIERS[curTier(x.id)+1]}`:'',tag:ok?null:'Ultimate',dim:!ok||p.gold<c});}).join('');
+  const p=G.p; const S=G.shop; const pick=S.pick;
+  const grid=deckSummary().map(x=>{const ok=canEvolve(x.id); const c=ok?evolvePrice(x.id):0; return cardHTML(x.id,{act:'shop-pick',data:`data-id="${x.id}"`,price:ok?c:null,priceTag:ok?` → ${TIERS[curTier(x.id)+1]}`:'',tag:ok?null:'Ultimate',dim:!ok||p.gold<c});}).join('');
+  let body;
+  if(S.used) body=`<div class="eyebrow">Done for this visit</div>${pick?`<div class="pair"><div class="pc"><span class="plabel">Reforged · ${TIERS[curTier(pick)]}</span>${cardHTML(pick,{big:true,mode:'static'})}</div></div>`:''}<p class="msg good">${esc(S.used)}. The smith gets back to work; come back in a while.</p>`;
+  else if(pick){ const c=evolvePrice(pick); body=`<div class="eyebrow">${esc(CARD[pick].name)} · ${TIERS[curTier(pick)]} → ${TIERS[curTier(pick)+1]}</div>${upgradePairHTML(pick)}<div class="row center"><button class="btn primary" data-act="shop-confirm" data-id="${pick}" ${p.gold<c?'disabled':''}>⚒️ Reforge · ${c} gold</button><button class="btn ghost" data-act="shop-back">Choose another</button></div>${p.gold<c?'<p class="msg bad">Not enough gold.</p>':''}`; }
+  else body=`<div class="eyebrow">Upgrade one card · pick it to see it before and after</div><div class="shopcards">${grid}</div>`;
   return `<div class="scene shop">
-    <div class="row between"><h2>⚒️ Merchant · Round ${G.round}</h2><button class="btn primary" data-act="shop-leave">Continue the climb →</button></div>
-    ${G.shop.used?`<div class="eyebrow">Done for this visit</div><p class="msg good">${esc(G.shop.used)}. The merchant packs up; come back in seven rounds.</p>`:`<div class="eyebrow">Upgrade one card · one tier higher, priced by the tier it becomes</div>
-    <div class="shopcards">${grid}</div>`}
+    <div class="row between"><h2>⚒️ Blacksmith${G.keeper?" · the keeper's forge":''}</h2><button class="btn primary" data-act="shop-leave">${G.keeper?'Back to the keeper':'Back'} →</button></div>
+    ${body}
   </div>`;
 }
 function gameoverHTML(){
@@ -139,9 +150,9 @@ function gameoverHTML(){
   return `<div class="center scene">
     <div class="sicon"><span>💀</span></div>
     <h1 class="pop">You died</h1>
-    <p class="muted">Round ${G.round} · Level ${G.p.level} · ${G.kills} enemies slain · ${G.bossesSlain} bosses · ${G.p.deck.length} cards · ${G.evolves} evolutions</p>
+    <p class="muted">Dungeon ${G.dungeon?G.dungeon.n:1} · room ${G.dungeon?G.dungeon.entered:1} · ${G.time||0} steps · Level ${G.p.level} · ${G.kills} enemies slain · ${G.bossesSlain} lairs · ${G.p.deck.length} cards · ${G.evolves} evolutions</p>
     <p class="muted small">${G.fight&&G.fight.enemies?`Slain by ${esc(G.fight.enemies.filter(e=>e.alive).map(e=>e.name).join(' and ')||'your own recklessness')}.`:''} Permadeath: this run is gone.</p>
-    ${b.round?`<div class="kv"><span>Best round <b>${b.round}</b></span><span>Runs <b>${b.runs}</b></span></div>`:''}
+    ${b.depth?`<div class="kv"><span>Deepest dungeon <b>${b.depth}</b></span><span>Runs <b>${b.runs}</b></span></div>`:''}
     <div class="row center"><button class="btn primary big" data-act="new">Start over</button><button class="btn ghost" data-act="title">Title screen</button></div>
   </div>`;
 }

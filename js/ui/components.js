@@ -4,62 +4,69 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 function elPill(el){ const e=EL[el]; return `<span class="elpill" style="--el:${e.c}">${e.i} ${e.n}</span>`; }
 const KIND_LABEL={mecha:'Machine',summon:'Summon',trap:'Trap'};
 // One effect -> {big, unit, text, short}. big/unit/text feed the info box; short is the extra line.
+// Icons for the figures on a card face. Elements and statuses share their glyphs; stats and plain effects have their own.
+const STAT_ICON={maxHp:'❤️',attack:'⚔️',spell:'🔮',armor:'🛡️',dodge:'💨',counter:'🗡️',crit:'🎯',lifesteal:'🩸',thorns:'🌵',luck:'🍀',energyMax:'🔷',handSize:'🎴',regen:'💚',slots:'☗'};
+const FIG_ICON={block:'🛡️',armor:'🛡️',heal:'❤️',draw:'🎴',mana:'🔷',hp:'🩸'};
+// One effect -> one figure for the card face: a number, an icon and a short unit (4 ☠️ DMG), plus a modifier line when it matters (all enemies, pierces Block).
+// `short` is the one-line text for tags and lists. The hover tooltip (tips.js) carries the full explanation.
 function fxPart(f,v,base,d){
-  const t=f[0]; const n=k=>v[k]>base[k]?`<i class="up">${v[k]}</i>`:`${v[k]}`; const elN=EL[d.el].n.toLowerCase();
-  if(t==='dmg'){ const o=f[2]||{}; const hits=o.hits?(typeof o.hits==='string'?v[o.hits]:o.hits):1; const bits=[`${elN} damage`]; if(hits>1) bits[0]+=` × ${hits}`; if(o.aoe) bits.push('to all enemies'); if(o.pierce) bits.push('pierces Block'); if(o.bv) bits.push(`×2 vs ${ST[o.bv].n}`); if(o.ls) bits.push(`heals ${o.ls}%`); return {big:n(f[1]),unit:'DMG',text:bits.join(' · '),short:`${n(f[1])}${hits>1?'×'+hits:''} ${elN} dmg${o.aoe?' to all':''}${o.pierce?', pierces':''}${o.bv?', ×2 vs '+ST[o.bv].n:''}${o.ls?', heals '+o.ls+'%':''}`}; }
-  if(t==='block') return {big:n(f[1]),unit:'BLOCK',text:'absorbs damage this turn',short:`Gain ${n(f[1])} Block`};
-  if(t==='armor') return {big:`+${n(f[1])}`,unit:'ARMOR',text:'for this fight',short:`+${n(f[1])} Armor this fight`};
-  if(t==='se'){ const o=f[3]||{}; const tg=o.aoe?'to all enemies':'to the target'; if(f[1]==='frozen') return {big:'❄',unit:'FREEZE',text:o.aoe?'all enemies skip a turn':'the target skips a turn',short:`Freeze ${o.aoe?'all enemies':'the target'}`}; return {big:n(f[2]),unit:ST[f[1]].n.toUpperCase(),text:tg,short:`Apply ${n(f[2])} ${ST[f[1]].n}${o.aoe?' to all':''}`}; }
-  if(t==='ss'){ const s=f[1]; if(s==='dodgeNext') return {big:'💨',unit:'DODGE',text:'the next attack',short:'Dodge the next attack'}; if(s==='counterNext') return {big:'🗡',unit:'COUNTER',text:'the next attack',short:'Counter the next attack'}; const pct=(s==='critT'||s==='dodgeT')?'%':''; return {big:`+${n(f[2])}${pct}`,unit:ST[s].n.toUpperCase(),text:'this fight',short:`+${n(f[2])}${pct} ${ST[s].n} this fight`}; }
-  if(t==='heal') return {big:n(f[1]),unit:'HEAL',text:'restore HP',short:`Heal ${n(f[1])}`};
-  if(t==='healPct') return {big:`${n(f[1])}%`,unit:'HEAL',text:'of Max HP',short:`Heal ${n(f[1])}% Max HP`};
-  if(t==='draw') return {big:n(f[1]),unit:'DRAW',text:'cards',short:`Draw ${n(f[1])}`};
-  if(t==='energy') return {big:`+${n(f[1])}`,unit:'MANA',text:'this turn',short:`+${n(f[1])} Mana`};
-  if(t==='maxEnergy') return {big:`+${n(f[1])}`,unit:'MANA',text:'every turn this fight',short:`+${n(f[1])} Mana every turn`};
-  if(t==='selfDmg') return {big:`-${n(f[1])}`,unit:'HP',text:'you bleed',short:`Lose ${n(f[1])} HP`};
-  if(t==='cleanse') return {big:'✚',unit:'CLEANSE',text:'remove your debuffs',short:'Remove your debuffs'};
-  if(t==='stat') return {big:`+${n(f[2])}`,unit:STATNAMES[f[1]].toUpperCase(),text:'permanently',short:`+${n(f[2])} ${STATNAMES[f[1]]} permanently`};
-  if(t==='passive'){ const P=PASSIVES[f[1]]; const txt=passiveText(f[1],v); return {big:P.icon,unit:KIND_LABEL[P.kind].toUpperCase(),text:txt,short:P.name,line:txt}; }
+  const t=f[0]; const n=k=>v[k]>base[k]?`<i class="up">${v[k]}</i>`:`${v[k]}`; const el=EL[d.el]; const elN=el.n.toLowerCase(); const fig=(num,icon,unit,mod,short)=>({num,icon,unit,mod:mod||'',short});
+  if(t==='dmg'){ const o=f[2]||{}; const hits=o.hits?(typeof o.hits==='string'?v[o.hits]:o.hits):1; const mods=[]; if(o.aoe) mods.push('all enemies'); if(o.pierce) mods.push('pierces Block'); if(o.bv) mods.push(`×2 vs ${ST[o.bv].i} ${ST[o.bv].n}`); if(o.ls) mods.push(`heals ${o.ls}%`); return fig(`${n(f[1])}${hits>1?`<small>×${hits}</small>`:''}`,el.i,'dmg',mods.join(' · '),`${n(f[1])}${hits>1?'×'+hits:''} ${elN} dmg${o.aoe?' to all':''}${o.pierce?', pierces':''}${o.bv?', ×2 vs '+ST[o.bv].n:''}${o.ls?', heals '+o.ls+'%':''}`); }
+  if(t==='block') return fig(n(f[1]),FIG_ICON.block,'block','',`Gain ${n(f[1])} Block`);
+  if(t==='armor') return fig(`+${n(f[1])}`,FIG_ICON.armor,'armor','this fight',`+${n(f[1])} Armor this fight`);
+  if(t==='se'){ const o=f[3]||{}; if(f[1]==='frozen') return fig('',ST.frozen.i,'freeze',o.aoe?'all enemies skip a turn':'the target skips a turn',`Freeze ${o.aoe?'all enemies':'the target'}`); return fig(n(f[2]),ST[f[1]].i,ST[f[1]].n,o.aoe?'all enemies':'',`Apply ${n(f[2])} ${ST[f[1]].n}${o.aoe?' to all':''}`); }
+  if(t==='ss'){ const s=f[1]; if(s==='dodgeNext') return fig('',ST.dodgeNext.i,'dodge','the next attack','Dodge the next attack'); if(s==='counterNext') return fig('',ST.counterNext.i,'counter','the next attack','Counter the next attack'); const pct=(s==='critT'||s==='dodgeT')?'%':''; return fig(`+${n(f[2])}${pct}`,ST[s].i,ST[s].n,'this fight',`+${n(f[2])}${pct} ${ST[s].n} this fight`); }
+  if(t==='heal') return fig(n(f[1]),FIG_ICON.heal,'heal','',`Heal ${n(f[1])}`);
+  if(t==='healPct') return fig(`${n(f[1])}%`,FIG_ICON.heal,'heal','of Max HP',`Heal ${n(f[1])}% Max HP`);
+  if(t==='draw') return fig(n(f[1]),FIG_ICON.draw,'draw','',`Draw ${n(f[1])}`);
+  if(t==='energy') return fig(`+${n(f[1])}`,FIG_ICON.mana,'mana','',`+${n(f[1])} Mana`);
+  if(t==='maxEnergy') return fig(`+${n(f[1])}`,FIG_ICON.mana,'mana','every turn this fight',`+${n(f[1])} Mana every turn`);
+  if(t==='selfDmg') return fig(`-${n(f[1])}`,FIG_ICON.hp,'hp','you bleed',`Lose ${n(f[1])} HP`);
+  if(t==='cleanse') return fig('✚','','cleanse','remove your debuffs','Remove your debuffs');
+  if(t==='stat') return fig(`+${n(f[2])}`,STAT_ICON[f[1]]||'',STATNAMES[f[1]],'for good',`+${n(f[2])} ${STATNAMES[f[1]]} permanently`);
+  if(t==='passive'){ const P=PASSIVES[f[1]]; const txt=passiveText(f[1],v); return fig('',P.icon,KIND_LABEL[P.kind],txt,P.name); }
   if(t==='special'){ const s=f[1]; const p=f[2]||{}; const m=p.m?n(p.m):'';
-    if(s==='execute') return {big:n('dmg'),unit:'DMG',text:`${elN} · ×2 below ${p.pct||30}% HP`,short:`${n('dmg')} dmg, ×2 below ${p.pct||30}% HP`};
-    if(s==='snipe') return {big:n('dmg'),unit:'DMG',text:'pierces Block · +50% crit',short:`${n('dmg')} dmg, pierces, +50% crit`};
-    if(s==='retaliation') return {big:`${m}×`,unit:'THORNS',text:'as physical damage',short:`${m}× Thorns as damage`};
-    if(s==='stDmg') return {big:`${m}×`,unit:ST[p.s].n.toUpperCase(),text:`as ${elN} damage${p.aoe?' to all':''}${p.consume?' · consumes it':''}`,short:`${m}× ${ST[p.s].n} as damage`};
-    if(s==='doubleSt') return {big:'×2',unit:ST[p.s].n.toUpperCase(),text:p.aoe?'on every enemy':'on the target',short:`Double ${ST[p.s].n}${p.aoe?' on all':''}`};
-    if(s==='spread') return {big:'⇶',unit:'SPREAD',text:"the target's afflictions to all enemies",short:'Spread afflictions to all'};
-    if(s==='blockDmg') return {big:`${m}×`,unit:'BLOCK',text:`as ${elN} damage`,short:`${m}× Block as damage`};
-    if(s==='playedDmg') return {big:m,unit:'DMG',text:'per card played this turn',short:`${m} dmg per card played`};
-    if(s==='elBoost') return {big:`+${n(p.v)}%`,unit:EL[p.el].n.toUpperCase(),text:'damage this fight',short:`+${n(p.v)}% ${EL[p.el].n} damage this fight`};
-    if(s==='parry') return {big:'×2',unit:'COUNTER',text:'that counter hits twice as hard',short:'Counter deals double'};
-    if(s==='redraw') return {big:n(p.n),unit:'REDRAW',text:'discard random cards, draw as many',short:`Discard ${n(p.n)}, draw ${n(p.n)}`};
-    if(s==='sabotage') return {big:'✖',unit:'SABOTAGE',text:'destroy an enemy machine, summon or trap',short:'Destroy an enemy passive'};
-    if(s==='emp') return {big:'✖✖',unit:'EMP',text:'destroy every enemy passive',short:'Destroy all enemy passives'};
-    if(s==='pilfer') return {big:'☗',unit:'STEAL',text:'take an enemy passive for yourself',short:'Steal an enemy passive'};
-    if(s==='pilferAll') return {big:'☗☗',unit:'STEAL',text:'take every enemy passive',short:'Steal all enemy passives'};
-    if(s==='mimic') return {big:'🎩',unit:'CONJURE',text:"a card of the enemy's element into your hand",short:'Conjure an enemy-element card'}; }
-  return {big:'?',unit:'',text:'',short:''};
+    if(s==='execute') return fig(n('dmg'),el.i,'dmg',`×2 below ${p.pct||30}% HP`,`${n('dmg')} dmg, ×2 below ${p.pct||30}% HP`);
+    if(s==='snipe') return fig(n('dmg'),el.i,'dmg','pierces Block · +50% crit',`${n('dmg')} dmg, pierces, +50% crit`);
+    if(s==='retaliation') return fig(`${m}×`,STAT_ICON.thorns,'thorns','as physical damage',`${m}× Thorns as damage`);
+    if(s==='stDmg') return fig(`${m}×`,ST[p.s].i,ST[p.s].n,`as ${elN} damage${p.aoe?' to all':''}${p.consume?' · consumes it':''}`,`${m}× ${ST[p.s].n} as damage`);
+    if(s==='doubleSt') return fig('×2',ST[p.s].i,ST[p.s].n,p.aoe?'on every enemy':'on the target',`Double ${ST[p.s].n}${p.aoe?' on all':''}`);
+    if(s==='spread') return fig('⇶','','spread',"the target's afflictions to all enemies",'Spread afflictions to all');
+    if(s==='blockDmg') return fig(`${m}×`,FIG_ICON.block,'block',`as ${elN} damage`,`${m}× Block as damage`);
+    if(s==='playedDmg') return fig(m,el.i,'dmg','per card played this turn',`${m} dmg per card played`);
+    if(s==='elBoost') return fig(`+${n(p.v)}%`,EL[p.el].i,EL[p.el].n,'damage this fight',`+${n(p.v)}% ${EL[p.el].n} damage this fight`);
+    if(s==='parry') return fig('×2',ST.counterNext.i,'counter','that counter hits twice as hard','Counter deals double');
+    if(s==='redraw') return fig(n(p.n),'🔁','redraw','discard random cards, draw as many',`Discard ${n(p.n)}, draw ${n(p.n)}`);
+    if(s==='sabotage') return fig('✖','','sabotage','destroy an enemy machine, summon or trap','Destroy an enemy passive');
+    if(s==='emp') return fig('✖✖','','emp','destroy every enemy passive','Destroy all enemy passives');
+    if(s==='pilfer') return fig('☗','','steal','take an enemy passive for yourself','Steal an enemy passive');
+    if(s==='pilferAll') return fig('☗☗','','steal','take every enemy passive','Steal all enemy passives');
+    if(s==='mimic') return fig('🎩','','conjure',"a card of the enemy's element into your hand",'Conjure an enemy-element card'); }
+  return fig('?','','','','');
 }
 function foeName(id){ const e=(typeof ENEMIES!=='undefined'&&ENEMIES.find(x=>x.id===id))||(typeof BOSSES!=='undefined'&&BOSSES.find(x=>x.id===id)); return e?e.name:id; }
-function cardParts(id,tier){
-  const d=CARD[id]; const v=cardVals(id,tier); const base=cardVals(id,tierIdx(id)); const parts=d.fx.map(f=>fxPart(f,v,base,d));
-  let main=parts[0]||(d.unplayable?{big:'☠',unit:'CURSE',text:'unplayable · clogs your hand',short:'Unplayable · clogs your hand'}:{big:'',unit:'',text:'',short:''});
-  main.line=main.line||main.short||main.text;   // the first description line on the card face
-  const extras=parts.slice(1).map(p=>p.short);
-  if(d.type==='mecha'||d.type==='summon') extras.push('Takes a passive slot');
-  if(d.type==='trap'&&d.fx[0]&&d.fx[0][0]==='passive') extras.push('Armed until an enemy attacks');
-  if(d.retain) extras.push('Block carries over');
-  if(d.exhaust) extras.push('Exhaust');
-  if(d.consume) extras.push('Consumed when played');
-  if(d.endTurnDmg) extras.push(`${d.endTurnDmg} damage at end of turn in hand`);
-  return {main,extras};
+function cardParts(id,tier,vsTier){
+  const d=CARD[id]; const v=cardVals(id,tier); const base=cardVals(id,vsTier!=null?vsTier:tierIdx(id)); const parts=d.fx.map(f=>fxPart(f,v,base,d));
+  const main=parts[0]||(d.unplayable?{num:'☠',icon:'',unit:'curse',mod:'unplayable · clogs your hand',short:'Unplayable · clogs your hand'}:{num:'',icon:'',unit:'',mod:'',short:''});
+  const extras=parts.slice(1); const kws=[];
+  if(d.type==='mecha'||d.type==='summon') kws.push('Takes a passive slot');
+  if(d.type==='trap'&&d.fx[0]&&d.fx[0][0]==='passive') kws.push('Armed until an enemy attacks');
+  if(d.retain) kws.push('Block carries over');
+  if(d.exhaust) kws.push('Exhaust');
+  if(d.consume) kws.push('Consumed when played');
+  if(d.endTurnDmg) kws.push(`${d.endTurnDmg} damage at end of turn in hand`);
+  return {main,extras,kws};
 }
+// The figure of an effect: <number> <icon> <unit>, then its modifier line. Extras render as compact pills of the same shape.
+function figHTML(p){ return `<div class="cmain">${p.num?`<b class="cnum">${p.num}</b>`:''}${p.icon?`<span class="cico">${p.icon}</span>`:''}${p.unit?`<span class="cunit">${p.unit}</span>`:''}</div>${p.mod?`<div class="cmod">${p.mod}</div>`:''}`; }
+function pillHTML(p){ const mod=p.mod&&p.mod.length<=12?` · ${p.mod}`:''; return `<span class="cx">${p.num?`<b>${p.num}</b>`:''}${p.icon?`<i>${p.icon}</i>`:''}${p.unit||mod?`<small>${p.unit}${mod}</small>`:''}</span>`; }
 // Card face (see CARD REF.png): name box top-left, Mana cost top-right (nothing when the card is free), art panel, dotted info box
 // with the element tag and the effect lines, evolution badge (▲n) bottom-left, card kind (attack, spell, trap…) bottom-right.
 // The whole background is the tier colour.
 function cardHTML(id,o){
   o=o||{}; const d=CARD[id]; const tier=o.tier!=null?o.tier:(G?curTier(id):tierIdx(id)); const tn=TIERS[tier]; const e=EL[d.el]; const paysMana=d.type==='spell'||d.type==='summon'; const cost=paysMana?d.cost:0;
   const cls=['card','t-'+tn,'ty-'+d.type,'el-'+d.el]; if(o.data&&o.data.includes('data-sel')) cls.push('sel'); if(o.data&&o.data.includes('data-fan')) cls.push('fanc'); if(o.big) cls.push('big'); if(o.mode==='static') cls.push('static'); if(d.unplayable) cls.push('unplayable'); if(o.dim) cls.push('unaff'); if(o.enter) cls.push('enter');
-  const evo=tier-tierIdx(id); const {main,extras}=cardParts(id,tier);
+  const evo=tier-tierIdx(id); const {main,extras,kws}=cardParts(id,tier,o.vsTier);
   const nameCls=d.name.length>18?' xl':d.name.length>12?' long':'';
   const costBox=paysMana?`<div class="ccost" title="Mana cost"><b>${cost}</b></div>`:'';
   return `<div class="${cls.join(' ')}" style="--el:${e.c};--tier:${TIER[tn].c}" ${o.act?`data-act="${o.act}"`:''} ${o.data||''} data-card="${id}" data-tier="${tier}" tabindex="0">
@@ -67,8 +74,10 @@ function cardHTML(id,o){
     ${costBox}
     <div class="cart"><span>${d.icon}</span></div>
     <div class="cbox">
-      <div class="ctags"><span class="ctag" title="Element">${e.n}</span><span class="ctier" title="Tier">${tn}</span></div>
-      <div class="cdesc"><p class="cmain">${main.line}</p>${extras.map(x=>`<p class="cext">${x}</p>`).join('')}</div>
+      <div class="ctags"><span class="ctag" title="Element">${e.i} ${e.n}</span><span class="ctier" title="Tier">${tn}</span></div>
+      ${figHTML(main)}
+      ${extras.length?`<div class="cxs">${extras.map(pillHTML).join('')}</div>`:''}
+      ${kws.map(k=>`<div class="ckw">${k}</div>`).join('')}
     </div>
     ${evo>0?`<div class="cevo" title="Evolved ${evo} tier${evo>1?'s':''} above its base"><i></i>${evo}</div>`:''}
     <div class="ckind" title="${TYPES[d.type]} · ${TYPE_DESC[d.type]}">${TYPE_ICON[d.type]} ${TYPES[d.type]}</div>
@@ -86,6 +95,7 @@ function slotsHTML(){
 }
 function enemyPassivesHTML(e){ return e.passives.map(p=>`<span class="epc ${p.kind}" title="${esc(passivePlain(p))}">${p.icon} ${esc(p.name)}</span>`).join(''); }
 // Enemies are cards too: same plaques, element art panel, HP ribbon where a price would sit, dotted box with intent, statuses and passives.
+// Corner seals: the nature (element) symbol top-right, the level bottom-left, both the size of a Mana cost box.
 function enemyHTML(e,i){
   const F=G.fight; const sel=F.target===i&&e.alive; const ch=TYPE_CHART[e.el]; const el=EL[e.el];
   const weak=ch.weak.map(x=>`<span title="Weak to ${EL[x].n} (2× damage)">${EL[x].i}</span>`).join('')||'—';
@@ -94,7 +104,7 @@ function enemyHTML(e,i){
   const nameCls=e.name.length>18?' xl':e.name.length>12?' long':'';
   return `<div class="card enemy el-${e.el} r-${rank} ${sel?'sel':''} ${e.alive?'':'dead'} ${e.boss?'isboss':''}" data-act="target" data-i="${i}" data-uid="${e.uid}" style="--el:${el.c};--tier:${body}" tabindex="0">
     <div class="cname${nameCls}">${esc(e.name)}</div>
-    <div class="ccost elv" title="Enemy level"><small>Lv</small><b>${e.lvl||G.round}</b></div>
+    <div class="ccost enat" title="${el.n} nature${NATURE[e.el]?` · ${NATURE[e.el].name}`:''}"><span>${el.i}</span></div>
     <div class="cart"><span>${e.icon}</span></div>
     <div class="bar ehp"><i style="width:${e.hp/e.maxHp*100}%"></i><b class="num">${e.hp} / ${e.maxHp}</b></div>
     <div class="cbox">
@@ -105,6 +115,7 @@ function enemyHTML(e,i){
       <div class="epassives">${enemyPassivesHTML(e)}</div>
       <div class="ewr"><span class="weak">Weak ${weak}</span><span class="res">Res ${res}</span></div>
     </div>
+    <div class="ccost elv" title="Enemy level"><small>Lv</small><b>${e.lvl||G.round}</b></div>
     <div class="ckind">${e.boss?'☠ Boss':e.elite?'★ Elite':'⚔ Enemy'}</div>
   </div>`;
 }

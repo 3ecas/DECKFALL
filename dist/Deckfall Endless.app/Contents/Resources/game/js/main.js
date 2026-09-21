@@ -4,7 +4,7 @@ function handle(act,t){
   switch(act){
     case 'noop': return;
     case 'new': clearTimeout(UI.timer); UI.modal=null; newGame(); render(); break;
-    case 'continue': { const s=loadSave(); if(s){ G=s; UI.busy=false; UI.modal=null; UI.handUids=[]; markSeen(G.p.deck); if(G.phase==='battle'&&(!G.fight||G.fight.over)) nextRound(); else if(G.phase==='interlude'&&G.inter){ if(G.inter.t==='ambush'){ nextRound(); } else { render(); if(G.inter.auto&&!(G.inter.cards&&!G.inter.picked)) UI.timer=setTimeout(nextRound,2500); } } else if(G.phase==='spoils'&&G.spoils){ render(); spoilsMaybeContinue(); } else if(G.phase==='battle'&&G.fight.turn===0){ startPlayerTurn(); } else render(); } else render(); } break;   // a fight is saved before its first turn: start it on load
+    case 'continue': { const s=loadSave(); if(s){ G=s; UI.busy=false; UI.modal=null; UI.handUids=[]; UI.uid=Math.max(UI.uid,(G.uid||0)+1); markSeen(G.p.deck); if(G.phase==='battle'&&(!G.fight||G.fight.over)) nextRound(); else if(G.phase==='interlude'&&G.inter){ if(G.inter.t==='ambush'){ nextRound(); } else { render(); if(G.inter.auto&&!(G.inter.cards&&!G.inter.picked)) UI.timer=setTimeout(nextRound,2500); } } else if(G.phase==='spoils'&&G.spoils){ render(); spoilsMaybeContinue(); } else if(G.phase==='battle'&&G.fight.turn===0){ startPlayerTurn(); } else render(); } else render(); } break;   // a fight is saved before its first turn: start it on load
     case 'title': clearTimeout(UI.timer); G=null; UI.modal=null; render(); break;
     case 'library': clearTimeout(UI.timer); UI.modal=null; UI.screen='library'; if(G) markSeen(G.p.deck); render(); break;
     case 'lib-back': UI.screen=null; render(); break;
@@ -23,9 +23,27 @@ function handle(act,t){
     case 'inter-card': interludePick(t.dataset.id); break;
     case 'inter-skip': interludeSkip(); break;
     case 'inter-next': interludeContinue(); break;
-    case 'shop-upgrade': shopUpgrade(t.dataset.id); break;
-    case 'shop-leave': nextRound(); break;
+    case 'shop-pick': shopPick(t.dataset.id); break;
+    case 'shop-confirm': case 'shop-upgrade': shopUpgrade(t.dataset.id); break;
+    case 'shop-back': shopBack(); break;
+    case 'shop-leave': if(G.keeper){ G.shop=null; G.phase='keeper'; render(); save(); } else nextRound(); break;
+    case 'hex': if(UI.dragSuppress&&Date.now()-UI.dragSuppress<250) break; walkTo(+t.dataset.x,+t.dataset.y); break;
+    case 'keeper-rest': keeperRest(); break;
+    case 'keeper-smith': keeperSmith(); break;
+    case 'keeper-buy': keeperBuy(t.dataset.id); break;
+    case 'keeper-remove': keeperRemove(); break;
+    case 'keeper-pack': case 'deck': UI.modal=null; UI.screen='deck'; render(); break;
+    case 'deck-back': case 'pack-back': UI.screen=null; render(); break;
+    case 'deck-out': if(dkCanSwap()) stashCard(t.dataset.id); break;
+    case 'deck-in': if(dkCanSwap()) unstashCard(t.dataset.id); break;
+    case 'dk-el': case 'dk-type': case 'dk-tier': case 'dk-cost': case 'dk-fx': { const key={'dk-el':'els','dk-type':'types','dk-tier':'tiers','dk-cost':'costs','dk-fx':'fx'}[act]; const arr=dkState()[key]; const v=t.dataset.v; const i=arr.indexOf(v); if(i>=0) arr.splice(i,1); else arr.push(v); render(); } break;
+    case 'dk-sort': dkState().sort=t.dataset.v; render(); break;
+    case 'dk-reset': UI.dk=null; render(); break;
+    case 'keeper-descend': keeperDescend(); break;
+    case 'event-choice': eventChoose(+t.dataset.i); break;
     case 'forge-pick': forgePick(); break;
+    case 'forge-confirm': forgeConfirm(); break;
+    case 'forge-back': forgeBack(); break;
     case 'camp-rest': campChoose('rest'); break;
     case 'camp-tough': campChoose('tough'); break;
     case 'modal': openModal(t.dataset.m); break;
@@ -39,10 +57,12 @@ function handle(act,t){
   }
 }
 document.addEventListener('click',e=>{ const t=e.target.closest('[data-act]'); if(!t) return; if(t.tagName==='BUTTON'&&t.disabled) return; if(t.tagName==='BUTTON'&&!['end','ult','sound','bet','double','cashout'].includes(t.dataset.act)) sfx('click'); handle(t.dataset.act,t); });
-document.addEventListener('input',e=>{ if(e.target&&e.target.id==='libq'){ UI.lib.q=e.target.value; const g=document.querySelector('.libgrid'); if(g) g.innerHTML=libraryGridHTML(); const c=document.getElementById('libcount'); if(c) c.textContent='· '+libCountText(); } });
+document.addEventListener('mouseover',e=>{ const h=e.target.closest&&e.target.closest('.hex.floor'); if(h&&G&&G.phase==='map') previewPath(+h.dataset.x,+h.dataset.y); });   // the path you would walk
+document.addEventListener('mouseout',e=>{ const b=e.target.closest&&e.target.closest('.board'); if(b&&!(e.relatedTarget&&b.contains(e.relatedTarget))) clearPreview(); });
+document.addEventListener('input',e=>{ if(e.target&&e.target.id==='dkq'){ dkState().q=e.target.value; const g=document.querySelector('.dkall'); if(g) g.innerHTML=dkGridHTML(); return; } if(e.target&&e.target.id==='libq'){ UI.lib.q=e.target.value; const g=document.querySelector('.libgrid'); if(g) g.innerHTML=libraryGridHTML(); const c=document.getElementById('libcount'); if(c) c.textContent='· '+libCountText(); } });
 // ---- keyboard focus for everything outside a fight: menus, spoils, road events, merchant, pick windows ----
 function kbFoes(){ const F=G&&G.fight; if(!F) return; const t=F.enemies[F.target]; document.querySelectorAll('.card.enemy').forEach(c=>c.classList.toggle('kbf',UI.kbRow==='foes'&&!!t&&c.dataset.uid===String(t.uid))); }
-function kbTargets(){ const root=document.querySelector('.modal .box')||document.getElementById('app'); if(!root) return []; return [...root.querySelectorAll('[data-act]')].filter(el=>!el.closest('.hud')&&!el.closest('.log')&&!el.disabled&&el.offsetParent!==null&&!el.classList.contains('modal')&&!['noop','close'].includes(el.dataset.act)); }
+function kbTargets(){ const root=document.querySelector('.modal .box')||document.getElementById('app'); if(!root) return []; return [...root.querySelectorAll('[data-act]')].filter(el=>!el.closest('.hud')&&!el.classList.contains('hex')&&!el.closest('.log')&&!el.disabled&&el.offsetParent!==null&&!el.classList.contains('modal')&&!['noop','close'].includes(el.dataset.act)); }
 function kbKey(){ return `${G?G.phase:'title'}:${UI.modal?UI.modal.type:''}:${UI.screen||''}`; }
 function kbApply(){ const els=kbTargets(); document.querySelectorAll('.kbf').forEach(x=>x.classList.remove('kbf')); if(UI.kbi==null||!els.length) return; if(UI.kbi>=els.length) UI.kbi=els.length-1; const el=els[UI.kbi]; el.classList.add('kbf'); try{ el.scrollIntoView({block:'nearest',inline:'nearest'}); }catch(err){} }
 function kbMove(dir){
@@ -56,10 +76,10 @@ function kbMove(dir){
 }
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&UI.modal){ closeModal(); return; }
-  if(e.key==='Escape'&&UI.screen==='library'){ UI.screen=null; render(); return; }
+  if(e.key==='Escape'&&UI.screen){ UI.screen=null; render(); return; }
   if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')) return;
   const isSpace=e.key===' '||e.key==='Spacebar'||e.code==='Space'; const k=e.key.toLowerCase();
-  if(UI.screen==='library') return;
+  if(UI.screen) return;
   if(G&&G.phase==='battle'&&!UI.modal){
     const F=G.fight; const n=F&&F.hand?F.hand.length:0; const alive=F.enemies.map((x,i)=>x.alive?i:-1).filter(i=>i>=0);
     if(e.key>='1'&&e.key<='9') playCard(parseInt(e.key,10)-1);
@@ -72,6 +92,11 @@ document.addEventListener('keydown',e=>{
     else if(e.key==='Tab'){ e.preventDefault(); endTurn(); }
     else if(k==='e'){ const d=document.querySelector('.slots'); if(d) d.classList.toggle('open'); }
     return;
+  }
+  if(G&&G.phase==='map'&&!UI.modal){   // on the map W A S D step, Space acts on the tile you stand on
+    const dir={d:0,e:1,q:2,a:3,z:4,c:5,arrowright:0,arrowleft:3}[k];   // E, NE, NW, W, SW, SE
+    if(dir!=null){ e.preventDefault(); moveStep(dir); return; }
+    if(isSpace||e.key==='Enter'){ e.preventDefault(); const t=hereTile(); if(t&&blocks(t)) resolveTile(t); return; }
   }
   const dirs={a:'a',d:'d',w:'w',s:'s',arrowleft:'a',arrowright:'d',arrowup:'w',arrowdown:'s'};
   if(dirs[k]){ e.preventDefault(); kbMove(dirs[k]); return; }

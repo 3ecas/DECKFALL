@@ -124,19 +124,25 @@ function interludeHTML(){
     ${T.text&&!b?`<p class="muted">${esc(T.text)}</p>`:''}
     <div class="lines">${I.lines.map((l,i)=>`<p class="line" style="--i:${i}">${esc(l)}</p>`).join('')}</div>
     ${I.cards&&!I.picked?`<div class="cardgrid fan">${I.cards.map((id,i)=>cardHTML(id,{big:true,act:'inter-card',data:`data-id="${id}" style="--i:${i}"`,enter:true,tag:G.p.deck.includes(id)?(canEvolve(id)?`Owned · evolve to ${TIERS[curTier(id)+1]}`:'Owned · copy'):null})).join('')}</div><button class="btn ghost sm" data-act="inter-skip">Take none</button>`:''}
-    ${I.t==='forge'&&!I.auto&&!I.picked?`<div class="row center"><button class="btn primary" data-act="forge-pick">Choose a card to reforge</button><button class="btn ghost" data-act="inter-next">Leave the forge</button></div>`:''}
+    ${I.t==='forge'&&!I.auto&&!I.picked?(I.pick?`${upgradePairHTML(I.pick)}<div class="row center"><button class="btn primary" data-act="forge-confirm">⚒️ Reforge it</button><button class="btn ghost" data-act="forge-back">Choose another</button></div>`:`<div class="row center"><button class="btn primary" data-act="forge-pick">Choose a card to reforge</button><button class="btn ghost" data-act="inter-next">Leave the forge</button></div>`):''}
+    ${I.t==='forge'&&I.picked&&I.pick?`<div class="pair"><div class="pc"><span class="plabel">Reforged · ${TIERS[curTier(I.pick)]}</span>${cardHTML(I.pick,{big:true,mode:'static'})}</div></div>`:''}
     ${I.t==='event'&&!I.picked?`<div class="choices">${EVENTS[I.ev].choices.map((c,i)=>`<button class="choice" data-act="event-choice" data-i="${i}">${esc(c.t)}</button>`).join('')}</div>`:''}
     ${I.t==='camp'&&!I.auto&&!I.picked?`<div class="row center"><button class="btn primary" data-act="camp-rest">🛏️ Rest · heal ${CAMP.healPct}% of Max HP</button><button class="btn" data-act="camp-tough">💪 Train · +${CAMP.toughPct}% Max HP for good</button></div>`:''}
     ${I.t==='ambush'?`<p class="msg bad">Prepare yourself.</p>`:waiting?'':`<div class="autobar ${I.picked?'fast':''}"><i></i></div><button class="btn sm ghost" data-act="inter-next">Continue now</button>`}
   </div>`;
 }
+// Before and after of an upgrade: the card as it is now and as it will be one tier up, side by side; the values that grow are marked.
+function upgradePairHTML(id){ const cur=curTier(id), next=Math.min(8,cur+1); return `<div class="pair"><div class="pc"><span class="plabel">Now · ${TIERS[cur]}</span>${cardHTML(id,{big:true,mode:'static',tier:cur,vsTier:cur})}</div><span class="parrow">➜</span><div class="pc"><span class="plabel">After · ${TIERS[next]}</span>${cardHTML(id,{big:true,mode:'static',tier:next,vsTier:cur})}</div></div>`; }
 function shopHTML(){
-  const p=G.p;
-  const grid=deckSummary().map(x=>{const ok=canEvolve(x.id); const c=ok?evolvePrice(x.id):0; return cardHTML(x.id,{act:'shop-upgrade',data:`data-id="${x.id}"`,price:ok?c:null,priceTag:ok?` → ${TIERS[curTier(x.id)+1]}`:'',tag:ok?null:'Ultimate',dim:!ok||p.gold<c});}).join('');
+  const p=G.p; const S=G.shop; const pick=S.pick;
+  const grid=deckSummary().map(x=>{const ok=canEvolve(x.id); const c=ok?evolvePrice(x.id):0; return cardHTML(x.id,{act:'shop-pick',data:`data-id="${x.id}"`,price:ok?c:null,priceTag:ok?` → ${TIERS[curTier(x.id)+1]}`:'',tag:ok?null:'Ultimate',dim:!ok||p.gold<c});}).join('');
+  let body;
+  if(S.used) body=`<div class="eyebrow">Done for this visit</div>${pick?`<div class="pair"><div class="pc"><span class="plabel">Reforged · ${TIERS[curTier(pick)]}</span>${cardHTML(pick,{big:true,mode:'static'})}</div></div>`:''}<p class="msg good">${esc(S.used)}. The smith gets back to work; come back in a while.</p>`;
+  else if(pick){ const c=evolvePrice(pick); body=`<div class="eyebrow">${esc(CARD[pick].name)} · ${TIERS[curTier(pick)]} → ${TIERS[curTier(pick)+1]}</div>${upgradePairHTML(pick)}<div class="row center"><button class="btn primary" data-act="shop-confirm" data-id="${pick}" ${p.gold<c?'disabled':''}>⚒️ Reforge · ${c} gold</button><button class="btn ghost" data-act="shop-back">Choose another</button></div>${p.gold<c?'<p class="msg bad">Not enough gold.</p>':''}`; }
+  else body=`<div class="eyebrow">Upgrade one card · pick it to see it before and after</div><div class="shopcards">${grid}</div>`;
   return `<div class="scene shop">
     <div class="row between"><h2>⚒️ Blacksmith${G.keeper?" · the keeper's forge":''}</h2><button class="btn primary" data-act="shop-leave">${G.keeper?'Back to the keeper':'Back'} →</button></div>
-    ${G.shop.used?`<div class="eyebrow">Done for this visit</div><p class="msg good">${esc(G.shop.used)}. The smith gets back to work; come back in a while.</p>`:`<div class="eyebrow">Upgrade one card · one tier higher, priced by the tier it becomes</div>
-    <div class="shopcards">${grid}</div>`}
+    ${body}
   </div>`;
 }
 function gameoverHTML(){

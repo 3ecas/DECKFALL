@@ -29,23 +29,26 @@ function mkEnemy(def,o){
 }
 function pickEnemies(o){
   const s=G.round;
-  if(o.boss){ const b=BOSSES[(Math.round(s/10)-1)%BOSSES.length]; return [mkEnemy(b,{boss:true})]; }
+  if(o.boss){ const b=(o.bossId&&BOSSES.find(x=>x.id===o.bossId))||BOSSES[(Math.round(s/10)-1+BOSSES.length)%BOSSES.length]; return [mkEnemy(b,{boss:true})]; }
   if(o.mimic) return [mkEnemy(ENEMY.mimic,{elite:true})];
-  let pool=ENEMIES.filter(x=>!x.special&&x.min<=s&&x.min>=s-14); if(pool.length<4) pool=ENEMIES.filter(x=>!x.special&&x.min<=s);
+  const B=G.dungeon?themeNow():null;   // companions come from the dungeon's theme
+  let pool=ENEMIES.filter(x=>!x.special&&x.min<=s&&x.min>=s-14&&(!B||B.els.includes(x.el))); if(pool.length<4) pool=ENEMIES.filter(x=>!x.special&&x.min<=s&&x.min>=s-14); if(pool.length<4) pool=ENEMIES.filter(x=>!x.special&&x.min<=s);
   let count=1; const r=Math.random();
   if(!o.elite){ if(s>=20&&r<0.08) count=3; else if(s>=8&&r<0.16) count=2; }   // fewer, stronger foes: a second creature is rare, a third rarer
-  const list=[]; for(let i=0;i<count;i++) list.push(mkEnemy(pick(pool),{elite:o.elite,scale:count===1?1:count===2?0.66:0.52}));
+  const list=[]; for(let i=0;i<count;i++){ const def=(i===0&&o.enemyId&&ENEMY[o.enemyId])?ENEMY[o.enemyId]:pick(pool); list.push(mkEnemy(def,{elite:o.elite,scale:count===1?1:count===2?0.66:0.52})); }
   return list;
 }
 function startFight(o){
-  clearTimeout(UI.timer); clearTimeout(UI.autoTimer);
+  clearTimeout(UI.timer); clearTimeout(UI.autoTimer); clearTimeout(UI.walkTimer); UI.walk=null;
+  if(o.dangerBonus) G.round+=o.dangerBonus;   // lairs fight a little above their ground
   const enemies=pickEnemies(o);
-  const drawPile=shuffle(G.p.deck.map(id=>({uid:UI.uid++,id})));
-  G.fight={key:UI.fightKey++, enemies, turn:0, energy:0, energyBonus:0, hand:[], draw:drawPile, discard:[], exhaust:[], passives:[], block:0, st:{}, str:0, spellT:0, thornsT:0, critT:0, armorT:0, regen:0, dodgeT:0, elBoost:{}, dodgeNext:false, counterNext:false, parry:false, retain:false, target:0, played:0, turnAttacks:0, o, over:false};
-  G.log=[]; log(o.boss?`BOSS: ${enemies[0].name} blocks the way!`:o.elite?`An elite ${enemies[0].name} appears!`:`${enemies.map(e=>e.name).join(' and ')} appear${enemies.length>1?'':'s'}!`, o.boss?'bad':'');
+  // the kit persists: the fight works on the run's hand, piles and passives, and hands them back when it ends
+  const K=G.p.kit||(G.p.kit=newKit()); if(!K.draw.length&&!K.hand.length&&!K.discard.length) K.draw=shuffle(G.p.deck.map(id=>({uid:UI.uid++,id})));
+  G.fight={key:UI.fightKey++, enemies, turn:0, energy:K.energy||0, energyBonus:0, hand:K.hand, draw:K.draw, discard:K.discard, exhaust:K.exhaust, passives:K.passives, block:0, st:{}, str:0, spellT:0, thornsT:0, critT:0, armorT:0, regen:0, dodgeT:0, elBoost:{}, dodgeNext:false, counterNext:false, parry:false, retain:false, target:0, played:0, turnAttacks:0, o, over:false};
+  G.log=[]; log(o.boss?`BOSS: ${enemies[0].name} guards its lair!`:o.forced?`${enemies[0].name} has caught your scent. There is no running.`:o.elite?`An elite ${enemies[0].name} appears!`:`${enemies.map(e=>e.name).join(' and ')} appear${enemies.length>1?'':'s'}!`, (o.boss||o.forced)?'bad':'');
   G.phase='battle'; G.spoils=null; G.inter=null; G.shop=null; UI.handUids=[]; UI.sel=null; UI.kbRow='hand'; save();
   UI.intro=true; clearTimeout(UI.introTimer); UI.introTimer=setTimeout(()=>{ UI.intro=false; const a=document.querySelector('.arena'); if(a) a.classList.remove('intro'); },1500);   // the creature steps in first; its details are revealed when the fight starts
-  const f=fx(); if(f) setTimeout(()=>f.banner(o.boss?`Boss: ${enemies[0].name}`:o.elite?`Elite: ${enemies[0].name}`:`Round ${G.round}`, o.boss?'boss':o.elite?'elite':''),50); sfx(o.boss?'boss':o.elite?'elite':'battle');
+  const f=fx(); if(f) setTimeout(()=>f.banner(o.boss?`Boss: ${enemies[0].name}`:o.forced?`Ambush! ${enemies[0].name}`:o.elite?`Elite: ${enemies[0].name}`:`${enemies[0].name} · danger ${G.round}`, o.boss?'boss':(o.elite||o.forced)?'elite':''),50); sfx(o.boss?'boss':o.forced?'ambush':o.elite?'elite':'battle');
   startPlayerTurn();
 }
 function startPlayerTurn(){
@@ -57,10 +60,10 @@ function startPlayerTurn(){
   if(F.st.poison){ dmgPlayerRaw(F.st.poison,'Poison'); F.st.poison--; if(F.st.poison<=0) delete F.st.poison; }
   if(F.st.burn&&G.p.hp>0){ dmgPlayerRaw(F.st.burn,'Burn'); F.st.burn=Math.floor(F.st.burn/2); if(F.st.burn<=0) delete F.st.burn; }
   if(checkDeath()) return;
-  const before=F.hand.length; draw((F.turn===1?PS('handSize'):(F.hand.length===0?2:1))+pSum('drawPerTurn')); sfx('draw',{n:F.hand.length-before});   // opening hand on turn 1, then one card a turn (two if your hand is empty); unplayed cards stay in hand
+  const before=F.hand.length; draw((F.turn===1?Math.max(0,PS('handSize')-F.hand.length):(F.hand.length===0?2:1))+pSum('drawPerTurn')); sfx('draw',{n:F.hand.length-before});   // top the persistent hand up on turn 1, then one card a turn (two if your hand is empty); unplayed cards stay in hand, even between fights
   render(); autoEndCheck();
 }
-function draw(n){ const F=G.fight; for(let i=0;i<n;i++){ if(F.hand.length>=10) break; if(!F.draw.length){ if(!F.discard.length) break; F.draw=shuffle(F.discard); F.discard=[]; } F.hand.push(F.draw.pop()); } }
+function draw(n){ drawFrom(G.fight,n); }
 function addBlock(n){ const F=G.fight; F.block+=n; floatP(`🛡️ +${n}`,'block'); log(`You gain ${n} Block`); sfx('block'); const f=fx(); if(f) f.player('phys',1); }
 function needsTarget(d){ return d.fx.some(f=>(f[0]==='dmg'&&!(f[2]&&f[2].aoe))||(f[0]==='se'&&!(f[3]&&f[3].aoe))||(f[0]==='special'&&['execute','snipe','retaliation','stDmg','doubleSt','spread','blockDmg','playedDmg','sabotage','pilfer','mimic'].includes(f[1])&&!(f[2]&&f[2].aoe))); }
 function canPlay(inst){ const F=G.fight; const d=CARD[inst.id]; return !d.unplayable&&F.energy>=cardCost(inst.id); }
@@ -168,7 +171,7 @@ function damageEnemy(e,amount,o){
   e.hp-=dmg;
   if(dmg>0&&e.st.shock>0){ const x=e.st.shock; e.hp-=x; dmg+=x; e.st.shock--; if(e.st.shock<=0) delete e.st.shock; log(`Shock adds ${x} damage`); }
   const f=fx(); if(f) f.hit(e,o.el||'phys');
-  if(e.hp<=0){ e.hp=0; e.alive=false; G.kills++; log(`${e.name} is slain!`,'good'); if(f) f.death(e); sfx('death'); if(e.el==='fire'&&G.p.hp>0){ const c=Math.max(1,e.lvl||1); dmgPlayerRaw(c,`${e.name}'s cinders`); if(f) f.player('fire',2); } }
+  if(e.hp<=0){ e.hp=0; e.alive=false; G.kills++; log(`${e.name} is slain!`,'good'); if(f) f.death(e); sfx('death'); if(e.el==='fire'&&G.p.hp>0){ const c=Math.min(Math.max(1,e.lvl||1),G.p.hp-1); if(c>0){ dmgPlayerRaw(c,`${e.name}'s cinders`); if(f) f.player('fire',2); } } }   // Cinder: the burst hurts but never kills; it leaves you at 1 HP at worst
   return dmg;
 }
 function damageEnemyRaw(e,amount,el,src){ if(!e.alive) return; const d=Math.max(0,Math.round(amount)); e.hp-=d; floatE(e,`${d}`,'dmg'); log(`${src} deals ${d} to ${e.name}`); const f=fx(); if(f) f.hit(e,el); sfx('tick',{el}); if(e.hp<=0){ e.hp=0; e.alive=false; G.kills++; log(`${e.name} is slain!`,'good'); if(f) f.death(e); sfx('death'); } }
@@ -357,11 +360,16 @@ function winFight(){
   let drop=null; { const dead=F.enemies.filter(x=>!x.alive&&(FOE_MOVES[x.id]||[]).length); if(dead.length){ const x=dead.find(z=>z.boss)||dead.find(z=>z.elite)||pick(dead); const chance=x.boss?1:x.elite?0.6:0.3; if(Math.random()<chance){ const id=pick(FOE_MOVES[x.id]); drop={id,from:x.name}; markSeen(id); } } }
   const picks=(o.boss?1:0)+ups;   // one pick per level gained, plus the boss's own card
   G.spoils={gold,xp,kind,levelBefore,picks,bossPick:!!o.boss,cards:picks?offerPool(o.boss?'boss':kind,3):null,cardTaken:picks===0,msgs:[],drop,dropTaken:!drop};
-  G.phase='spoils'; render(); save();
+  // the kit goes back to the run: exhausted cards return to the discard pile, conjured cards fade, the tile is cleared, a lair grants a slot
+  F.discard.push(...F.exhaust); F.exhaust.length=0; F.hand=F.hand.filter(c=>!c.temp);
+  G.p.kit={hand:F.hand,draw:F.draw,discard:F.discard,exhaust:F.exhaust,passives:F.passives,energy:F.energy};
+  clearTile(o.tile);
+  if(o.boss&&G.p.slots<5){ G.p.slots++; G.spoils.msgs.push(`The lair falls silent. You feel room for one more passive: ${G.p.slots} slots.`); }
+  G.phase='spoils'; render(); save(); spoilsMaybeContinue();   // nothing to pick or take? the road continues by itself
 }
 function spoilsDone(r){ return !!r&&r.cardTaken&&(!r.drop||r.dropTaken); }
 function spoilsMaybeContinue(){ const r=G.spoils; if(spoilsDone(r)){ clearTimeout(UI.timer); UI.timer=setTimeout(spoilsContinue,1000); } }
-function spoilsTakeDrop(){ const r=G.spoils; if(!r||!r.drop||r.dropTaken) return; const id=r.drop.id; sfx(G.p.deck.includes(id)&&canEvolve(id)?'evolve':'pick'); const res=addCard(id); r.msgs=r.msgs||[]; r.msgs.push(res==='evolved'?`${CARD[id].name} evolves to ${TIERS[curTier(id)]}`:`${CARD[id].name}, taken from ${r.drop.from}, joins your deck`); r.dropTaken=true; render(); save(); spoilsMaybeContinue(); }
+function spoilsTakeDrop(){ const r=G.spoils; if(!r||!r.drop||r.dropTaken) return; const id=r.drop.id; sfx(G.p.deck.includes(id)&&canEvolve(id)?'evolve':'pick'); const res=addCard(id); r.msgs=r.msgs||[]; r.msgs.push(res==='evolved'?`${CARD[id].name} evolves to ${TIERS[curTier(id)]}`:res==='packed'?`${CARD[id].name}, taken from ${r.drop.from}, goes into your pack: the deck is full`:`${CARD[id].name}, taken from ${r.drop.from}, joins your deck`); r.dropTaken=true; render(); save(); spoilsMaybeContinue(); }
 function spoilsSkipDrop(){ const r=G.spoils; if(!r||!r.drop||r.dropTaken) return; r.dropTaken=true; r.msgs=r.msgs||[]; r.msgs.push(`You leave ${CARD[r.drop.id].name} behind.`); render(); save(); spoilsMaybeContinue(); }
-function spoilsPickCard(id){ const r=G.spoils; if(!r||r.cardTaken||!r.cards||!r.cards.includes(id)) return; sfx(G.p.deck.includes(id)&&canEvolve(id)?'evolve':'pick'); const res=addCard(id); r.msgs=r.msgs||[]; r.msgs.push(res==='evolved'?`${CARD[id].name} evolves to ${TIERS[curTier(id)]}`:res==='copied'?`Another ${CARD[id].name} joins your deck`:`${CARD[id].name} joins your deck`); r.picks=(r.picks||1)-1; r.bossPick=false; if(r.picks>0) r.cards=offerPool(r.kind==='boss'?'elite':r.kind,3); else { r.cards=null; r.cardTaken=true; } render(); save(); spoilsMaybeContinue(); }
+function spoilsPickCard(id){ const r=G.spoils; if(!r||r.cardTaken||!r.cards||!r.cards.includes(id)) return; sfx(G.p.deck.includes(id)&&canEvolve(id)?'evolve':'pick'); const res=addCard(id); r.msgs=r.msgs||[]; r.msgs.push(res==='evolved'?`${CARD[id].name} evolves to ${TIERS[curTier(id)]}`:res==='copied'?`Another ${CARD[id].name} joins your deck`:res==='packed'?`${CARD[id].name} goes into your pack: the deck is full. Swap it in at a town`:`${CARD[id].name} joins your deck`); r.picks=(r.picks||1)-1; r.bossPick=false; if(r.picks>0) r.cards=offerPool(r.kind==='boss'?'elite':r.kind,3); else { r.cards=null; r.cardTaken=true; } render(); save(); spoilsMaybeContinue(); }
 function spoilsSkipCard(){ const r=G.spoils; if(!r||r.cardTaken) return; r.picks=0; r.cards=null; r.bossPick=false; r.cardTaken=true; r.msgs=r.msgs||[]; r.msgs.push('You take no card.'); render(); save(); spoilsMaybeContinue(); }
