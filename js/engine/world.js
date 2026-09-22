@@ -13,13 +13,18 @@ const THEMES={
   pits:    {n:'Ash Pits',        i:'🏜️', els:['earth','fire'],    c:'#6a4a26', boss:'earthshaker'},
   sanctum: {n:'Drowned Sanctum', i:'⛪', els:['holy','water'],    c:'#5a5040', boss:'seraph'},
   marsh:   {n:'Hydra Marsh',     i:'🐊', els:['poison','water'],  c:'#2e4a3a', boss:'hydra_matriarch'},
+  roost:   {n:'Dragon Roost',    i:'🐉', els:['dragon','fire'],   c:'#5a1e2e', boss:'elder_wyrm'},
+  vault:   {n:'Mind Vault',      i:'🔮', els:['psychic','shadow'],c:'#3c1f5a', boss:'archmind'},
+  peaks:   {n:'Windswept Peaks', i:'🪽', els:['flying','light'],  c:'#2f4a5c', boss:'roc'},
+  arena:   {n:'Fighting Pits',   i:'🥊', els:['fighting','phys'], c:'#5a3a22', boss:'grandmaster'},
 };
+// Offers inside a theme lean a little toward its elements (deckLean in state.js): every nature type is a deck (js/data/decks.js).
 const VISION=3, DUNGEON_STEP=2, BOSS_EVERY=3, BOSS_RAMP=5;   // sight in hexes, danger added per dungeon, boss cadence, a boss fights at its dungeon base danger + BOSS_RAMP however deep its room
 // Dungeons start small and grow: 5 or 6 rooms in the first, two more with every dungeon (up to 30), on a grid of about 39 hexes per room.
 // Past what fits the screen the view no longer shrinks the hexes: it follows you, and you can drag it (map.js).
 function dungeonSize(n){ const rooms=Math.min(30,5+2*(n-1)+rnd(0,1)); const cells=rooms*46; const w=Math.max(16,Math.min(64,Math.round(Math.sqrt(cells*1.42)))); const h=Math.max(12,Math.min(46,Math.round(cells/w))); return {w,h,rooms}; }
 const TILE_ICON={chest:'📦',shrine:'⛩️',forge:'⚒️',camp:'🔥',trap:'❓',idol:'🗿',boost:'✨',exit:'🚪',entry:'🕳️',event:'❔',lair:'👑'};
-const SENSE={beast:2,shadow:2,phys:1,light:1,fire:1,ice:1,water:1,poison:1,holy:1,grass:0,earth:0};   // how far a creature notices you (sight is 3)
+const SENSE={beast:2,shadow:2,dragon:2,psychic:2,flying:2,phys:1,light:1,fire:1,ice:1,water:1,poison:1,holy:1,fighting:1,grass:0,earth:0};   // how far a creature notices you (sight is 3)
 // ---- hex math: odd-r offset coordinates, pointy tops. Directions in order E, NE, NW, W, SW, SE ----
 const HEX_DIRS=[[[1,0],[0,-1],[-1,-1],[-1,0],[-1,1],[0,1]],[[1,0],[1,-1],[0,-1],[-1,0],[0,1],[1,1]]];
 function hexNeighbors(c,r){ return HEX_DIRS[r&1].map(([dc,dr])=>[c+dc,r+dr]); }
@@ -136,7 +141,7 @@ function eventChoose(i){ const I=G.inter; if(!I||I.t!=='event'||I.picked) return
 // ---- the keeper: between dungeons, one visit, each service once ----
 function restCost(){ return 10+G.round*3; }
 function removeCost(){ return 20+G.round*4; }
-function cardPrice(id){ return Math.round(TIER[CARD[id].tier].price*0.6*(1+0.03*G.round)); }
+function cardPrice(id){ return Math.round(TIER[CARD[id].tier].price*0.6*(1+0.03*G.round)*(CARD[id].legendary?2.5:1)); }   // a legendary costs 2.5×
 function openKeeper(){ clearTimeout(UI.walkTimer); UI.walk=null; const purse=goldReward()*2; G.p.gold+=purse; G.keeper={n:G.dungeon.n,purse,used:{},offers:offerPool('shop',3),view:null,msg:null}; G.phase='keeper'; render(); save(); sfx('shop'); }
 function keeperRest(){ const K=G.keeper; const p=G.p; if(!K||K.used.rest) return; if(p.hp>=p.maxHp){ toast('You are already rested'); return; } const c=restCost(); if(p.gold<c){ toast('Not enough gold'); return; } p.gold-=c; const h=heal(p.maxHp); K.used.rest=true; K.msg=`You sleep by the keeper's fire and wake with ${h} HP back.`; sfx('heal'); render(); save(); }
 function keeperSmith(){ const K=G.keeper; if(!K||K.used.smith) return; openShop(); }

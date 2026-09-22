@@ -18,7 +18,8 @@ dungeon crawl, without a Pokemon-style party and without a Slay the Spire route.
 
 1. **Exploration over fighting.** The dungeon is the game. Fights are chosen, guarded rewards, or the price of carelessness.
 2. **One long game.** Nothing resets between fights except Block, statuses and "this fight" buffs.
-3. **Composition.** The board (today's passive slots) is where the run's identity lives: tribes, traits, placement.
+3. **Composition.** The board (today's passive slots) is where the run's identity lives: tribes, traits, placement. Decks
+   (built, September 2026) are the first step: named groups of cards that read how many deck-mates were played before them.
 4. **Growth you can feel.** Cards evolve, the board grows, danger rises with every room and every dungeon. Endless, readable.
 
 ## The dungeon
@@ -36,7 +37,8 @@ dungeon crawl, without a Pokemon-style party and without a Slay the Spire route.
   "round" reads that instead, so scaling, rewards and tiers all follow it. Dungeon 1 runs from danger 1 to about 8.
 - **Themes.** Rat Warrens (beast, poison), Sunken Grotto (water, lightning), Ember Forge (fire, earth), Frost Halls
   (ice, physical), Bone Crypt (shadow, holy), Fungal Garden (grass, poison), Storm Spire (lightning, earth), Ash Pits
-  (earth, fire), Drowned Sanctum (holy, water), Hydra Marsh (poison, water). A theme decides the creatures, the boss
+  (earth, fire), Drowned Sanctum (holy, water), Hydra Marsh (poison, water), Dragon Roost (dragon, fire), Mind Vault (psychic, shadow),
+  Windswept Peaks (flying, light), Fighting Pits (fighting, phys). A theme decides the creatures, the boss
   and, later, the cards and events. Consecutive dungeons never repeat a theme.
 - **Rooms hold things.** Guards (one or two creatures, sometimes with a chest behind them), a nest (an elite and a
   chest), a find (chest, shrine, forge, campfire, blessing, idol), an event (a gambler, a blood altar, a wounded
@@ -70,6 +72,19 @@ Hand, draw pile, discard pile, exhaust pile, passives and Mana live on the run, 
   each copy is, and everything you own below with filters by element, type, effect, tier, cost and a search.
   Later: a wandering merchant or two inside dungeons.
 
+## Decks (built)
+
+Every nature type is a deck (`js/data/decks.js`, `deckOf` decides: a named sub-deck can come later). Any card belongs to its
+element's deck; most stand alone, and each element has three to five synergy cards that read the rest through a few
+primitives on top of the card vocabulary: damage per same-element card played earlier this turn (`pp`), a combo flag on any
+effect (`ifPack`, only after another card of the element this turn), a rising chance to apply a status (`packStatus`), a
+caller that pulls element-mates from the draw pile (`tutor`), a fight-long bonus for the whole element (`packBuff`) and a
+payoff that counts the element's cards played this turn or this fight (`pack`). Creature abilities belong to their element
+too, so the Rat Warrens feed a Poison deck. Offers lean toward the elements you hold and the theme's, so a deck assembles
+over a run without a draft. Balance rule: a synergy card alone is a little weaker than a plain card of its tier; with two
+element-mates before it, clearly stronger. Later: deck thresholds (four Poison cards played this fight: ...) and a board
+tribe for each element.
+
 ## The board and compositions (stage two)
 
 - Passive slots become positions: two rows of three, four unlocked at the start, more from bosses.
@@ -94,6 +109,8 @@ same proportions.
 1. **Dungeons** (built): hex mazes with rooms and corridors, fog with line of sight, click and key movement on a
    fixed screen, the exit, danger by rooms and dungeons, themes, guards, nests, finds, four events, sense ranges,
    bosses every third dungeon, the keeper, persistent hand, piles, passives and Mana, the deck cap and the pack.
+   **Decks** (built): every nature type is a deck, synergy cards for all fourteen, creature abilities in decks, element-leaning
+   offers; the four newer natures (Dragon, Psychic, Flying, Fighting) with their cards, creatures, bosses and themes.
 2. **Board**: positions, unit HP, tribes and traits, enemy boards, between-fight hand discard, theme field effects.
 3. **Life below**: more events and people, keys and locked doors, wandering merchants, quests from the keeper,
    theme-flavoured card offers, secrets (the well is the first).
@@ -104,3 +121,5 @@ same proportions.
 Hero and deck, no party. Hex grid, whole dungeon on one screen. Sight 3, sense at most 2. Creatures visible and
 avoidable, forced fights only by sense. No time clock: danger comes from rooms and dungeons. Units die (stage two).
 Six tribes at launch. Enemy dispel disables rather than destroys. One deck of 20, swaps only at the keeper.
+Legendary cards live outside the tier ladder's offer pools: a flag on the card, a per-offer chance (`LEGEND_CHANCE`), no
+new tier. The first one is a joke card, Dick, and the system is generic so the next one costs one line.

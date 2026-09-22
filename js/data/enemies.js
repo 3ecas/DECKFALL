@@ -17,11 +17,15 @@ const NATURE = {
   earth: {name:'Stoneskin', icon:'🪨', text:'Armor shaves damage off every hit you land, and its Block is 50% stronger.'},
   shadow:{name:'Drain',     icon:'🌑', text:'Heals half the damage it deals, and 15% of your attack cards fade into shadow.'},
   holy:  {name:'Ward',      icon:'✨', text:'Cleanses one of its ailments each turn, and its attacks pass through half your Block.'},
+  dragon:{name:'Tyrant',    icon:'🐉', text:'Its attacks pass through your Armor, and its hoard pays double gold when it falls.'},
+  psychic:{name:'Mind Drain', icon:'🔮', text:'Every hit it lands on you also drains 1 Mana.'},
+  flying:{name:'Wings',     icon:'🪽', text:'20% of your attack and spell cards miss it entirely; summons and machines never miss.'},
+  fighting:{name:'Counter', icon:'🥊', text:'30% of the attack cards that hit it are answered with a punch for half its attack.'},
 };
 const ENEMIES = [];
 function e(id,name,icon,el,hp,atk,min,pat,o){ ENEMIES.push(Object.assign({id,name,icon,el,hp,atk,min,pat},o||{})); }
 e('wolf','Wolf','🐺','beast',22,5,1,null);
-e('giant_rat','Giant Rat','🐀','beast',16,4,1,null);
+e('giant_rat','Giant Rat','🐀','poison',16,4,1,null);
 e('bandit','Bandit','🥷','phys',24,5,1,null);
 e('crab','Rock Crab','🦀','water',28,4,1,null);
 e('sprout_fiend','Sprout Fiend','🌱','grass',20,4,1,null);
@@ -71,6 +75,23 @@ e('beastmaster','Beastmaster','🪓','beast',40,6,7,null,{passives:['wolf_pup']}
 e('warlock','Warlock','🧙‍♂️','shadow',38,6,9,null,{passives:['imp']});
 e('golemancer','Golemancer','🧱','earth',52,7,14,null,{passives:['clay_golem']});
 e('war_engineer','War Engineer','🤖','light',56,9,19,null,{passives:['overclock','repair_drone']});
+// ---- the four newer natures: dragons, minds, wings and fists ----
+e('drake_hatchling','Drake Hatchling','🦎','dragon',24,5,2,null);
+e('wyvern','Wyvern','🐲','dragon',42,7,7,null);
+e('drake','Drake','🐉','dragon',56,8,12,null);
+e('lindwurm','Lindwurm','🐍','dragon',66,9,19,null);
+e('mind_wisp','Mind Wisp','💭','psychic',18,4,1,null);
+e('seer','Blind Seer','🧿','psychic',28,5,4,null);
+e('mindflayer','Mind Flayer','🦑','psychic',46,7,10,null);
+e('sphinx','Sphinx','🔯','psychic',60,9,17,null);
+e('sparrowhawk','Sparrowhawk','🐦','flying',17,5,1,null);
+e('owl','Grey Owl','🦉','flying',26,5,4,null);
+e('harpy','Harpy','🪶','flying',40,7,8,null);
+e('griffin','Griffin','🪽','flying',56,9,15,null);
+e('brawler','Pit Brawler','🥊','fighting',24,5,1,null);
+e('monk','Wandering Monk','🧘','fighting',30,6,5,null);
+e('gladiator','Gladiator','🤺','fighting',44,8,9,null);
+e('champion','Pit Champion','🏋️','fighting',60,9,16,null);
 e('mimic','Mimic','🧰','phys',40,7,1,null,{special:true});
 const ENEMY = Object.fromEntries(ENEMIES.map(x=>[x.id,x]));
 // Bosses ride the same curve as enemies (hp × hpMult(round), atk × atkMult(round)) and on top of that get +1 armor, +5 levels, ×1.2 basic attacks
@@ -87,4 +108,8 @@ const BOSSES = [
   {id:'earthshaker', name:'Earthshaker', icon:'🌋', el:'earth', hp:62, atk:7, pat:[D(20),A(1.6),S('vuln',2),X(),A(1.2)], passives:['clay_golem']},
   {id:'seraph', name:'Seraph of Judgment', icon:'😇', el:'holy', hp:55, atk:7, pat:[H(.15),A(1.4),X(),S('weak',2),A(.5,4),B(3)], passives:['valkyrie']},
   {id:'chaos_beast', name:'Chaos Beast', icon:'👾', el:'beast', hp:58, atk:7, pat:[A(1.5),AS(1,'burn',5),SU('bear'),A(.6,3),B(4)], passives:['bear']},
+  {id:'elder_wyrm', name:'Elder Wyrm', icon:'🐉', el:'dragon', hp:60, atk:7, pat:[D(14),AS(1,'burn',4),A(.6,3),X(),A(1.6)]},
+  {id:'archmind', name:'Archmind', icon:'🧠', el:'psychic', hp:52, atk:7, pat:[S('weak',2),A(1.3),X(),S('vuln',2),A(.5,4),B(3)]},
+  {id:'roc', name:'Great Roc', icon:'🦅', el:'flying', hp:56, atk:7, pat:[A(1.5),D(12),A(.6,3),S('vuln',2),A(1.3)]},
+  {id:'grandmaster', name:'Grandmaster', icon:'🥋', el:'fighting', hp:58, atk:7, pat:[A(.6,3),B(3),A(1.5),D(14),A(1.2)]},
 ];

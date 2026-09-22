@@ -10,8 +10,8 @@ const FIG_ICON={block:'🛡️',armor:'🛡️',heal:'❤️',draw:'🎴',mana:'
 // One effect -> one figure for the card face: a number, an icon and a short unit (4 ☠️ DMG), plus a modifier line when it matters (all enemies, pierces Block).
 // `short` is the one-line text for tags and lists. The hover tooltip (tips.js) carries the full explanation.
 function fxPart(f,v,base,d){
-  const t=f[0]; const n=k=>v[k]>base[k]?`<i class="up">${v[k]}</i>`:`${v[k]}`; const el=EL[d.el]; const elN=el.n.toLowerCase(); const fig=(num,icon,unit,mod,short)=>({num,icon,unit,mod:mod||'',short});
-  if(t==='dmg'){ const o=f[2]||{}; const hits=o.hits?(typeof o.hits==='string'?v[o.hits]:o.hits):1; const mods=[]; if(o.aoe) mods.push('all enemies'); if(o.pierce) mods.push('pierces Block'); if(o.bv) mods.push(`×2 vs ${ST[o.bv].i} ${ST[o.bv].n}`); if(o.ls) mods.push(`heals ${o.ls}%`); return fig(`${n(f[1])}${hits>1?`<small>×${hits}</small>`:''}`,el.i,'dmg',mods.join(' · '),`${n(f[1])}${hits>1?'×'+hits:''} ${elN} dmg${o.aoe?' to all':''}${o.pierce?', pierces':''}${o.bv?', ×2 vs '+ST[o.bv].n:''}${o.ls?', heals '+o.ls+'%':''}`); }
+  const t=f[0]; const n=k=>v[k]>base[k]?`<i class="up">${v[k]}</i>`:`${v[k]}`; const el=EL[d.el]; const elN=el.n.toLowerCase(); const fig=(num,icon,unit,mod,short)=>({num,icon,unit,mod:mod||'',short}); const DK=DECKS[deckOf(d)]||{n:'deck',i:'🎴'};   // the card's deck is its nature; pmod: the short modifier a pill shows instead of the long one
+  if(t==='dmg'){ const o=f[2]||{}; const hits=o.hits?(typeof o.hits==='string'?v[o.hits]:o.hits):1; const mods=[]; if(o.aoe) mods.push('all enemies'); if(o.pierce) mods.push('pierces Block'); if(o.bv) mods.push(`×2 vs ${ST[o.bv].i} ${ST[o.bv].n}`); if(o.ls) mods.push(`heals ${o.ls}%`); if(o.pp) mods.push(`+${n(o.pp)} per ${DK.i} played this turn`); const part=fig(`${n(f[1])}${hits>1?`<small>×${hits}</small>`:''}`,el.i,'dmg',mods.join(' · '),`${n(f[1])}${hits>1?'×'+hits:''} ${elN} dmg${o.aoe?' to all':''}${o.pierce?', pierces':''}${o.bv?', ×2 vs '+ST[o.bv].n:''}${o.ls?', heals '+o.ls+'%':''}${o.pp?', +'+n(o.pp)+' per '+DK.n+' card this turn':''}`); if(o.pp) part.pmod=`+${n(o.pp)}/${DK.i}`; return part; }
   if(t==='block') return fig(n(f[1]),FIG_ICON.block,'block','',`Gain ${n(f[1])} Block`);
   if(t==='armor') return fig(`+${n(f[1])}`,FIG_ICON.armor,'armor','this fight',`+${n(f[1])} Armor this fight`);
   if(t==='se'){ const o=f[3]||{}; if(f[1]==='frozen') return fig('',ST.frozen.i,'freeze',o.aoe?'all enemies skip a turn':'the target skips a turn',`Freeze ${o.aoe?'all enemies':'the target'}`); return fig(n(f[2]),ST[f[1]].i,ST[f[1]].n,o.aoe?'all enemies':'',`Apply ${n(f[2])} ${ST[f[1]].n}${o.aoe?' to all':''}`); }
@@ -41,12 +41,18 @@ function fxPart(f,v,base,d){
     if(s==='emp') return fig('✖✖','','emp','destroy every enemy passive','Destroy all enemy passives');
     if(s==='pilfer') return fig('☗','','steal','take an enemy passive for yourself','Steal an enemy passive');
     if(s==='pilferAll') return fig('☗☗','','steal','take every enemy passive','Steal all enemy passives');
-    if(s==='mimic') return fig('🎩','','conjure',"a card of the enemy's element into your hand",'Conjure an enemy-element card'); }
+    if(s==='mimic') return fig('🎩','','conjure',"a card of the enemy's element into your hand",'Conjure an enemy-element card');
+    // deck synergies (js/data/decks.js)
+    if(s==='packStatus') return Object.assign(fig(n(p.v),ST[p.s].i,ST[p.s].n,`${p.base}% chance · +${p.per}% per ${DK.i} played this turn`,`${p.base}%+ chance of ${n(p.v)} ${ST[p.s].n}`),{pmod:`${p.base}%+${p.per}%/${DK.i}`});
+    if(s==='tutor') return Object.assign(fig(n(p.n),DK.i,'call',`${DK.n} cards from your draw pile to your hand`,`Call ${n(p.n)} ${DK.n} card${(v[p.n]||1)>1?'s':''} to hand`),{pmod:'to hand'});
+    if(s==='packBuff') return Object.assign(fig(`+${n(p.v)}`,DK.i,'dmg',`to every ${DK.n} card this fight`,`+${n(p.v)} dmg to ${DK.n} cards this fight`),{pmod:'this fight'});
+    if(s==='pack'){ const what=p.what||'dmg'; const sc=p.scope==='fight'?'fight':'turn'; const icon={dmg:el.i,block:FIG_ICON.block,heal:FIG_ICON.heal,energy:FIG_ICON.mana,draw:FIG_ICON.draw}[what]; const unit={dmg:'dmg',block:'block',heal:'heal',energy:'mana',draw:'draw'}[what]; return Object.assign(fig(n(p.m),icon,unit,`per ${DK.i} played this ${sc}${p.aoe?' · all enemies':''}${p.pierce?' · pierces Block':''}`,`${n(p.m)} ${unit} per ${DK.n} card played this ${sc}${p.aoe?', to all':''}${p.pierce?', pierces':''}`),{pmod:`per ${DK.i}`}); } }
   return fig('?','','','','');
 }
 function foeName(id){ const e=(typeof ENEMIES!=='undefined'&&ENEMIES.find(x=>x.id===id))||(typeof BOSSES!=='undefined'&&BOSSES.find(x=>x.id===id)); return e?e.name:id; }
 function cardParts(id,tier,vsTier){
-  const d=CARD[id]; const v=cardVals(id,tier); const base=cardVals(id,vsTier!=null?vsTier:tierIdx(id)); const parts=d.fx.map(f=>fxPart(f,v,base,d));
+  const d=CARD[id]; const v=cardVals(id,tier); const base=cardVals(id,vsTier!=null?vsTier:tierIdx(id)); const parts=d.fx.map(f=>fxPart(f,v,base,d)); const DK=DECKS[deckOf(d)];
+  d.fx.forEach((f,i)=>{ if(fxOpts(f).ifPack&&parts[i]){ const p=parts[i]; p.combo=true; p.mod=[`combo · after another ${DK.i} this turn`,p.mod].filter(Boolean).join(' · '); p.short='Combo: '+p.short; } });   // a combo effect only fires after a deck-mate this turn
   const main=parts[0]||(d.unplayable?{num:'☠',icon:'',unit:'curse',mod:'unplayable · clogs your hand',short:'Unplayable · clogs your hand'}:{num:'',icon:'',unit:'',mod:'',short:''});
   const extras=parts.slice(1); const kws=[];
   if(d.type==='mecha'||d.type==='summon') kws.push('Takes a passive slot');
@@ -59,13 +65,13 @@ function cardParts(id,tier,vsTier){
 }
 // The figure of an effect: <number> <icon> <unit>, then its modifier line. Extras render as compact pills of the same shape.
 function figHTML(p){ return `<div class="cmain">${p.num?`<b class="cnum">${p.num}</b>`:''}${p.icon?`<span class="cico">${p.icon}</span>`:''}${p.unit?`<span class="cunit">${p.unit}</span>`:''}</div>${p.mod?`<div class="cmod">${p.mod}</div>`:''}`; }
-function pillHTML(p){ const mod=p.mod&&p.mod.length<=12?` · ${p.mod}`:''; return `<span class="cx">${p.num?`<b>${p.num}</b>`:''}${p.icon?`<i>${p.icon}</i>`:''}${p.unit||mod?`<small>${p.unit}${mod}</small>`:''}</span>`; }
+function pillHTML(p){ const m=p.pmod||(p.mod&&p.mod.length<=12?p.mod:''); const mod=m?` · ${m}`:''; return `<span class="cx${p.combo?' combo':''}">${p.combo?'<i class="cb" title="Combo: only after another card of its deck this turn">⛓</i>':''}${p.num?`<b>${p.num}</b>`:''}${p.icon?`<i>${p.icon}</i>`:''}${p.unit||mod?`<small>${p.unit}${mod}</small>`:''}</span>`; }
 // Card face (see CARD REF.png): name box top-left, Mana cost top-right (nothing when the card is free), art panel, dotted info box
 // with the element tag and the effect lines, evolution badge (▲n) bottom-left, card kind (attack, spell, trap…) bottom-right.
 // The whole background is the tier colour.
 function cardHTML(id,o){
   o=o||{}; const d=CARD[id]; const tier=o.tier!=null?o.tier:(G?curTier(id):tierIdx(id)); const tn=TIERS[tier]; const e=EL[d.el]; const paysMana=d.type==='spell'||d.type==='summon'; const cost=paysMana?d.cost:0;
-  const cls=['card','t-'+tn,'ty-'+d.type,'el-'+d.el]; if(o.data&&o.data.includes('data-sel')) cls.push('sel'); if(o.data&&o.data.includes('data-fan')) cls.push('fanc'); if(o.big) cls.push('big'); if(o.mode==='static') cls.push('static'); if(d.unplayable) cls.push('unplayable'); if(o.dim) cls.push('unaff'); if(o.enter) cls.push('enter');
+  const cls=['card','t-'+tn,'ty-'+d.type,'el-'+d.el]; if(o.data&&o.data.includes('data-sel')) cls.push('sel'); if(o.data&&o.data.includes('data-fan')) cls.push('fanc'); if(o.big) cls.push('big'); if(o.mode==='static') cls.push('static'); if(d.unplayable) cls.push('unplayable'); if(d.legendary) cls.push('legendary'); if(o.dim) cls.push('unaff'); if(o.enter) cls.push('enter');
   const evo=tier-tierIdx(id); const {main,extras,kws}=cardParts(id,tier,o.vsTier);
   const nameCls=d.name.length>18?' xl':d.name.length>12?' long':'';
   const costBox=paysMana?`<div class="ccost" title="Mana cost"><b>${cost}</b></div>`:'';
@@ -74,7 +80,7 @@ function cardHTML(id,o){
     ${costBox}
     <div class="cart"><span>${d.icon}</span></div>
     <div class="cbox">
-      <div class="ctags"><span class="ctag" title="Element">${e.i} ${e.n}</span><span class="ctier" title="Tier">${tn}</span></div>
+      <div class="ctags"><span class="ctag" title="Element">${e.i} ${e.n}</span><span class="ctier" title="${d.legendary?'Legendary · ':''}Tier">${d.legendary?'★ ':''}${tn}</span></div>
       ${figHTML(main)}
       ${extras.length?`<div class="cxs">${extras.map(pillHTML).join('')}</div>`:''}
       ${kws.map(k=>`<div class="ckw">${k}</div>`).join('')}
@@ -90,12 +96,10 @@ function slotsHTML(){
   // The passives drawer: a tab on top of the stats plaque (count plus icon and name of each passive); hovering or tapping it opens the cards above.
   const F=G.fight||G.p.kit||newKit(); const max=PS('slots'); const used=F.passives.filter(Boolean).length; let h='';
   for(let i=0;i<max;i++){ const p=F.passives[i]; h+=p?`<div class="slot ${p.kind}" style="--el:${EL[p.el].c}"><span class="sic">${p.icon}</span><span class="snm">${esc(p.name)}</span><span class="skd">${KIND_LABEL[p.kind]}${p.kind==='trap'?' · armed':''}</span><span class="stx">${esc(passivePlain(p))}</span></div>`:`<div class="slot empty"><span class="skd">empty slot</span></div>`; }
-  const names=F.passives.filter(Boolean).map(p=>`<span class="pdi" style="--el:${EL[p.el].c}">${p.icon} ${esc(p.name)}</span>`).join('');
+  const names=F.passives.filter(Boolean).map(p=>`<span class="pdi" style="--el:${EL[p.el].c}" title="${esc(p.name)} · ${esc(passivePlain(p))}"><i>${p.icon}</i><small>${esc(p.name)}</small></span>`).join('');
   return `<div class="pdtab"><span>☗ Passives</span><b>${used}/${max}</b>${names||'<span class="pdh">none in play</span>'}</div><div class="pcards">${h}</div>`;
 }
-function enemyPassivesHTML(e){ return e.passives.map(p=>`<span class="epc ${p.kind}" title="${esc(passivePlain(p))}">${p.icon} ${esc(p.name)}</span>`).join(''); }
-// Enemies are cards too: same plaques, element art panel, HP ribbon where a price would sit, dotted box with intent, statuses and passives.
-// Corner seals: the nature (element) symbol top-right, the level bottom-left, both the size of a Mana cost box.
+function enemyPassivesHTML(e){ return e.passives.map(p=>`<span class="epc ${p.kind}" title="${esc(p.name)} · ${esc(passivePlain(p))}"><i>${p.icon}</i><small>${esc(p.name)}</small></span>`).join(''); }
 function enemyHTML(e,i){
   const F=G.fight; const sel=F.target===i&&e.alive; const ch=TYPE_CHART[e.el]; const el=EL[e.el];
   const weak=ch.weak.map(x=>`<span title="Weak to ${EL[x].n} (2× damage)">${EL[x].i}</span>`).join('')||'—';
@@ -119,15 +123,17 @@ function enemyHTML(e,i){
     <div class="ckind">${e.boss?'☠ Boss':e.elite?'★ Elite':'⚔ Enemy'}</div>
   </div>`;
 }
+// Statuses and defences as isolated objects: an icon with its number, no box. Only what is on shows.
+function stHTML(cls,icon,val,title,style){ return `<span class="st ${cls}" title="${title}"${style?` style="${style}"`:''}><i>${icon}</i>${val!=null&&val!==''?`<b>${val}</b>`:''}</span>`; }
 function enemyStatusesHTML(e){
-  const sts=Object.entries(e.st).map(([k,v])=>`<span class="st ${k}" title="${ST[k].d}">${ST[k].i} ${k==='frozen'?'Frozen':v}</span>`).join('');
-  const blk=e.block>0?`<span class="st block" title="Block absorbs damage this turn">🛡️ ${e.block}</span>`:'';
-  const arm=e.armor>0?`<span class="st" title="Armor: flat damage reduction per hit">🪨 ${e.armor}</span>`:'';
-  const th=e.thorns>0?`<span class="st thorns" title="Thorns: your attack cards cost you HP">🌵 ${e.thorns}</span>`:'';
+  const sts=Object.entries(e.st).map(([k,v])=>stHTML(k,ST[k].i,k==='frozen'?null:v,`${ST[k].n}: ${ST[k].d}`)).join('');
+  const blk=e.block>0?stHTML('block','🛡️',e.block,'Block: absorbs damage this turn'):'';
+  const arm=e.armor>0?stHTML('armor','🪨',e.armor,'Armor: flat damage reduction on every hit'):'';
+  const th=e.thorns>0?stHTML('thorns','🌵',e.thorns,'Thorns: your attack cards cost you HP'):'';
   return blk+arm+th+sts;
 }
 function enemyIntentHTML(e){ const it=e.alive?intentInfo(e):{i:'💀',t:'Slain'}; return `<span>${it.i}</span><span>${it.t}</span>`; }
-function boostsHTML(){ return G.boosts.map(b=>`<span class="boost" title="${b.name}: ${b.rounds} fight${b.rounds>1?'s':''} left">${b.icon} ${b.el?'+'+b.v+'% '+EL[b.el].n:'+'+b.v+' '+STATNAMES[b.stat]} <i>${b.rounds}</i></span>`).join(''); }
+function boostsHTML(){ return G.boosts.map(b=>`<span class="boost" title="${b.name}: ${b.el?'+'+b.v+'% '+EL[b.el].n+' damage':'+'+b.v+' '+STATNAMES[b.stat]} · ${b.rounds} fight${b.rounds>1?'s':''} left"><i>${b.icon}</i><b>${b.rounds}</b></span>`).join(''); }
 function gaugesHTML(){
   const p=G.p;
   return `<div class="bar hp" title="Health"><i style="width:${p.hp/p.maxHp*100}%"></i><b class="num">❤ ${p.hp} / ${p.maxHp}</b></div>
@@ -142,34 +148,38 @@ function hudHTML(o){
     <div class="tools">${toolsHTML()}</div>
   </div>`;
 }
-function toolsHTML(){ const p=G.p; return `<button class="btn sm" data-act="deck" title="Your deck and your pack">Deck ${p.deck.length}</button><button class="btn sm" data-act="modal" data-m="stats">Stats</button><button class="btn sm" data-act="modal" data-m="chart">Types</button><button class="btn sm" data-act="sound" title="Sound on/off" aria-label="Sound">${SFX.enabled?'🔊':'🔇'}</button><button class="btn sm" data-act="modal" data-m="menu" aria-label="Menu">☰</button>`; }
+function toolsHTML(){ const p=G.p; const t=(act,extra,icon,label,title)=>`<button class="tool" data-act="${act}" ${extra} title="${title}" aria-label="${title}"><i>${icon}</i><small>${label}</small></button>`;
+  return t('deck','',`🎴`,`Deck <b>${p.deck.length}</b>`,'Your deck and your pack')+t('modal','data-m="stats"','📜','Stats','Your stats')+t('modal','data-m="chart"','📖','Types','Elements, decks and the type chart')+t('sound','',SFX.enabled?'🔊':'🔇','Sound','Sound on/off')+t('modal','data-m="menu"','⚙️','Menu','Menu'); }
 function logHTML(){ return `<div class="log">${G.log.slice(-8).map(l=>`<div class="${l.c}">${esc(l.m)}</div>`).join('')}</div>`; }
 function playerStatusesHTML(){
-  // Only conditions that are not a base stat: the stat chips already show Block, Strength, Focus, Armor, Thorns, Crit, Dodge and Life Steal as current values.
+  // Conditions that are not a base stat (the stat objects show Strength, Focus, Armor, Thorns, Crit, Dodge and Life Steal as current values). Icon and number only; the tooltip explains.
   const F=G.fight; const out=[];
-  for(const [k,v] of Object.entries(F.st)) out.push(`<span class="st ${k}" title="${ST[k].d}">${ST[k].i} ${v}</span>`);
-  if(F.regen) out.push(`<span class="st regen" title="${ST.regen.d}">💚 ${F.regen}</span>`);
-  for(const el in F.elBoost) out.push(`<span class="st" title="${EL[el].n} damage this fight">${EL[el].i} +${F.elBoost[el]}%</span>`);
-  if(F.dodgeNext) out.push(`<span class="st" title="${ST.dodgeNext.d}">💨 Evasive</span>`);
-  if(F.counterNext) out.push(`<span class="st" title="${ST.counterNext.d}">🗡️ Riposte${F.parry?' ×2':''}</span>`);
+  for(const [k,v] of Object.entries(F.st)) out.push(stHTML(k,ST[k].i,k==='frozen'?null:v,`${ST[k].n}: ${ST[k].d}`));
+  if(F.regen) out.push(stHTML('regen','💚',F.regen,`Regen: ${ST.regen.d}`));
+  for(const el in F.elBoost) out.push(stHTML('elb',EL[el].i,'+'+F.elBoost[el]+'%',`${EL[el].n} damage +${F.elBoost[el]}% this fight`));
+  { const M=packMaps(F); for(const dk in M.deckBuff){ if(M.deckBuff[dk]&&DECKS[dk]) out.push(stHTML('deckst',DECKS[dk].i,'+'+M.deckBuff[dk],`${DECKS[dk].n} deck: every ${DECKS[dk].n} card deals +${M.deckBuff[dk]} damage this fight`,`--deck:${DECKS[dk].c}`)); } for(const dk in M.deckTurn){ if(M.deckTurn[dk]&&DECKS[dk]) out.push(stHTML('deckst',`⛓`,M.deckTurn[dk],`${M.deckTurn[dk]} ${DECKS[dk].n} card${M.deckTurn[dk]>1?'s':''} played this turn: the next ${DECKS[dk].n} card reads them`,`--deck:${DECKS[dk].c}`)); } }   // deck synergies: the standing bonus and this turn's count
+  if(F.dodgeNext) out.push(stHTML('dodgeNext','💨',null,`Evasive: ${ST.dodgeNext.d}`));
+  if(F.counterNext) out.push(stHTML('counterNext','🗡️',F.parry?'×2':null,`Riposte: ${ST.counterNext.d}`));
   return out.join('');
 }
 function playerHTML(){
   const F=G.fight; const p=G.p; const gain=1+F.energyBonus+pSum('manaPerTurn')+pSum('sMana'); const max=MANA_CAP;
-  const stat=(i,v,l,t)=>`<span class="stat" title="${t}"><i>${i}</i><b>${v}</b><small>${l}</small></span>`;
-  // The stat chips always show the current value, in-fight bonuses included (no separate icons for them).
-  const armor=PS('armor')+F.armorT, block=F.block||0;
-  const stats=[stat('⚔️',PS('attack')+F.str+pSum('atkBonus'),'Atk','Attack: added to every attack card, summon and machine (Strength included)'),stat('🔮',PS('spell')+F.spellT+pSum('spellBonus'),'Spell','Spell Power: added to every spell (Focus included)'),stat('🎯',(PS('crit')+F.critT)+'%','Crit','Critical chance: 50% bonus damage'),stat('🛡️',armor+block,'Armor',`Damage reduction you will receive: ${block} Block this turn (absorbs damage) + ${armor} Armor (off every hit)`),stat('💨',(PS('dodge')+F.dodgeT)+'%','Dodge','Dodge: chance to avoid an attack'),stat('🗡️',PS('counter')+'%','Counter','Counter: chance to strike back when hit'),stat('🩸',PS('lifesteal')+'%','Steal','Life steal: heal a share of every attack'),stat('🌵',PS('thorns')+F.thornsT+pSum('thorns'),'Thorns','Thorns: attackers take this much damage')];
-  const cells=Array.from({length:MANA_CAP},(_,k)=>`<i class="mcell ${k<F.energy?'on':''}"></i>`).join('');
+  // A stat shows only once it is on: an icon with its current value (in-fight bonuses included), the name in the tooltip.
+  const stat=(i,v,l,t)=>`<span class="stat" title="${l}: ${t}"><i>${i}</i><b>${v}</b></span>`;
+  const armor=PS('armor')+F.armorT, block=F.block||0; const pct=v=>v>0?v+'%':0;
+  const stats=[[PS('attack')+F.str+pSum('atkBonus'),'⚔️','Attack','added to every attack card, summon and machine (Strength included)'],[PS('spell')+F.spellT+pSum('spellBonus'),'🔮','Spell Power','added to every spell (Focus included)'],[pct(PS('crit')+F.critT),'🎯','Crit','chance of 50% bonus damage'],[armor,'🪨','Armor','flat damage reduction on every hit you take'],[pct(PS('dodge')+F.dodgeT),'💨','Dodge','chance to avoid an attack'],[pct(PS('counter')),'🗡️','Counter','chance to strike back when hit'],[pct(PS('lifesteal')),'🩸','Life Steal','heal a share of every attack'],[PS('thorns')+F.thornsT+pSum('thorns'),'🌵','Thorns','attackers take this much damage']].filter(s=>s[0]).map(s=>stat(s[1],s[0],s[2],s[3]));
   const sts=playerStatusesHTML();
   return `<div class="player">
     <div class="slots" data-act="passives" title="Your machines, summons and armed traps · hover or tap to open">${slotsHTML()}</div>
-    <div class="prow">
-      <div class="pbars">${gaugesHTML()}</div><i class="pdiv"></i>
-      <div class="pstats">${stats.join('')}</div>
+    <div class="orb" title="Mana: spells and summons cost Mana, everything else is free. Your first turn of a fight has 0; from the second turn on you gain ${gain} at the start of each turn, up to ${max}, and unspent Mana carries over."><b class="num">${F.energy}</b><small>/${max}</small></div>
+    <div class="pmid">
+      <div class="prow">
+        <div class="pbars">${block>0?`<span class="blk" title="Block: absorbs ${block} damage this turn"><i>🛡️</i><b>${block}</b></span>`:''}${gaugesHTML()}</div>
+        ${stats.length?`<div class="pstats">${stats.join('')}</div>`:''}
+      </div>
+      ${sts?`<div class="statuses pstatuses">${sts}</div>`:''}
     </div>
-    ${sts?`<div class="statuses pstatuses">${sts}</div>`:''}
-    <div class="manabar" title="Mana: spells and summons cost Mana, everything else is free. Your first turn of a fight has 0; from the second turn on you gain ${gain} at the start of each turn, up to ${max}, and unspent Mana carries over."><span class="mlbl">Mana</span><div class="mcells">${cells}</div><span class="mval num">${F.energy}<small>/${max}</small></span><button class="btn primary endbtn" data-act="end" ${UI.busy?'disabled':''}>End Turn</button></div>
+    <button class="btn primary endbtn" data-act="end" ${UI.busy?'disabled':''}>End Turn</button>
   </div>`;
 }
 function handHTML(){
@@ -197,6 +207,7 @@ function modalHTML(){
   else if(m.type==='stats'){ const p=G.p; const rows=[['Level',p.level],['Max HP',p.maxHp],['Attack',PS('attack')],['Spell Power',PS('spell')],['Armor',PS('armor')],['Dodge',PS('dodge')+'%'],['Counter',PS('counter')+'%'],['Crit',PS('crit')+'%'],['Life Steal',PS('lifesteal')+'%'],['Thorns',PS('thorns')],['Regen',PS('regen')],['Luck',PS('luck')],['Mana per turn','+1'],['Hand size',PS('handSize')],['Passive slots',PS('slots')],['Gold',p.gold],['Enemies slain',G.kills],['Bosses slain',G.bossesSlain],['Cards evolved',G.evolves]];
     body=`<h2>Stats</h2><table class="stats">${rows.map(r=>`<tr><td>${r[0]}</td><td class="num">${r[1]}</td></tr>`).join('')}</table>${G.boosts.length?`<h3>Active boosts</h3><div class="boosts">${boostsHTML()}</div>`:''}`; }
   else if(m.type==='chart'){ body=`<h2>Card types</h2><div class="typegrid">${Object.keys(TYPES).map(t=>`<div class="typerow ty-${t}"><span class="ctypelbl">${TYPE_ICON[t]} ${TYPES[t]}</span><span class="muted small">${TYPE_DESC[t]}</span></div>`).join('')}</div>
+    <h2>Decks</h2><p class="muted small">Every nature type is a deck: the cards of an element play together. Most cards stand alone; the synergy cards listed here count the cards of their element you played before them this turn or this fight, only <b>combo</b> (⛓) after another card of their element this turn, call element-mates from your draw pile, or lift every card of their element for the fight. Creature abilities belong to their element's deck too: slay the creature and it may drop one. Card offers lean toward the elements you hold.</p><div class="typegrid decks">${Object.keys(DECKS).map(k=>{ const D=DECKS[k]; const all=deckCards(k); const cs=synergyCards(k); return `<div class="typerow deckrow" style="--deck:${D.c}"><span class="ctypelbl">${D.i} ${esc(D.n)} <span class="muted small">· ${all.length} cards, ${cs.length} with synergy</span></span><span class="muted small">${esc(D.d)}</span><span class="small decklist">${cs.map(c=>`${c.icon} ${esc(c.name)}`).join(' · ')}</span></div>`; }).join('')}</div>
     <h2>Type Chart</h2><p class="muted small">Super effective hits deal <b>2×</b>, resisted hits <b>½</b>. Wet targets take +50% Lightning and Ice and half Fire. Attacks, summons and machines scale with Attack; spells with Spell Power.</p><div class="chart"><span class="h">Enemy</span><span class="h">Weak to (2×)</span><span class="h">Resists (½)</span>${Object.keys(TYPE_CHART).filter(k=>k!=='phys').map(k=>`${elPill(k)}<span>${TYPE_CHART[k].weak.map(x=>EL[x].i+' '+EL[x].n).join(', ')||'—'}</span><span>${TYPE_CHART[k].resist.map(x=>EL[x].i+' '+EL[x].n).join(', ')||'—'}</span>`).join('')}</div><h3>Enemy natures</h3><p class="muted small">Every enemy fights by its nature. The trait is written on its card.</p><table class="stats">${Object.keys(NATURE).map(k=>`<tr><td>${NATURE[k].icon} ${NATURE[k].name} <span class="muted">· ${EL[k].n}</span></td><td class="left">${NATURE[k].text}</td></tr>`).join('')}</table><h3>Card tiers</h3><div class="tierrow">${TIERS.map(t=>`<span class="tierchip" style="--tier:${TIER[t].c}">${t} ×${TIER[t].mult}</span>`).join('')}</div><h3>Status effects</h3><table class="stats">${Object.keys(ST).map(k=>`<tr><td>${ST[k].i} ${ST[k].n}</td><td class="left">${ST[k].d}</td></tr>`).join('')}</table>`; }
   else if(m.type==='help'){ body=helpHTML(); }
   else if(m.type==='menu'){ body=`<h2>Menu</h2><div class="choices"><button class="choice" data-act="library">📚 Card Library<small>Every card you have discovered so far.</small></button><button class="choice" data-act="modal" data-m="help">How to play</button><button class="choice" data-act="quit">Save and return to title<small>Your run is saved automatically after every step.</small></button>${m.confirm?`<button class="choice danger" data-act="abandon">Yes, abandon this run for good</button>`:`<button class="choice" data-act="abandon-ask">Abandon run<small>Permadeath applies: the run is deleted.</small></button>`}</div>`; }
@@ -208,9 +219,10 @@ function helpHTML(){ return `<h2>How to play</h2>
 <p><b>New cards.</b> Fights give gold and XP. Every level you gain lets you choose one of three new cards; that is the only way new cards come to you, apart from bosses and the odd cursed idol. Taking a card you already own evolves it instead.</p>
 <p><b>Turns.</b> Your hand, your piles, your Mana and your passives carry from fight to fight. A fight tops your hand up to five cards; at the start of each turn you draw one more, or two if your hand is empty. What you do not play stays in your hand, even between fights (curses rotate back into the deck). <b>Attacks, shields, skills, potions, machines and traps are free.</b> Spells and summons cost Mana, the blue bar under your hand: your first turn of a fight has 0, from the second turn on you gain 1 at the start of each turn (up to 10), and unspent Mana carries over. When nothing in your hand can be played, the turn ends by itself. End Turn lets every enemy act according to the intent shown on its card.</p>
 <p><b>Card face.</b> Name top-left. Spells and summons show their Mana cost top-right; a card with no cost box is free to play. The picture in the middle. The dotted box shows the element, the tier and what the card does: the first line is the main effect, the lines underneath are extras. Bottom-right says what kind of card it is (attack, spell, shield, skill, potion, machine, summon, trap). The whole card is coloured by its tier, and a green ▲ badge bottom-left counts how many tiers it has evolved.</p>
-<p><b>Tiers.</b> Basic cards do one plain thing. Common, uncommon, medium, good, great, rare, perfect and ultimate cards add effects and grow. Getting a card you already own <b>evolves</b> it one tier, multiplying its numbers. Some cards are born ultimate.</p>
+<p><b>Tiers.</b> Basic cards do one plain thing. Common, uncommon, medium, good, great, rare, perfect and ultimate cards add effects and grow. Getting a card you already own <b>evolves</b> it one tier, multiplying its numbers. Some cards are born ultimate. <b>Legendary</b> cards (★, gold frame) never sit in a normal offer: one slips in on its own now and then, more often deep in a run, with Luck, and in a boss's treasury.</p>
 <p><b>Passives.</b> Machines, summons and armed traps take one of your passive slots and stay in play from fight to fight, until they are dismantled, destroyed or replaced. Machines give bonuses (double first attack, block per machine, damage per attack played). Summons act every turn. Traps spring on the next enemy attack. Enemies have passives too, and some can destroy yours. Sabotage, EMP and Pilfer destroy or steal theirs. Yours are listed on the tab above the stats bar; hover or tap it to open the drawer and see their cards.</p>
-<p><b>Elements.</b> Ten elements with combos: Fire burns and detonates, Ice chills, freezes and shatters, Lightning shocks and multi-hits, Water soaks, Grass grows, Poison stacks and doubles, Earth turns Block into damage, Shadow steals life, Holy heals and smites. Hit a weakness for <b>2×</b>. Enemies fight by their nature too: fire ones burn you, ice ones chill your Mana, shadow ones drain and fade, earth ones wear stone skin. Each trait is written on the enemy's card; open <b>Types</b> for the full list and the chart.</p>
+<p><b>Elements.</b> Fourteen elements with combos: Fire burns and detonates, Ice chills, freezes and shatters, Lightning shocks and multi-hits, Water soaks, Grass grows, Poison stacks and doubles, Earth turns Block into damage, Shadow steals life, Holy heals and smites, Dragon claws and breathes fire behind hard scales, Psychic pierces Block and reads the enemy, Flying dodges and dives, Fighting strings blows together and counters. Hit a weakness for <b>2×</b>. Enemies fight by their nature too: fire ones burn you, ice ones chill your Mana, shadow ones drain and fade, earth ones wear stone skin, dragons ignore your Armor, minds drain your Mana, wings dodge a fifth of your cards, fighters punch back. Each trait is written on the enemy's card; open <b>Types</b> for the full list and the chart.</p>
+<p><b>Decks.</b> Every nature type is a deck: the cards of an element play together. Most cards stand alone, and every element has a few synergy cards that read the rest: a Rat is more likely to poison for every Poison card you played before it this turn, a Wolf hits harder for every Beast card before it, a ⛓ combo line (Cross, Backstab, Black Death) only fires after another card of its element, callers (Plague Rat, Kata, Wyrm Call) pull element-mates from your draw pile, and the Rat King or a Hymn lifts every card of its element for the whole fight. Card offers lean toward the elements you hold, and a creature's abilities belong to its element too, so the rats of the Warrens feed a Poison deck. Open <b>Types</b> to see every deck and its synergy cards.</p>
 <p><b>Creature abilities.</b> Every creature has its own moves, played between plain attacks and shown on its card as its next intent. Slay it and it may drop one of them: a real card for your deck, and the only way to get it.</p>
 <p><b>Death is final.</b> Enemies scale with the dungeon you are in and the rooms you have entered. When HP hits zero the run ends and you start over with basic cards.</p>
 $1In a dungeon, click a hex to walk there (the path shows as you hover) or step with Q E A D Z C; Space acts on your hex. in a fight, A and D (or the arrows) move the highlight along your hand, W jumps up to the enemies where A and D choose who to strike and S comes back down, Space plays the highlighted card, Tab ends the turn, E opens and closes the passives drawer, 1–9 play a card directly. Everywhere else, W A S D (or the arrows) move the highlight over the choices and Space picks it; Esc closes windows.</p>`; }

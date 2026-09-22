@@ -46,6 +46,10 @@ const SFX=(()=>{
     else if(el==='earth'){ osc({type:'sine',f0:75,f1:28,dur:0.55,g:0.9,a:0.002,send:0.2}); nb({dur:0.5,type:'lowpass',f0:320,f1:90,g:0.6,send:0.2}); nb({dur:0.05,type:'highpass',f0:2500,g:0.3}); }
     else if(el==='shadow'){ osc({type:'sawtooth',f0:110,dur:0.5,g:0.28,a:0.12,lp:200,lp1:1500,send:0.6}); nb({dur:0.45,type:'bandpass',f0:380,f1:900,q:1.5,g:0.3,a:0.15,send:0.6}); thump(0.7,0.4,0.12); }
     else if(el==='holy'){ chime([880,1320,1760,2640],0.14,0.9); nb({dur:0.5,type:'highpass',f0:7500,g:0.08,a:0.05,send:0.6}); thump(1.1,0.3); }
+    else if(el==='dragon'){ whoosh(0.4,0.5); osc({type:'sawtooth',f0:70,f1:40,dur:0.6,g:0.35,lp:400,lp1:120,send:0.4}); crackle(4,0.3); thump(0.7,0.7,0.02); }
+    else if(el==='psychic'){ osc({type:'sine',f0:900,f1:1800,dur:0.35,g:0.12,send:0.7}); osc({type:'triangle',f0:450,f1:225,dur:0.4,g:0.1,delay:0.05,send:0.6}); nb({dur:0.3,type:'bandpass',f0:2600,q:4,g:0.15,a:0.08,send:0.6}); }
+    else if(el==='flying'){ whoosh(1.6,0.4); nb({dur:0.25,type:'bandpass',f0:1800,f1:900,q:1.2,g:0.3,a:0.02,send:0.3}); thump(1.1,0.3); }
+    else if(el==='fighting'){ thump(1.2,0.7,0.01); nb({dur:0.08,type:'bandpass',f0:1400,q:1.5,g:0.5}); osc({type:'sine',f0:180,f1:60,dur:0.18,g:0.3}); }
     else { thump(1,0.6); whoosh(1.3,0.25); nb({dur:0.06,type:'bandpass',f0:1800,q:2,g:0.3}); }
     if(big){ thump(0.6,0.7,0.02); nb({dur:0.5,type:'highpass',f0:6000,g:0.1,a:0.02,send:0.6}); } };
   S.tick=o=>{ const el=o&&o.el; if(el==='fire') crackle(4,0.25); else if(el==='poison') osc({type:'sine',f0:420,f1:240,dur:0.12,g:0.12,lp:1200,send:0.2}); else { thump(1,0.35); } };

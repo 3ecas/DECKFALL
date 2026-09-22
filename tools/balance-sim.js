@@ -49,7 +49,7 @@
       else if (t === 'cleanse') s += 3;
       else if (t === 'stat') s += (v[f[2]] || 0) * (f[1] === 'maxHp' ? 1.5 : 8);
       else if (t === 'passive') { const p = PASSIVES[f[1]]; s += 8 + (p && p.kind === 'trap' ? 4 : 6) + Object.values(v).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0); }
-      else if (t === 'special') { const p = f[2] || {}; const m = p.m ? v[p.m] : 1; s += ({ execute: (v.dmg || 0) * 1.3 + atkStat, snipe: (v.dmg || 0) * 1.2 + atkStat, stDmg: m * 5, doubleSt: 8, spread: 3, blockDmg: m * 6, playedDmg: m * 6, elBoost: (v[p.v] || 0) / 4, retaliation: m * 3, parry: 4, redraw: 3, sabotage: 4, emp: 5, pilfer: 6, pilferAll: 8, mimic: 6 })[f[1]] || 3; }
+      else if (t === 'special') { const p = f[2] || {}; const m = p.m ? v[p.m] : 1; s += ({ execute: (v.dmg || 0) * 1.3 + atkStat, snipe: (v.dmg || 0) * 1.2 + atkStat, stDmg: m * 5, doubleSt: 8, spread: 3, blockDmg: m * 6, playedDmg: m * 6, elBoost: (v[p.v] || 0) / 4, retaliation: m * 3, parry: 4, redraw: 3, sabotage: 4, emp: 5, pilfer: 6, pilferAll: 8, mimic: 6, packStatus: (v[p.v] || 1) * 1.5, tutor: (v[p.n] || 1) * 4, packBuff: (v[p.v] || 1) * 4, pack: (v[p.m] || 1) * 4 })[f[1]] || 3; }
     }
     if (d.exhaust) s *= 0.75;
     s -= cardCost(id) * 2;
@@ -64,8 +64,8 @@
   function estDmg(id, e) {
     const d = CARD[id]; const v = cardVals(id); let total = 0; const kind = d.type === 'spell' ? 'spell' : 'phys';
     for (const f of d.fx) {
-      if (f[0] === 'dmg') { const o = f[2] || {}; const hits = o.hits ? (typeof o.hits === 'string' ? v[o.hits] : o.hits) : 1; total += Math.max(0, calcDmgEst(v[f[1]], kind, d.el, e, o) - (o.pierce ? 0 : e.armor)) * hits; }
-      else if (f[0] === 'special') { const p = f[2] || {}; if (f[1] === 'execute') total += calcDmgEst(v.dmg, kind, d.el, e, {}) * (e.hp / e.maxHp < (p.pct || 30) / 100 ? 2 : 1); else if (f[1] === 'snipe') total += calcDmgEst(v.dmg, kind, d.el, e, {}); else if (f[1] === 'stDmg') total += (e.st[p.s] || 0) * (v[p.m] || 1); else if (f[1] === 'blockDmg') total += G.fight.block * (v[p.m] || 1); else if (f[1] === 'playedDmg') total += G.fight.played * (v[p.m] || 1); }
+      if (f[0] === 'dmg') { const o = f[2] || {}; const hits = o.hits ? (typeof o.hits === 'string' ? v[o.hits] : o.hits) : 1; total += Math.max(0, calcDmgEst(v[f[1]] + (o.pp ? (v[o.pp] || 0) * packCount(deckOf(d), 'turn') : 0), kind, d.el, e, o) - (o.pierce ? 0 : e.armor)) * hits; }
+      else if (f[0] === 'special') { const p = f[2] || {}; if (f[1] === 'execute') total += calcDmgEst(v.dmg, kind, d.el, e, {}) * (e.hp / e.maxHp < (p.pct || 30) / 100 ? 2 : 1); else if (f[1] === 'snipe') total += calcDmgEst(v.dmg, kind, d.el, e, {}); else if (f[1] === 'stDmg') total += (e.st[p.s] || 0) * (v[p.m] || 1); else if (f[1] === 'blockDmg') total += G.fight.block * (v[p.m] || 1); else if (f[1] === 'playedDmg') total += G.fight.played * (v[p.m] || 1); else if (f[1] === 'pack' && (p.what || 'dmg') === 'dmg') total += (v[p.m] || 1) * packCount(deckOf(d), p.scope || 'turn'); }
     }
     return total;
   }

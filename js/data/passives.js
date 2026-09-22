@@ -40,7 +40,10 @@ pv('skeleton_horde','Skeleton Horde','summon','shadow','💀','Each turn: attack
 pv('ent','Ent','summon','grass','🌳','Each turn: gives you {b} Block and {t} Thorns.',{sBlock:'b',sThorns:'t'});
 pv('valkyrie','Valkyrie','summon','holy','😇','Each turn: attacks for {v} and heals you {h}.',{sAttack:'v',sHeal:'h'});
 pv('phoenix','Phoenix','summon','fire','🐦‍🔥','Each turn: {v} fire damage to all enemies and heals you {h}.',{sAll:'v',sHeal:'h'});
-pv('dragon','Dragon','summon','fire','🐉','Each turn: {v} fire damage to all enemies.',{sAll:'v'});
+pv('dragon','Dragon','summon','dragon','🐉','Each turn: {v} dragon damage to all enemies.',{sAll:'v'});
+pv('psion','Psion','summon','psychic','🧿','Each turn: hits the target for {v}, ignoring Block.',{sAttack:'v',sPierce:1});
+pv('falcon','Falcon','summon','flying','🦅','Each turn: attacks for {v}, twice.',{sAttack:'v',hits:2});
+pv('disciple','Disciple','summon','fighting','🥋','Each turn: attacks for {v}, {hits} times.',{sAttack:'v',hits:'hits'});
 // --- armed traps (spring on the next enemy attack against you) ---
 pv('spike_trap','Spike Trap','trap','phys','🔩','Springs on the next attack: the attacker takes {v} damage.',{tDmg:'v'});
 pv('net_trap','Net Trap','trap','grass','🕸️','Springs on the next attack: negates it and applies {w} Weak.',{tNegate:1,tStatus:'weak',sv:'w'});

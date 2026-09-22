@@ -7,8 +7,8 @@ function fc(owner,id,name,type,el,cost,tier,icon,n,fx,o){ c(id,name,type,el,cost
 // ---- lowlands (rounds 1-2) ----
 fc('wolf','f_fang_bite','Fang Bite','attack','beast',0,0,'🦷',{dmg:4},[['dmg','dmg']]);
 fc('wolf','f_howl','Howl','skill','beast',0,0,'🐺',{v:2},[['ss','str','v']]);
-fc('giant_rat','f_gnaw','Gnaw','attack','beast',0,0,'🐀',{dmg:3,v:1},[['dmg','dmg'],['se','weak','v']]);
-fc('giant_rat','f_scurry','Scurry','skill','beast',0,0,'💨',{},[['ss','dodgeNext',null]]);
+fc('giant_rat','f_gnaw','Gnaw','attack','poison',0,0,'🐀',{dmg:3,v:1},[['dmg','dmg'],['se','weak','v']]);
+fc('giant_rat','f_scurry','Scurry','skill','poison',0,0,'💨',{},[['ss','dodgeNext',null]]);
 fc('bandit','f_cheap_shot','Cheap Shot','attack','phys',0,0,'🗡️',{dmg:4,v:1},[['dmg','dmg'],['se','vuln','v']]);
 fc('bandit','f_parry_stance','Parry Stance','shield','phys',0,0,'🛡️',{b:4},[['block','b'],['ss','counterNext',null]]);
 fc('crab','f_pincer','Pincer','attack','water',0,0,'🦀',{dmg:5},[['dmg','dmg']]);
@@ -146,6 +146,52 @@ fc('seraph','f_summon_valkyrie','Summon Valkyrie','summon','holy',2,7,'⚔️',{
 fc('chaos_beast','f_chaos_maul','Chaos Maul','attack','beast',0,7,'👾',{dmg:9,v:3},[['dmg','dmg'],['se','burn','v']]);
 fc('chaos_beast','f_feral_frenzy','Feral Frenzy','attack','beast',0,7,'🐾',{dmg:4,hits:3},[['dmg','dmg',{hits:'hits'}]]);
 fc('chaos_beast','f_call_bear','Call Bear','summon','beast',2,7,'🐻',{v:4},[['passive','bear']]);
+// ---- dragons, minds, wings and fists (the four newer natures), tiers by the rounds they appear in ----
+fc('drake_hatchling','f_hatchling_bite','Hatchling Bite','attack','dragon',0,0,'🦎',{dmg:4,v:1},[['dmg','dmg'],['se','burn','v']]);
+fc('drake_hatchling','f_tail_whip','Tail Whip','attack','dragon',0,0,'🐊',{dmg:3,v:1},[['dmg','dmg'],['se','weak','v']]);
+fc('wyvern','f_wyvern_sting','Wyvern Sting','attack','dragon',0,2,'🐲',{dmg:7,v:3},[['dmg','dmg'],['se','poison','v']]);
+fc('wyvern','f_wing_gust','Wing Gust','attack','dragon',0,2,'🌬️',{dmg:3,hits:2},[['dmg','dmg',{hits:'hits'}],['ss','dodgeNext',null]]);
+fc('drake','f_drake_breath','Drake Breath','spell','dragon',2,3,'🔥',{dmg:9,v:3},[['dmg','dmg',{aoe:1}],['se','burn','v',{aoe:1}]]);
+fc('drake','f_scale_armor','Scale Armor','shield','dragon',0,3,'🛡️',{b:10,a:1},[['block','b'],['armor','a']]);
+fc('lindwurm','f_crushing_coil','Crushing Coil','attack','dragon',0,5,'🐍',{dmg:12,v:2},[['dmg','dmg'],['se','vuln','v']]);
+fc('lindwurm','f_wyrm_roar','Wyrm Roar','skill','dragon',0,5,'🗣️',{v:3,b:6},[['ss','str','v'],['block','b']]);
+fc('mind_wisp','f_psi_spark','Psi Spark','spell','psychic',1,0,'💭',{dmg:5},[['dmg','dmg']]);
+fc('mind_wisp','f_daze','Daze','skill','psychic',0,0,'💫',{v:2},[['se','weak','v']]);
+fc('seer','f_second_sight','Second Sight','skill','psychic',0,1,'👁️',{b:4},[['block','b'],['ss','dodgeNext',null]]);
+fc('seer','f_seer_beam','Seer Beam','spell','psychic',1,1,'🔮',{dmg:7,v:1},[['dmg','dmg'],['se','vuln','v']]);
+fc('mindflayer','f_mind_lash','Mind Lash','spell','psychic',2,3,'🦑',{dmg:9,v:2},[['dmg','dmg'],['se','weak','v']]);
+fc('mindflayer','f_dominate','Dominate','skill','psychic',0,3,'🧿',{v:2,k:2},[['se','vuln','v'],['ss','str','k']]);
+fc('sphinx','f_riddle','Riddle','skill','psychic',0,4,'🔯',{v:2,k:1},[['se','weak','v'],['se','vuln','k']]);
+fc('sphinx','f_thought_crush','Thought Crush','spell','psychic',2,4,'🧠',{dmg:13},[['dmg','dmg',{pierce:1}]]);
+fc('sparrowhawk','f_sharp_peck','Sharp Peck','attack','flying',0,0,'🐦',{dmg:4},[['dmg','dmg']]);
+fc('sparrowhawk','f_wing_beat','Wing Beat','skill','flying',0,0,'🪽',{},[['ss','dodgeNext',null]]);
+fc('owl','f_silent_dive','Silent Dive','attack','flying',0,1,'🦉',{dmg:7},[['dmg','dmg',{pierce:1}]]);
+fc('owl','f_hoot','Hoot','skill','flying',0,1,'🎶',{v:2},[['se','weak','v']]);
+fc('harpy','f_talon_rake','Talon Rake','attack','flying',0,2,'🪶',{dmg:4,hits:2,v:1},[['dmg','dmg',{hits:'hits'}],['se','vuln','v']]);
+fc('harpy','f_shriek','Shriek','skill','flying',0,2,'🔊',{v:1},[['se','weak','v',{aoe:1}],['ss','dodgeNext',null]]);
+fc('griffin','f_sky_strike','Sky Strike','attack','flying',0,4,'🦅',{dmg:12},[['dmg','dmg']]);
+fc('griffin','f_gale','Gale','shield','flying',0,4,'🌬️',{b:8},[['block','b'],['ss','dodgeNext',null]]);
+fc('brawler','f_jab_jab','Jab Jab','attack','fighting',0,0,'👊',{dmg:2,hits:2},[['dmg','dmg',{hits:'hits'}]]);
+fc('brawler','f_guard_up','Guard Up','shield','fighting',0,0,'🛡️',{b:5},[['block','b']]);
+fc('monk','f_palm_strike','Palm Strike','attack','fighting',0,1,'🖐️',{dmg:7},[['dmg','dmg']]);
+fc('monk','f_inner_focus','Inner Focus','skill','fighting',0,1,'🧘',{v:2,h:4},[['ss','str','v'],['heal','h']]);
+fc('gladiator','f_pit_haymaker','Pit Haymaker','attack','fighting',0,2,'💢',{dmg:11},[['dmg','dmg']]);
+fc('gladiator','f_taunt','Taunt','shield','fighting',0,2,'🗣️',{b:6},[['block','b'],['ss','counterNext',null]]);
+fc('champion','f_ground_pound','Ground Pound','attack','fighting',0,4,'🏋️',{dmg:12,v:1},[['dmg','dmg'],['se','vuln','v']]);
+fc('champion','f_flex','Flex','skill','fighting',0,4,'💪',{v:3,b:8},[['ss','str','v'],['block','b']]);
+// ---- their bosses ----
+fc('elder_wyrm','f_wyrm_breath','Wyrm Breath','spell','dragon',3,7,'🐉',{dmg:8,v:3},[['dmg','dmg',{aoe:1}],['se','burn','v',{aoe:1}]]);
+fc('elder_wyrm','f_tail_sweep','Tail Sweep','attack','dragon',0,7,'🐊',{dmg:4,hits:3},[['dmg','dmg',{hits:'hits'}]]);
+fc('elder_wyrm','f_ancient_scales','Ancient Scales','shield','dragon',0,7,'🛡️',{b:10,a:1},[['block','b'],['armor','a']]);
+fc('archmind','f_mind_blast','Mind Blast','spell','psychic',3,7,'🧠',{dmg:9,v:2},[['dmg','dmg'],['se','weak','v']]);
+fc('archmind','f_psychic_storm','Psychic Storm','spell','psychic',3,7,'🌌',{dmg:3,hits:4},[['dmg','dmg',{hits:'hits'}]]);
+fc('archmind','f_prescience','Prescience','shield','psychic',0,7,'👁️',{b:8},[['block','b'],['ss','dodgeNext',null]]);
+fc('roc','f_roc_dive','Roc Dive','attack','flying',0,7,'🦅',{dmg:10,v:1},[['dmg','dmg'],['se','vuln','v']]);
+fc('roc','f_roc_hurricane','Roc Hurricane','spell','flying',3,7,'🌀',{dmg:6,v:2},[['dmg','dmg',{aoe:1}],['se','weak','v',{aoe:1}]]);
+fc('roc','f_thermal','Thermal','skill','flying',0,7,'🌤️',{v:10},[['healPct','v'],['ss','dodgeNext',null]]);
+fc('grandmaster','f_flurry','Flurry','attack','fighting',0,7,'👊',{dmg:3,hits:4},[['dmg','dmg',{hits:'hits'}]]);
+fc('grandmaster','f_iron_stance','Iron Stance','shield','fighting',0,7,'🥋',{b:10},[['block','b'],['ss','counterNext',null]]);
+fc('grandmaster','f_rising_kick','Rising Kick','attack','fighting',0,7,'🦵',{dmg:12,v:2},[['dmg','dmg'],['se','vuln','v']]);
 for(const x of CARDS) if(!CARD[x.id]) CARD[x.id]=x;
 // owner id -> its ability ids, and the reverse lookup for the library
 const FOE_MOVES={}; for(const x of CARDS) if(x.drop){ (FOE_MOVES[x.drop]=FOE_MOVES[x.drop]||[]).push(x.id); }

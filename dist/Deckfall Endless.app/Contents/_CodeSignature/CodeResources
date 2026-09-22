@@ -10,47 +10,51 @@
 		</data>
 		<key>Resources/game/css/style.css</key>
 		<data>
-		IgKqmuJ4Gj6inz2EnuxrHqKSIkE=
+		tBa6b3pYKTXFeY9lpTM69j7u/KE=
 		</data>
 		<key>Resources/game/index.html</key>
 		<data>
-		r8FOZtp+yzlsna8DxAjaWsE8crA=
+		sbPjvLmK7KHscdvJ7Y8oGeUPwkM=
 		</data>
 		<key>Resources/game/js/data/cards.js</key>
 		<data>
-		dCumU5a2RxAhdPuxedSqYAz17Lc=
+		q6vlXrFSP1jlc05jLy1zG8cUld4=
+		</data>
+		<key>Resources/game/js/data/decks.js</key>
+		<data>
+		ib0gm5zSnq3+LNJSmbQIaOfGq7w=
 		</data>
 		<key>Resources/game/js/data/elements.js</key>
 		<data>
-		wkA+1I7QWxRCMC+qqQ2HVqS5KVQ=
+		TBhRkZjlSEhehlyRKx5wo1NJDrg=
 		</data>
 		<key>Resources/game/js/data/enemies.js</key>
 		<data>
-		oveB7HtfAnrO9LaRETL5rODGjPo=
+		Qw0CjGUczOZWyOcuffARxzQtEds=
 		</data>
 		<key>Resources/game/js/data/foecards.js</key>
 		<data>
-		2Cq/ogBqn4fsZqzvHCU59M9++QA=
+		Uzn07MR0rBMVxCUcVNVfQHrdebo=
 		</data>
 		<key>Resources/game/js/data/interludes.js</key>
 		<data>
-		iaxEcwML7Vhek81i34JTW2/OCao=
+		3IRWzjBId+OhBn5FzGDpFpI1PRc=
 		</data>
 		<key>Resources/game/js/data/passives.js</key>
 		<data>
-		mHAKoHp3P1R8vBv72+QRMtt12J4=
+		ImKjCLQYwyjMX1/dhRyuBc4Z6O8=
 		</data>
 		<key>Resources/game/js/engine/combat.js</key>
 		<data>
-		ZEJO51RY58PTCNQ0HcUg4d/Uha0=
+		/2XTqnOdDzEYdu9Rh3AWjyzlDm4=
 		</data>
 		<key>Resources/game/js/engine/state.js</key>
 		<data>
-		YiG2rWDJQCMWXNvgRJrmjUhmuzQ=
+		iMJzlfYWtdbZFbHk+Vl8A3hJhkg=
 		</data>
 		<key>Resources/game/js/engine/world.js</key>
 		<data>
-		Jk4EBLMTtOGmgbD6tJwoFyhC6SQ=
+		j/KLL2QX4SSqqSBOV3QktY9oDF4=
 		</data>
 		<key>Resources/game/js/main.js</key>
 		<data>
@@ -58,7 +62,7 @@
 		</data>
 		<key>Resources/game/js/ui/components.js</key>
 		<data>
-		eEMQLWYzvs7Vc+C8G0QaKEnWiWQ=
+		MoWC3zsvxSfFbXmgtZqbhKxayHA=
 		</data>
 		<key>Resources/game/js/ui/deck.js</key>
 		<data>
@@ -66,7 +70,7 @@
 		</data>
 		<key>Resources/game/js/ui/fx.js</key>
 		<data>
-		4mh0IuZfPvllrtjrxY7li75a+CE=
+		hv0+L1eWWFVvmUzED24HlQ0+jro=
 		</data>
 		<key>Resources/game/js/ui/map.js</key>
 		<data>
@@ -74,15 +78,15 @@
 		</data>
 		<key>Resources/game/js/ui/screens.js</key>
 		<data>
-		nyxRGR17ZbaGQCx10MICdIUKYqs=
+		CWjNepZaJEetvefGcId0nWke76U=
 		</data>
 		<key>Resources/game/js/ui/sound.js</key>
 		<data>
-		6zeDDwDuySLoDvthiYn7S4/WNjs=
+		f00Kn3/VUUuzQ+exQ9rk7AaovjY=
 		</data>
 		<key>Resources/game/js/ui/tips.js</key>
 		<data>
-		lJfj+M4DKsm6GloFjRttEcgzjwg=
+		Chaejn83q1uC/YoW/a3RtimGzAk=
 		</data>
 	</dict>
 	<key>files2</key>
@@ -98,77 +102,84 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			SemJ8JcbCsvwre8GvtDKYbvW/+G2ME9z2M92lgLleyM=
+			asyKtACvItmfWnBspOqWkar9xtFHcjtQH7b6Ysybtvs=
 			</data>
 		</dict>
 		<key>Resources/game/index.html</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			6IKZA5R5snTNpnSae5Yhsgwg+waJKrqJVxUZkl7gtzM=
+			ZD7kadGpYHdszBv/cVB84zX9yTHDIEjNR011OrmdCtk=
 			</data>
 		</dict>
 		<key>Resources/game/js/data/cards.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			rKP59OgEI1bTOkW1SDgvfN2tL6HOlh4AuylcEgrMTAk=
+			7XzBHgrUvlC2oiJ1YvYhmaheCz6sVSMMnulM4gfczCw=
+			</data>
+		</dict>
+		<key>Resources/game/js/data/decks.js</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			lWXCMT7oXL5LnF0xScTsbeYU5VTy1ntOp5RUA63QQAs=
 			</data>
 		</dict>
 		<key>Resources/game/js/data/elements.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			faj05fz6HU1oI4x/Fl6om4ygeamdQyKCJLV3urNM56o=
+			SNH7ff/UJADGR4eqsoV576E/O8TeNxi2NU4gM9t4pXI=
 			</data>
 		</dict>
 		<key>Resources/game/js/data/enemies.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			vs3o+V1320XuEaN5inTZJpVk47FxaZTtW0W8x3cDFeQ=
+			6S73ThurxPMIzD0KBofM8a4Fk+251kEmQq6OblJtwcE=
 			</data>
 		</dict>
 		<key>Resources/game/js/data/foecards.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			4amLcVn/pJwteP6om5nP5o5+WPeuNsgx+djqnEUSkwY=
+			9IScHR4jxk5OXvrj6fn+VsyPqVhNCBJ0c9Ps79A7HrM=
 			</data>
 		</dict>
 		<key>Resources/game/js/data/interludes.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			Px+/iVJ7EZUxxVRnG9Ib4f/phUTOaJZ049pZ7+fM8Yk=
+			4/zWUjVuzN5zei+M8wjVnjEHM4+Ne9gbtSoIxfl7qcA=
 			</data>
 		</dict>
 		<key>Resources/game/js/data/passives.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			jtUMv+5pjz2yPJ4zepciHV//502jBmTWZzaTeHsRb9Q=
+			OeCDsH+j3XwvmigUIWj5J5wTQ2HbAJCQ7MymKCFDw1U=
 			</data>
 		</dict>
 		<key>Resources/game/js/engine/combat.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			6HdqXfI5ouJS1qM5mQz9lWID9pu+ynNMns2Mb4f/4PI=
+			4ucLB49Ixq2tpUUlbYlNBjsbN7aY/UM8YM6jFFR+ZLo=
 			</data>
 		</dict>
 		<key>Resources/game/js/engine/state.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			+vC4uN5tZutqGt9aJMnuH20k4ZFDAcjIbEgfP6hAg4w=
+			fR57Or2rHZQUkiSeiNTMEUwnBDH0WQn5NxK2+pi97gk=
 			</data>
 		</dict>
 		<key>Resources/game/js/engine/world.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			PmyKgt0AEP1TIQ2pH8e/HZfUVz2RhSIH5FYUyJh0ZoE=
+			CkblnXIpzHBtVgherembNwR8Y+vQvNB3nlozp9Nze+M=
 			</data>
 		</dict>
 		<key>Resources/game/js/main.js</key>
@@ -182,7 +193,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			gpW+r/S+GQrjqzCs6CabqJXQWBkuEnxxG5GnHqiC9Dk=
+			4cgrgYRtc7+uI/2K+hBdDOGHRf8xffj4qpKb9nO5zZo=
 			</data>
 		</dict>
 		<key>Resources/game/js/ui/deck.js</key>
@@ -196,7 +207,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Ub54IWM96D0KbgbNhXN/B1cWOd+0EQZBaW3yNWmtqLY=
+			opg3FYjupFecOUIm4c2sEfp5zm2REHI1xT3rOYUlRBg=
 			</data>
 		</dict>
 		<key>Resources/game/js/ui/map.js</key>
@@ -210,21 +221,21 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			mTyruS492oPeLK98m0G1tA2KChnvStqlqzCO9huWWHA=
+			W3g0TXGikLfb0zV4DjlRhJboiaBHMSac8FI/vGWb05Q=
 			</data>
 		</dict>
 		<key>Resources/game/js/ui/sound.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			kTqF0Edb1O1QvD05qNzzKjn4K/ntl7iGgXlZWkQaFnQ=
+			pE6PZO/YC0N4Be2MMRAfbaesXK2p/9gCnC8h0l5giwc=
 			</data>
 		</dict>
 		<key>Resources/game/js/ui/tips.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			yhu48gkN0lLOCwnGzJiWio3RHZWUV3d4P7Kvq2PPbzw=
+			A+9hsv8oxMxzBVbsXVqy54HsA383Xb4M1nxBIyz5Q6U=
 			</data>
 		</dict>
 	</dict>

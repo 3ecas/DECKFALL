@@ -23,6 +23,7 @@ function mkEnemy(def,o){
   if(e.el==='shadow'){ e.ls=true; e.evade=15; }             // Drain
   if(e.el==='phys') e.crit=20;                              // Precision
   if(e.el==='beast') e.enrage=1.4;                          // Frenzy
+  if(e.el==='flying') e.fly=20;                             // Wings: a fifth of your cards miss it
   if(!o.boss) e.pi=rnd(0,e.pat.length-1);
   for(const pid of (def.passives||[])) addEnemyPassive(e,pid);
   return e;
@@ -44,7 +45,7 @@ function startFight(o){
   const enemies=pickEnemies(o);
   // the kit persists: the fight works on the run's hand, piles and passives, and hands them back when it ends
   const K=G.p.kit||(G.p.kit=newKit()); if(!K.draw.length&&!K.hand.length&&!K.discard.length) K.draw=shuffle(G.p.deck.map(id=>({uid:UI.uid++,id})));
-  G.fight={key:UI.fightKey++, enemies, turn:0, energy:K.energy||0, energyBonus:0, hand:K.hand, draw:K.draw, discard:K.discard, exhaust:K.exhaust, passives:K.passives, block:0, st:{}, str:0, spellT:0, thornsT:0, critT:0, armorT:0, regen:0, dodgeT:0, elBoost:{}, dodgeNext:false, counterNext:false, parry:false, retain:false, target:0, played:0, turnAttacks:0, o, over:false};
+  G.fight={key:UI.fightKey++, enemies, turn:0, energy:K.energy||0, energyBonus:0, hand:K.hand, draw:K.draw, discard:K.discard, exhaust:K.exhaust, passives:K.passives, block:0, st:{}, str:0, spellT:0, thornsT:0, critT:0, armorT:0, regen:0, dodgeT:0, elBoost:{}, deckTurn:{}, deckFight:{}, deckBuff:{}, dodgeNext:false, counterNext:false, parry:false, retain:false, target:0, played:0, turnAttacks:0, o, over:false};
   G.log=[]; log(o.boss?`BOSS: ${enemies[0].name} guards its lair!`:o.forced?`${enemies[0].name} has caught your scent. There is no running.`:o.elite?`An elite ${enemies[0].name} appears!`:`${enemies.map(e=>e.name).join(' and ')} appear${enemies.length>1?'':'s'}!`, (o.boss||o.forced)?'bad':'');
   G.phase='battle'; G.spoils=null; G.inter=null; G.shop=null; UI.handUids=[]; UI.sel=null; UI.kbRow='hand'; save();
   UI.intro=true; clearTimeout(UI.introTimer); UI.introTimer=setTimeout(()=>{ UI.intro=false; const a=document.querySelector('.arena'); if(a) a.classList.remove('intro'); },1500);   // the creature steps in first; its details are revealed when the fight starts
@@ -55,7 +56,7 @@ function startPlayerTurn(){
   const F=G.fight; if(F.over) return; F.turn++; G.turnsTotal++;
   // Mana: the first turn of every fight starts at 0; from the second turn on you gain 1 (plus any per-turn bonuses), up to MANA_CAP, and unspent Mana carries over.
   if(F.turn>1){ const gain=1+F.energyBonus+pSum('manaPerTurn')+pSum('sMana'); if(F.st.chill){ delete F.st.chill; log('Chilled: no Mana gained this turn','bad'); } else F.energy=Math.min(MANA_CAP,F.energy+gain); } else if(F.st.chill) delete F.st.chill;
-  F.played=0; F.turnAttacks=0; if(!F.retain) F.block=0; F.retain=false; F.dodgeNext=false; F.counterNext=false; F.parry=false;
+  F.played=0; F.turnAttacks=0; F.deckTurn={}; if(!F.retain) F.block=0; F.retain=false; F.dodgeNext=false; F.counterNext=false; F.parry=false;
   const rg=PS('regen')+F.regen+pSum('healPerTurn')+pSum('sHeal'); if(rg>0){ const h=heal(rg); if(h) log(`Regen and allies heal ${h}`,'good'); }
   if(F.st.poison){ dmgPlayerRaw(F.st.poison,'Poison'); F.st.poison--; if(F.st.poison<=0) delete F.st.poison; }
   if(F.st.burn&&G.p.hp>0){ dmgPlayerRaw(F.st.burn,'Burn'); F.st.burn=Math.floor(F.st.burn/2); if(F.st.burn<=0) delete F.st.burn; }
@@ -64,8 +65,11 @@ function startPlayerTurn(){
   render(); autoEndCheck();
 }
 function draw(n){ drawFrom(G.fight,n); }
+// ---- decks (synergy groups, js/data/decks.js): per fight, how many cards of each deck you played this turn and this fight, and each deck's standing damage bonus ----
+function packMaps(F){ F.deckTurn=F.deckTurn||{}; F.deckFight=F.deckFight||{}; F.deckBuff=F.deckBuff||{}; return F; }
+function packCount(deck,scope){ if(!deck||!G||!G.fight) return 0; const F=packMaps(G.fight); return (scope==='fight'?F.deckFight:F.deckTurn)[deck]||0; }
 function addBlock(n){ const F=G.fight; F.block+=n; floatP(`🛡️ +${n}`,'block'); log(`You gain ${n} Block`); sfx('block'); const f=fx(); if(f) f.player('phys',1); }
-function needsTarget(d){ return d.fx.some(f=>(f[0]==='dmg'&&!(f[2]&&f[2].aoe))||(f[0]==='se'&&!(f[3]&&f[3].aoe))||(f[0]==='special'&&['execute','snipe','retaliation','stDmg','doubleSt','spread','blockDmg','playedDmg','sabotage','pilfer','mimic'].includes(f[1])&&!(f[2]&&f[2].aoe))); }
+function needsTarget(d){ return d.fx.some(f=>(f[0]==='dmg'&&!(f[2]&&f[2].aoe))||(f[0]==='se'&&!(f[3]&&f[3].aoe))||(f[0]==='special'&&['execute','snipe','retaliation','stDmg','doubleSt','spread','blockDmg','playedDmg','sabotage','pilfer','mimic','packStatus'].includes(f[1])&&!(f[2]&&f[2].aoe))||(f[0]==='special'&&f[1]==='pack'&&(f[2]||{}).what==='dmg'&&!(f[2]&&f[2].aoe))); }
 function canPlay(inst){ const F=G.fight; const d=CARD[inst.id]; return !d.unplayable&&F.energy>=cardCost(inst.id); }
 function autoEndCheck(){
   clearTimeout(UI.autoTimer); const F=G.fight; if(!F||F.over||UI.busy) return;
@@ -82,7 +86,9 @@ async function playCard(idx){
   UI.busy=true; sfx('play',{type:d.type,el:d.el}); const f=fx(); if(f){ f.playCard(idx,target); await sleep(200); }
   F.energy-=cost; F.hand.splice(idx,1); F.played++; if(d.type==='attack') F.turnAttacks++;
   log(`You play ${d.name}${curTier(inst.id)>tierIdx(inst.id)?' ('+TIERS[curTier(inst.id)]+')':''}`);
+  if(d.quip){ log(`${d.name}: ${d.quip}`,'good'); floatP(d.quip,'se'); }   // a card with something to say says it
   try{ await runEffects(d,cardVals(inst.id),target,inst); }catch(err){ console.error(err); }
+  { const dk=deckOf(d); const M=packMaps(F); M.deckTurn[dk]=(M.deckTurn[dk]||0)+1; M.deckFight[dk]=(M.deckFight[dk]||0)+1; }   // counted after its effects: a card reads the cards of its nature that came before it
   if(inst.inPlay){ /* sits in a passive slot */ }
   else if(inst.temp){ log(`${d.name} fades away`); }
   else if(d.consume){ removeCard(inst.id); log(`${d.name} is consumed for good.`,'good'); }
@@ -93,10 +99,12 @@ async function playCard(idx){
 }
 async function runEffects(d,v,target,inst){
   const F=G.fight; const alive=()=>F.enemies.filter(e=>e.alive); const src=d.name; const kind=d.type==='spell'?'spell':'phys';
+  const dk=deckOf(d); const DK=DECKS[dk]; let comboed=false;
   for(const f of d.fx){
-    const t=f[0];
-    if(t==='dmg'){ const o=f[2]||{}; const hits=o.hits?(typeof o.hits==='string'?v[o.hits]:o.hits):1;
-      for(let h=0;h<hits;h++){ const ts=o.aoe?alive():[target].filter(e=>e&&e.alive); if(!ts.length) break; for(const e of ts) hitEnemy(e,v[f[1]],{kind,el:d.el,pierce:o.pierce,ls:o.ls,bv:o.bv,bvm:o.bvm,src,isAttack:d.type==='attack',isSpell:d.type==='spell'}); if(hits>1){ render(); await sleep(150); } } }
+    const t=f[0]; const op=fxOpts(f);
+    if(op.ifPack){ if(!packCount(deckOf(d),'turn')){ log(`${src}'s combo needs another ${DK?DK.n:'deck'} card played first this turn`); continue; } if(!comboed){ comboed=true; log(`${src} combos with your ${DK?DK.n:'deck'} cards!`,'se'); floatP(`${DK?DK.i:'⛓'} Combo!`,'se'); } }   // a combo effect only fires after a deck-mate this turn
+    if(t==='dmg'){ const o=f[2]||{}; const hits=o.hits?(typeof o.hits==='string'?v[o.hits]:o.hits):1; const base=v[f[1]]+(o.pp?(v[o.pp]||0)*packCount(deckOf(d),'turn'):0);
+      for(let h=0;h<hits;h++){ const ts=o.aoe?alive():[target].filter(e=>e&&e.alive); if(!ts.length) break; for(const e of ts) hitEnemy(e,base,{kind,el:d.el,pierce:o.pierce,ls:o.ls,bv:o.bv,bvm:o.bvm,src,deck:deckOf(d),isAttack:d.type==='attack',isSpell:d.type==='spell'}); if(hits>1){ render(); await sleep(150); } } }
     else if(t==='block') addBlock(v[f[1]]);
     else if(t==='armor'){ F.armorT+=v[f[1]]; log(`+${v[f[1]]} Armor for this fight`,'good'); }
     else if(t==='se'){ const o=f[3]||{}; const val=f[2]?v[f[2]]:1; const ts=o.aoe?alive():[target].filter(e=>e&&e.alive); for(const e of ts) applyStatusEnemy(e,f[1],val); }
@@ -115,7 +123,7 @@ async function runEffects(d,v,target,inst){
   render();
 }
 async function special(name,p,d,v,target,kind){
-  const F=G.fight; const alive=()=>F.enemies.filter(e=>e.alive); const m=p.m?v[p.m]:1; const o=(x)=>Object.assign({kind,el:d.el,src:d.name,isAttack:d.type==='attack',isSpell:d.type==='spell'},x||{});
+  const F=G.fight; const alive=()=>F.enemies.filter(e=>e.alive); const m=p.m?v[p.m]:1; const o=(x)=>Object.assign({kind,el:d.el,src:d.name,deck:deckOf(d),isAttack:d.type==='attack',isSpell:d.type==='spell'},x||{}); const DK=DECKS[deckOf(d)]||{n:'deck',i:'🎴'};
   if(name==='execute'){ if(!target||!target.alive) return; const low=target.hp/target.maxHp<(p.pct||30)/100; hitEnemy(target,v.dmg*(low?2:1),o()); if(low) log('Execute! Double damage','se'); }
   else if(name==='snipe'){ if(target&&target.alive) hitEnemy(target,v.dmg,o({pierce:1,critBonus:50})); }
   else if(name==='retaliation'){ if(target&&target.alive) hitEnemy(target,(PS('thorns')+F.thornsT+pSum('thorns'))*m,o({el:'phys'})); }
@@ -131,11 +139,24 @@ async function special(name,p,d,v,target,kind){
   else if(name==='emp'){ let n=0; for(const e of alive()) while(e.passives.length){ removePassive(e.passives,e.passives[0],'destroyed'); n++; } log(n?`EMP destroys ${n} enemy passive${n>1?'s':''}!`:'EMP finds nothing to destroy',n?'se':''); if(n) sfx('break'); }
   else if(name==='pilfer'){ const e=(target&&target.alive&&target.passives.length)?target:alive().find(x=>x.passives.length); if(!e){ log('Nothing to steal'); return; } stealPassive(e,pick(e.passives)); }
   else if(name==='pilferAll'){ let n=0; for(const e of alive()) while(e.passives.length&&n<PS('slots')){ stealPassive(e,e.passives[0]); n++; } if(!n) log('Nothing to steal'); }
-  else if(name==='mimic'){ const e=target&&target.alive?target:alive()[0]; if(!e) return; let el=e.el; if(el==='beast'||el==='phys') el=pick(['fire','water','ice','light','grass','poison','earth','shadow','holy']); const id=randomCardId('fight',[],x=>x.el===el&&x.type!=='curse'); F.hand.push({uid:UI.uid++,id,temp:true}); log(`You conjure ${CARD[id].name} from ${e.name}'s essence`,'se'); }
+  else if(name==='mimic'){ const e=target&&target.alive?target:alive()[0]; if(!e) return; let el=e.el; if(el==='beast'||el==='phys') el=pick(Object.keys(EL).filter(k=>k!=='beast'&&k!=='phys')); const id=randomCardId('fight',[],x=>x.el===el&&x.type!=='curse'); F.hand.push({uid:UI.uid++,id,temp:true}); log(`You conjure ${CARD[id].name} from ${e.name}'s essence`,'se'); }
+  // ---- deck synergies (js/data/decks.js) ----
+  else if(name==='packStatus'){ if(!target||!target.alive) return; const cnt=packCount(deckOf(d),'turn'); const chance=Math.min(100,(p.base||0)+(p.per||0)*cnt); const val=v[p.v]||1;
+    if(Math.random()*100<chance){ applyStatusEnemy(target,p.s,val); log(`${d.name}'s ${ST[p.s].n} takes hold (${chance}% with ${cnt} ${DK.n} card${cnt===1?'':'s'} before it)`,'se'); }
+    else { log(`${d.name} rolls ${chance}% for ${ST[p.s].n}: nothing`); floatE(target,`${ST[p.s].i} miss`,'miss'); } }
+  else if(name==='tutor'){ const want=v[p.n]||1; const got=[]; for(const pile of [F.draw,F.discard]){ while(got.length<want&&F.hand.length+got.length<10){ const idx=pile.map((c,i)=>deckOf(CARD[c.id])===deckOf(d)?i:-1).filter(i=>i>=0); if(!idx.length) break; got.push(pile.splice(pick(idx),1)[0]); } }
+    for(const c of got) F.hand.push(c); if(got.length){ log(`${d.name} calls ${got.map(c=>CARD[c.id].name).join(', ')} to your hand`,'good'); sfx('draw',{n:got.length}); } else log(`${d.name} calls, but no ${DK.n} card answers`); }
+  else if(name==='packBuff'){ const M=packMaps(F); const x=v[p.v]||1; M.deckBuff[deckOf(d)]=(M.deckBuff[deckOf(d)]||0)+x; log(`${DK.n} cards deal +${x} damage for the rest of the fight (now +${M.deckBuff[deckOf(d)]})`,'good'); floatP(`${DK.i} +${x} dmg`,'mana'); }
+  else if(name==='pack'){ const cnt=packCount(deckOf(d),p.scope||'turn'); const amt=(v[p.m]||1)*cnt; const what=p.what||'dmg'; if(!cnt){ log(`${d.name}: no ${DK.n} card ${p.scope==='fight'?'played yet this fight':'came before it this turn'}`); return; }
+    log(`${d.name} counts ${cnt} ${DK.n} card${cnt===1?'':'s'} this ${p.scope==='fight'?'fight':'turn'}`,'se');
+    if(what==='dmg'){ const ts=p.aoe?alive():[target].filter(e=>e&&e.alive); for(const e of ts) hitEnemy(e,amt,o({pierce:p.pierce})); }
+    else if(what==='block') addBlock(amt); else if(what==='heal'){ const h=heal(amt); floatP(`+${h}`,'heal'); log(`${d.name} heals ${h}`,'good'); sfx('heal'); }
+    else if(what==='energy'){ F.energy=Math.min(MANA_CAP,F.energy+amt); log(`+${amt} Mana`,'good'); floatP(`+${amt} Mana`,'mana'); sfx('mana'); } else if(what==='draw') draw(amt); }
 }
 function calcDmg(base,kind,el,e,o){
   o=o||{}; const F=G.fight;
   let d=base+(o.noStat?0:(kind==='phys'?PS('attack')+F.str+pSum('atkBonus'):PS('spell')+F.spellT+pSum('spellBonus')));
+  if(o.deck&&F.deckBuff&&F.deckBuff[o.deck]) d+=F.deckBuff[o.deck];   // the deck's standing bonus (Rat King, Hymn, Moonlit Hunt...)
   if(F.st.weak) d*=0.75;
   d*=1+(elBoostPct(el)+(F.elBoost[el]||0))/100;
   if(o.isAttack&&F.turnAttacks===1&&hasP('firstAttackMult')) d*=2;
@@ -152,6 +173,7 @@ function hitEnemy(e,base,o){
   if(!e||!e.alive) return 0;
   if(e.evade&&o.isAttack&&Math.random()*100<e.evade){ log(`${e.name} fades from your attack`,'bad'); floatE(e,'Fade','miss'); sfx('dodge'); return 0; }   // Drain: shadow enemies slip attack cards
   if(e.dodgeNext&&!o.summon){ e.dodgeNext=false; log(`${e.name} evades your ${o.src||'attack'}`,'bad'); floatE(e,'Evaded','miss'); sfx('dodge'); return 0; }
+  if(e.fly&&!o.summon&&Math.random()*100<e.fly){ log(`${e.name} swoops out of the way of your ${o.src||'attack'}`,'bad'); floatE(e,'Swoop','miss'); sfx('dodge'); return 0; }   // Wings
   if(e.el==='poison'&&o.isAttack&&!o.summon){ applyStatusPlayer('poison',1); }   // Toxic Blood
   const F=G.fight; const r=calcDmg(base,o.kind,o.el,e,o);
   const dealt=damageEnemy(e,r.d,{pierce:o.pierce,el:o.el}); sfx('hit',{el:o.el,se:r.se,crit:r.crit});
@@ -159,6 +181,7 @@ function hitEnemy(e,base,o){
   if(o.kind==='phys'&&!o.summon&&e.thorns>0&&e.alive){ G.p.hp-=e.thorns; floatP(`-${e.thorns} thorns`,'dmg'); log(`${e.name}'s thorns deal ${e.thorns} to you`,'bad'); }
   if(e.alive){ for(const p of F.passives){ const s=o.isAttack?pv_(p,'attackStatus'):o.isSpell?pv_(p,'spellStatus'):null; if(s) applyStatusEnemy(e,s,pv_(p,'sv')||1); } }
   if(e.alive&&e.counterNext&&!o.summon){ e.counterNext=false; const c=Math.max(1,Math.round(e.atk*0.8)); dmgPlayerRaw(c,`${e.name}'s riposte`); }
+  if(e.el==='fighting'&&o.isAttack&&!o.summon&&e.alive&&G.p.hp>0&&Math.random()<0.3){ dmgPlayerRaw(Math.max(1,Math.round(e.atk*0.5)),`${e.name}'s counter punch`); }   // Counter
   let tag=r.se?' SUPER EFFECTIVE!':r.res?' (resisted)':''; if(r.combo) tag+=' COMBO!'; if(r.crit) tag+=' CRIT!';
   floatE(e,r.se||r.combo?`${dealt}!`:`${dealt}`,r.se||r.combo?'se':'dmg');
   log(`${o.src||'You'} hit${o.src?'s':''} ${e.name} for ${dealt} ${EL[o.el].n.toLowerCase()}${tag}`,r.se||r.combo?'se':'');
@@ -210,7 +233,7 @@ function intentInfo(e){
       else if(t==='block') bits.push(`🛡️${Math.round(Math.max(1,Math.round(v[fxn[1]]*sc))*(e.el==='earth'?1.5:1))}`);
       else if(t==='heal') bits.push(`💚${Math.max(1,Math.round(v[fxn[1]]*sc))}`); else if(t==='healPct') bits.push(`💚${Math.round(e.maxHp*(v[fxn[1]]||10)/100)}`);
       else if(t==='ss') bits.push(fxn[1]==='dodgeNext'?'💨 evasive':fxn[1]==='counterNext'?'🗡️ riposte':fxn[1]==='regen'?'💚 regen':fxn[1]==='thornsT'?'🌵 thorns':'💪 strength');
-      else if(t==='passive') bits.push(`☗ ${PASSIVES[fxn[1]]?PASSIVES[fxn[1]].name:'ally'}`); else if(t==='armor') bits.push('🪨 armor'); else if(t==='cleanse') bits.push('✚ cleanse'); else if(t==='special') bits.push('✦'); }
+      else if(t==='passive') bits.push(`☗ ${PASSIVES[fxn[1]]?PASSIVES[fxn[1]].name:'ally'}`); else if(t==='armor') bits.push('🪨 armor'); else if(t==='cleanse') bits.push('✚ cleanse'); else if(t==='special') bits.push(fxn[1]==='packBuff'?'💪 strength':'✦'); }
     return {i:d.icon,t:`<b>${esc(d.name)}</b> · ${bits.join(' + ')}${hint}`}; }
   if(it.t==='def') return {i:'🛡️',t:`Block <b>${Math.round(it.v*e.atkScale)}</b>`};
   if(it.t==='buff') return {i:'💪',t:'Gains Strength'};
@@ -315,6 +338,7 @@ async function runEnemyMove(e,id){
       else if(sp==='snipe'){ await strike(num('dmg'),{pierce:true}); }
       else if(sp==='blockDmg'){ if(e.block>0) await strike(Math.round(e.block*(v[o.m]||1))); }
       else if(sp==='retaliation'){ if(e.thorns>0) await strike(Math.round(e.thorns*(v[o.m]||1))); }
+      else if(sp==='packBuff'){ const x=Math.max(1,Math.round((v[o.v]||1)*Math.max(0.5,sc*0.5))); e.st.str=(e.st.str||0)+x; floatE(e,`💪+${x}`,'se'); log(`${e.name} gains ${x} Strength`,'bad'); }   // a creature's pack howl is plain Strength for it
     }
     render(); await sleep(120); }
 }
@@ -335,8 +359,9 @@ async function enemyHitPlayer(e,d,o){
   if(F.st.wet&&(e.el==='light'||e.el==='ice')) d=Math.round(d*1.5);   // Wet: lightning and ice bite harder
   if(F.st.shock){ d+=F.st.shock; log(`Shock adds ${F.st.shock} damage`,'bad'); F.st.shock--; if(F.st.shock<=0) delete F.st.shock; }
   let blocked=0; if(F.block>0&&!o.pierce){ const usable=o.radiant?Math.ceil(F.block/2):F.block; blocked=Math.min(usable,d); F.block-=blocked; d-=blocked; if(o.radiant&&blocked<d+blocked) log('Radiant: the blow passes part of your Block','bad'); } else if(o.pierce&&F.block>0) log('The blow pierces your Block','bad');
-  if(d>0) d=Math.max(0,d-(PS('armor')+F.armorT));
-  G.p.hp-=d; const f=fx(); if(f&&d>0){ f.playerHit(); if(o.el) f.player(o.el,0); }
+  if(d>0){ const ar=PS('armor')+F.armorT; if(e.el==='dragon'&&ar>0) log(`Tyrant: ${e.name}'s blow ignores your Armor`,'bad'); else d=Math.max(0,d-ar); }
+  G.p.hp-=d;
+  if(d>0&&e.el==='psychic'&&F.energy>0){ F.energy--; log(`${e.name} drains 1 Mana`,'bad'); floatP('-1 Mana','dmg'); }   // Mind Drain const f=fx(); if(f&&d>0){ f.playerHit(); if(o.el) f.player(o.el,0); }
   if(d>0){ floatP(`-${d}`,'dmg'); sfx('hurt'); } else { floatP('Blocked','block'); sfx('blocked'); }
   log(`${o.src||e.name} hits you for ${d}${blocked?` (${blocked} blocked)`:''}`,'bad');
   const th=PS('thorns')+F.thornsT+pSum('thorns'); if(th>0&&e.alive) damageEnemyRaw(e,th,'phys','Thorns');
@@ -351,7 +376,7 @@ async function counterAttack(e){
 }
 function winFight(){
   const F=G.fight; if(!F||F.over) return; F.over=true; clearTimeout(UI.autoTimer); const o=F.o||{};
-  const mult=(o.boss?4:o.elite?2:1)*(o.goldMult||1);
+  const mult=(o.boss?4:o.elite?2:1)*(o.goldMult||1)*(F.enemies.some(x=>x.el==='dragon')?2:1);   // a dragon's hoard
   const gold=Math.round(goldReward()*mult*(0.85+Math.random()*0.3)); const xp=Math.round(xpReward()*(o.boss?4:o.elite?2:1));
   G.p.gold+=gold; G.fights++; if(o.boss) G.bossesSlain++;
   const kind=o.boss?'boss':(o.elite||o.mimic)?'elite':'fight';

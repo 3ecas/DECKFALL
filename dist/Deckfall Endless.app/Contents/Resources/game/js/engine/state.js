@@ -85,8 +85,17 @@ function tierWeights(kind){
   TIERS.forEach((t,i)=>{ const dist=i-center; w[t]=Math.exp(-Math.abs(dist)/1.4)*(dist>0?Math.pow(0.45,dist):1); if(i>0&&s<TIER[t].min-2-shift*4) w[t]*=0.04; });
   return w;
 }
-function randomCardId(kind,exclude,filter){ const tier=weightedPick(tierWeights(kind)); let pool=CARDS.filter(x=>x.tier===tier&&x.type!=='curse'&&!x.drop&&!(exclude||[]).includes(x.id)&&(!filter||filter(x))); if(!pool.length) pool=CARDS.filter(x=>x.type!=='curse'&&!x.drop&&!(exclude||[]).includes(x.id)); return pick(pool).id; }   // creature abilities (drop) only come from the creature
-function offerPool(kind,n,filter){ const ids=[]; let guard=0; while(ids.length<n&&guard++<40){ const id=randomCardId(kind,ids,filter); if(!ids.includes(id)) ids.push(id); } markSeen(ids); return ids; }
+function randomCardId(kind,exclude,filter){ const tier=weightedPick(tierWeights(kind)); let pool=CARDS.filter(x=>x.tier===tier&&x.type!=='curse'&&!x.drop&&!x.legendary&&!(exclude||[]).includes(x.id)&&(!filter||filter(x))); if(!pool.length) pool=CARDS.filter(x=>x.type!=='curse'&&!x.drop&&!x.legendary&&!(exclude||[]).includes(x.id)); return pick(pool).id; }   // creature abilities (drop) only come from the creature
+// Every nature type is a deck (js/data/decks.js) and decks assemble along the run: some offer slots lean toward the elements you already hold
+// (two points per card beyond the first of that element) and a little toward the dungeon theme's elements.
+const DECK_PULL=0.45;   // share of offer slots that lean toward a deck, when there is one to lean toward
+function deckLean(){ const own={}; for(const id of [...G.p.deck,...(G.p.stash||[])]){ if(!CARD[id]||CARD[id].type==='curse') continue; const dk=deckOf(CARD[id]); own[dk]=(own[dk]||0)+1; } const w={}; for(const dk in own) if(own[dk]>1) w[dk]=(own[dk]-1)*2; const T=G.dungeon&&typeof THEMES!=='undefined'&&THEMES[G.dungeon.theme]; if(T) for(const dk of T.els) w[dk]=(w[dk]||0)+1.5; return w; }
+function randomDeckCardId(kind,deck,exclude){ const pool=CARDS.filter(x=>deckOf(x)===deck&&x.type!=='curse'&&!x.drop&&!x.legendary&&!(exclude||[]).includes(x.id)); if(!pool.length) return null; const tw=tierWeights(kind); const w={}; for(const t in tw) if(pool.some(x=>x.tier===t)) w[t]=tw[t]; const tier=weightedPick(w); return pick(pool.filter(x=>x.tier===tier)).id; }
+// Legendary cards (cards.js, {legendary:1}) never sit in a normal pool. Each offer has a small chance to slip one into its last slot:
+// the base chance per offer kind, scaled up to full by round 12 and by Luck (+4% per point). A boss's treasury is the likeliest place.
+const LEGEND_CHANCE={fight:0.012,elite:0.03,boss:0.06,chest:0.02,shop:0.025,treasury:0.2,idol:0.03};
+function legendaryDrop(kind){ if(!G) return null; const L=CARDS.filter(x=>x.legendary); if(!L.length) return null; const p=(LEGEND_CHANCE[kind]||0.01)*Math.min(1,G.round/12)*(1+PS('luck')/25); return Math.random()<p?pick(L).id:null; }
+function offerPool(kind,n,filter){ const ids=[]; let guard=0; const lean=filter?{}:deckLean(); const any=Object.keys(lean).length>0; while(ids.length<n&&guard++<40){ let id=any&&Math.random()<DECK_PULL?randomDeckCardId(kind,weightedPick(lean),ids):null; if(!id) id=randomCardId(kind,ids,filter); if(!ids.includes(id)) ids.push(id); } if(!filter&&ids.length){ const lg=legendaryDrop(kind); if(lg&&!ids.includes(lg)) ids[ids.length-1]=lg; } markSeen(ids); return ids; }
 function deckCounts(){ const m={}; for(const id of G.p.deck) m[id]=(m[id]||0)+1; return m; }
 
 // ---- flow: a tile on the map -> a fight or a find -> spoils or an interlude -> back to the map (world.js) ----

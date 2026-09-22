@@ -39,7 +39,7 @@ function titleHTML(){
       <div class="menu-l">
         <div class="eyebrow">An endless deck-building roguelike</div>
         <div class="title-art"><span>Deckfall</span><span>Endless</span></div>
-        <p class="title-sub">Five basic cards and a torch. Crawl through fogged dungeons, find the exit, choose your fights, loot, evolve, combo. Ten elements, nine tiers, dungeons without end. Die, and start over.</p>
+        <p class="title-sub">Five basic cards and a torch. Crawl through fogged dungeons, find the exit, choose your fights, loot, evolve, combo. Fourteen elements, nine tiers, dungeons without end. Die, and start over.</p>
         <div class="menu-btns">
           ${s?`<button class="btn primary big" data-act="continue">Continue · dungeon ${s.dungeon?s.dungeon.n:1}</button>`:''}
           <button class="btn ${s?'':'primary'} big" data-act="new">${s?'New run · deletes the save':'Begin a run'}</button>
@@ -89,7 +89,7 @@ function libraryHTML(){
     </div>
   </div>`;
 }
-function handbarHTML(){ const F=G.fight; const alive=F.enemies.filter(e=>e.alive).length; return `<span class="muted small">Turn ${F.turn} · tap an enemy to target it · ${alive} ${alive===1?'enemy':'enemies'} left</span><span class="piles"><span>Draw ${F.draw.length}</span><span>Discard ${F.discard.length}</span><span>Exhaust ${F.exhaust.length}</span></span>`; }
+function handbarHTML(){ const F=G.fight; const alive=F.enemies.filter(e=>e.alive).length; return `<span class="muted small">Turn ${F.turn} · tap an enemy to target it · ${alive} ${alive===1?'enemy':'enemies'} left</span><span class="piles"><span title="Draw pile"><i>🂠</i>Draw <b>${F.draw.length}</b></span><span title="Discard pile"><i>🗂️</i>Discard <b>${F.discard.length}</b></span><span title="Exhausted this fight"><i>💨</i>Exhaust <b>${F.exhaust.length}</b></span></span>`; }
 function battleHTML(){
   const F=G.fight; UI.handUids=[];
   return `<div id="battle" data-key="${F.key}" class="battle">

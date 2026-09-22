@@ -284,7 +284,10 @@ c('s_skeletons','Skeleton Horde','summon','shadow',2,5,'💀',{v:3,hits:3},[['pa
 c('s_ent','Ent','summon','grass',2,6,'🌳',{b:6,t:1},[['passive','ent']]);
 c('s_valkyrie','Valkyrie','summon','holy',3,6,'😇',{v:8,h:4},[['passive','valkyrie']]);
 c('s_phoenix','Phoenix','summon','fire',3,7,'🐦‍🔥',{v:8,h:5},[['passive','phoenix']]);
-c('s_dragon','Dragon','summon','fire',3,8,'🐉',{v:16},[['passive','dragon']]);
+c('s_dragon','Dragon','summon','dragon',3,8,'🐉',{v:16},[['passive','dragon']]);
+c('s_psion','Psion','summon','psychic',2,4,'🧿',{v:5},[['passive','psion']]);
+c('s_falcon','Falcon','summon','flying',1,2,'🦅',{v:2},[['passive','falcon']]);
+c('s_disciple','Disciple','summon','fighting',2,3,'🥋',{v:3,hits:2},[['passive','disciple']]);
 // ---------- TRAPS & TRICKS (free) ----------
 c('t_spike','Spike Trap','trap','phys',0,1,'🔩',{v:8},[['passive','spike_trap']]);
 c('t_sleight','Sleight of Hand','trap','phys',0,1,'🃏',{n:2},[['special','redraw',{n:'n'}]]);
@@ -318,6 +321,83 @@ c('omnipotion','Omnipotion','potion','holy',0,7,'🏺',{v:1,k:1,h:5},[['stat','a
 // ---------- CURSES ----------
 c('wound','Wound','curse','shadow',0,0,'🩹',{},[],{unplayable:true});
 c('doom','Doom','curse','shadow',0,0,'💀',{},[],{unplayable:true,endTurnDmg:3});
+// ---------- DRAGON: heavy claws, breath that burns, scales that harden ----------
+c('claw_swipe','Claw Swipe','attack','dragon',0,0,'🐾',{dmg:4},[['dmg','dmg']]);
+c('ember_breath','Ember Breath','spell','dragon',1,0,'🐲',{dmg:3},[['dmg','dmg']]);
+c('scale_guard','Scale Guard','shield','dragon',0,0,'🛡️',{b:4},[['block','b']]);
+c('wyrmling_bite','Wyrmling Bite','attack','dragon',0,1,'🦷',{dmg:5,v:2},[['dmg','dmg'],['se','burn','v']]);
+c('dragon_scales','Dragon Scales','shield','dragon',0,1,'🐉',{b:4,a:1},[['block','b'],['armor','a']]);
+c('roar','Roar','skill','dragon',0,1,'🗣️',{v:2,k:1},[['ss','str','v'],['se','weak','k']]);
+c('tail_lash','Tail Lash','attack','dragon',0,2,'🐊',{dmg:4},[['dmg','dmg',{aoe:1}]]);
+c('flame_breath','Flame Breath','spell','dragon',2,2,'🔥',{dmg:7,v:2},[['dmg','dmg',{aoe:1}],['se','burn','v',{aoe:1}]]);
+c('hoard','Hoard','skill','dragon',0,2,'💎',{e:1,d:1},[['energy','e'],['draw','d']]);
+c('dragon_dive','Dragon Dive','attack','dragon',0,3,'🪽',{dmg:11,k:1},[['dmg','dmg'],['se','vuln','k']]);
+c('wyrm_hide','Wyrm Hide','shield','dragon',0,3,'🛡️',{b:8,a:2},[['block','b'],['armor','a']]);
+c('crushing_jaws','Crushing Jaws','attack','dragon',0,4,'🦷',{dmg:9},[['special','execute',{pct:30}]]);
+c('inferno_breath','Inferno Breath','spell','dragon',3,5,'🌋',{dmg:12,v:4,k:1},[['dmg','dmg',{aoe:1}],['se','burn','v',{aoe:1}],['se','vuln','k',{aoe:1}]]);
+c('dragonbone_plate','Dragonbone Plate','shield','dragon',0,6,'🦴',{b:14,a:2},[['block','b'],['armor','a']],{retain:true});
+c('dragon_heart','Dragon Heart','skill','dragon',0,7,'❤️‍🔥',{v:3,a:2,h:10},[['ss','str','v'],['armor','a'],['heal','h']]);
+c('wrath_of_wyrms','Wrath of Wyrms','spell','dragon',3,8,'🐉',{dmg:30,v:5,k:2},[['dmg','dmg',{aoe:1}],['se','burn','v',{aoe:1}],['se','vuln','k',{aoe:1}]]);
+// ---------- PSYCHIC: hits through Block, reads the enemy (Weak, Vulnerable), draws and refunds Mana ----------
+c('mind_spark','Mind Spark','spell','psychic',1,0,'💭',{dmg:3},[['dmg','dmg',{pierce:1}]]);
+c('psi_blade','Psi Blade','attack','psychic',0,0,'🗡️',{dmg:4},[['dmg','dmg']]);
+c('foresight','Foresight','skill','psychic',0,0,'👁️',{},[['ss','dodgeNext',null]]);
+c('confusion','Confusion','spell','psychic',1,1,'🌀',{v:2,k:1},[['se','weak','v'],['se','vuln','k']]);
+c('psybeam','Psybeam','spell','psychic',1,1,'🔮',{dmg:6,v:1},[['dmg','dmg'],['se','weak','v']]);
+c('mind_over_matter','Mind over Matter','skill','psychic',0,1,'🧠',{b:4,d:1},[['block','b'],['draw','d']]);
+c('telekinesis','Telekinesis','attack','psychic',0,2,'🫳',{dmg:6},[['dmg','dmg',{pierce:1}]]);
+c('psychic_shield','Psychic Shield','shield','psychic',0,2,'🔷',{b:6,v:1},[['block','b'],['ss','spellT','v']]);
+c('mind_crush','Mind Crush','spell','psychic',2,3,'🧠',{dmg:12},[['dmg','dmg',{pierce:1}]]);
+c('brainstorm','Brainstorm','skill','psychic',0,3,'⚡',{e:1,d:2},[['energy','e'],['draw','d']]);
+c('hypnosis','Hypnosis','spell','psychic',2,4,'🌀',{v:3,k:2},[['se','weak','v',{aoe:1}],['se','vuln','k',{aoe:1}]]);
+c('psionic_storm','Psionic Storm','spell','psychic',3,5,'🌌',{dmg:9,v:1},[['dmg','dmg',{aoe:1,pierce:1}],['se','weak','v',{aoe:1}]]);
+c('astral_form','Astral Form','skill','psychic',0,6,'👻',{v:15,k:3,d:1},[['ss','dodgeT','v'],['ss','spellT','k'],['draw','d']]);
+c('mind_prison','Mind Prison','spell','psychic',3,7,'🔒',{k:2},[['se','frozen',null,{aoe:1}],['se','vuln','k',{aoe:1}]]);
+c('omniscience','Omniscience','spell','psychic',3,8,'🔯',{dmg:26,d:2,e:2},[['dmg','dmg',{pierce:1}],['draw','d'],['energy','e']]);
+// ---------- FLYING: dodges, quick dives, the wind that draws ----------
+c('peck','Peck','attack','flying',0,0,'🐦',{dmg:4},[['dmg','dmg']]);
+c('gust','Gust','spell','flying',1,0,'🌬️',{dmg:3},[['dmg','dmg']]);
+c('glide','Glide','skill','flying',0,0,'🪽',{},[['ss','dodgeNext',null]]);
+c('wing_slash','Wing Slash','attack','flying',0,1,'🪶',{dmg:3,hits:2},[['dmg','dmg',{hits:'hits'}]]);
+c('feather_guard','Feather Guard','shield','flying',0,1,'🪶',{b:4},[['block','b'],['ss','dodgeNext',null]]);
+c('tailwind','Tailwind','skill','flying',0,1,'💨',{d:1,e:1},[['draw','d'],['energy','e']]);
+c('dive_bomb','Dive Bomb','attack','flying',0,2,'🦅',{dmg:7,k:1},[['dmg','dmg'],['se','vuln','k']]);
+c('air_cutter','Air Cutter','spell','flying',1,2,'🌪️',{dmg:4},[['dmg','dmg',{aoe:1}]]);
+c('updraft','Updraft','skill','flying',0,2,'🌤️',{d:1},[['ss','dodgeNext',null],['draw','d']]);
+c('aerial_ace','Aerial Ace','attack','flying',0,3,'✈️',{dmg:9},[['dmg','dmg',{pierce:1}]]);
+c('hurricane','Hurricane','spell','flying',2,3,'🌀',{dmg:6,v:1},[['dmg','dmg',{aoe:1}],['se','weak','v',{aoe:1}]]);
+c('sky_dance','Sky Dance','skill','flying',0,3,'💃',{v:10,k:2},[['ss','dodgeT','v'],['ss','str','k']]);
+c('talon_barrage','Talon Barrage','attack','flying',0,4,'🦅',{dmg:3,hits:4},[['dmg','dmg',{hits:'hits'}]]);
+c('cyclone','Cyclone','spell','flying',2,4,'🌪️',{dmg:10,v:2},[['dmg','dmg'],['se','weak','v']]);
+c('skyfall','Skyfall','attack','flying',0,5,'☄️',{dmg:14,k:2},[['dmg','dmg'],['se','vuln','k']]);
+c('wind_wall','Wind Wall','shield','flying',0,5,'🌬️',{b:12},[['block','b'],['ss','dodgeNext',null]],{retain:true});
+c('stormfront','Stormfront','spell','flying',3,6,'⛈️',{dmg:8,hits:2,v:2},[['dmg','dmg',{hits:'hits',aoe:1}],['se','weak','v',{aoe:1}]]);
+c('zephyr','Zephyr','skill','flying',0,7,'🍃',{v:20,d:2,e:1},[['ss','dodgeT','v'],['draw','d'],['energy','e']]);
+c('sky_sovereign','Sky Sovereign','attack','flying',0,8,'👑',{dmg:12,hits:3,k:2},[['dmg','dmg',{hits:'hits',pierce:1}],['se','vuln','k']]);
+// ---------- FIGHTING: fists, stances, counters and the strength to keep swinging ----------
+c('jab','Jab','attack','fighting',0,0,'👊',{dmg:3},[['dmg','dmg']]);
+c('kick','Kick','attack','fighting',0,0,'🦵',{dmg:4},[['dmg','dmg']]);
+c('brace','Brace','shield','fighting',0,0,'🛡️',{b:4},[['block','b']]);
+c('hook','Hook','attack','fighting',0,1,'🥊',{dmg:6},[['dmg','dmg']]);
+c('iron_guard','Iron Guard','shield','fighting',0,1,'🛡️',{b:5},[['block','b'],['ss','counterNext',null]]);
+c('warm_up','Warm-Up','skill','fighting',0,1,'🔥',{v:2,b:2},[['ss','str','v'],['block','b']]);
+c('grapple','Grapple','attack','fighting',0,2,'🤼',{dmg:5,k:2},[['dmg','dmg'],['se','vuln','k']]);
+c('sweep','Sweep','attack','fighting',0,2,'🦵',{dmg:4,v:1},[['dmg','dmg',{aoe:1}],['se','weak','v',{aoe:1}]]);
+c('ki_blast','Ki Blast','spell','fighting',1,2,'💥',{dmg:7},[['dmg','dmg']]);
+c('uppercut','Uppercut','attack','fighting',0,3,'👊',{dmg:8,k:1},[['dmg','dmg'],['se','vuln','k']]);
+c('iron_body','Iron Body','shield','fighting',0,3,'🧱',{a:2,t:2},[['armor','a'],['ss','thornsT','t']]);
+c('inner_peace','Inner Peace','skill','fighting',0,3,'🧘',{h:6,v:1},[['heal','h'],['ss','str','v']]);
+c('haymaker','Haymaker','attack','fighting',0,4,'💢',{dmg:15,s:2},[['dmg','dmg'],['selfDmg','s']]);
+c('flying_kick','Flying Kick','attack','fighting',0,4,'🦶',{dmg:9,v:2},[['dmg','dmg'],['se','weak','v']]);
+c('battle_trance','Battle Trance','skill','fighting',0,4,'😤',{v:3,k:10},[['ss','str','v'],['ss','critT','k']]);
+c('thousand_fists','Thousand Fists','attack','fighting',0,5,'👊',{dmg:3,hits:5},[['dmg','dmg',{hits:'hits'}]]);
+c('unbreakable','Unbreakable','shield','fighting',0,5,'🗿',{b:12,a:2},[['block','b'],['armor','a']]);
+c('ki_burst','Ki Burst','spell','fighting',2,6,'💥',{dmg:20,k:2},[['dmg','dmg'],['se','vuln','k']]);
+c('master_stance','Master Stance','skill','fighting',0,7,'🥋',{v:4,k:10},[['ss','str','v'],['ss','counterNext',null],['ss','dodgeT','k']]);
+c('final_strike','Final Strike','attack','fighting',0,8,'☄️',{dmg:34,k:3},[['dmg','dmg'],['se','vuln','k']]);
+// ---------- LEGENDARY: one of a kind. Never in a normal pool; an offer slips one in now and then (LEGEND_CHANCE in state.js) ----------
+// {legendary:1} marks it (gold frame, ★ on the tier tag, 2.5× price at the keeper); `quip` is what it says when played.
+c('dick','Dick','attack','phys',0,6,'🍆',{dmg:44,s:3},[['dmg','dmg',{pierce:1}],['selfDmg','s']],{legendary:1,exhaust:1,quip:'It is what it is.'});
 const CARD = Object.fromEntries(CARDS.map(x=>[x.id,x]));
 
 // ===================== SHOP ATTRIBUTE UPGRADES =====================

@@ -295,10 +295,21 @@ table.stats td{padding:5px 8px;border-bottom:1px solid var(--line)} table.stats 
 .el-earth .cart{--art-bg:linear-gradient(180deg,#4a3320,#1c120a);--art-fx:repeating-linear-gradient(180deg,rgba(0,0,0,.16) 0 .6cqw,transparent .6cqw 5cqw),repeating-linear-gradient(176deg,rgba(255,230,190,.07) 0 .4cqw,transparent .4cqw 7cqw)}
 .el-shadow .cart{--art-bg:linear-gradient(180deg,#1c1035,#05030c);--art-fx:radial-gradient(60% 55% at 50% 60%,rgba(120,80,255,.35),transparent 70%),radial-gradient(80% 40% at 50% 110%,rgba(0,0,0,.7),transparent 70%)}
 .el-holy .cart{--art-bg:linear-gradient(180deg,#5a4416,#22190a);--art-fx:repeating-conic-gradient(from 0deg at 50% 50%,rgba(255,241,168,.16) 0 5deg,transparent 5deg 16deg),radial-gradient(45% 55% at 50% 50%,rgba(255,245,200,.35),transparent 70%)}
+.el-dragon .cart{--art-bg:linear-gradient(180deg,#4a1220,#1a0509);--art-fx:repeating-linear-gradient(135deg,rgba(255,79,94,.16) 0 .8cqw,transparent .8cqw 5.5cqw),radial-gradient(70% 50% at 50% 108%,rgba(255,79,94,.5),transparent 70%)}
+.el-psychic .cart{--art-bg:linear-gradient(180deg,#3a1447,#12051a);--art-fx:repeating-radial-gradient(circle at 50% 50%,rgba(245,98,232,.16) 0 1.2cqw,transparent 1.2cqw 5cqw),radial-gradient(50% 45% at 50% 40%,rgba(245,98,232,.3),transparent 70%)}
+.el-flying .cart{--art-bg:linear-gradient(180deg,#123a3c,#061618);--art-fx:repeating-linear-gradient(-20deg,rgba(95,217,201,.14) 0 .7cqw,transparent .7cqw 7cqw),radial-gradient(60% 35% at 50% 0%,rgba(200,255,245,.18),transparent 70%)}
+.el-fighting .cart{--art-bg:linear-gradient(180deg,#4a2a14,#1a0d05);--art-fx:repeating-linear-gradient(90deg,rgba(194,112,58,.16) 0 .6cqw,transparent .6cqw 4.5cqw),radial-gradient(60% 45% at 50% 100%,rgba(194,112,58,.4),transparent 70%)}
 .card .price{background:linear-gradient(180deg,#ffe08a,#e0a944);border:max(1px,.3cqw) solid rgba(0,0,0,.45);box-shadow:inset 0 max(1px,.3cqw) 0 rgba(255,255,255,.5),0 1px 3px rgba(0,0,0,.45)}
 .card .price.tagp{background:linear-gradient(180deg,#2b4b50,#152c30);box-shadow:inset 0 max(1px,.3cqw) 0 rgba(255,255,255,.16),0 1px 3px rgba(0,0,0,.45)}
 .card.t-rare::after,.card.t-perfect::after,.card.t-ultimate::after{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.28) 46%,rgba(255,255,255,.06) 52%,transparent 62%) 120% 0/260% 100% no-repeat;animation:shimmer 5.5s ease-in-out infinite;pointer-events:none;z-index:4;mix-blend-mode:screen}
 @keyframes shimmer{0%,55%{background-position:120% 0}100%{background-position:-160% 0}}
+/* Legendary cards (cards.js {legendary:1}): gold frame and name box, a soft glow, and a holographic foil over the art that cycles its hue. */
+.card.legendary{--fc:#4a3208;--fl:rgba(255,226,140,.8);--fd:rgba(60,30,0,.35);--fo:#ffd166;box-shadow:0 6px 16px rgba(0,0,0,.45),0 0 16px rgba(255,209,102,.5)}
+.card.legendary .cname{background:linear-gradient(180deg,#7a541a,#4a3208 60%,#33220a);color:#ffe9a8;border-color:#1a1003}
+.card.legendary .ctier{color:#ffe9a8}
+.card.legendary .cart{--art-bg:linear-gradient(180deg,#3d2a08,#1a1003)}
+.card.legendary .cart::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;mix-blend-mode:screen;background:linear-gradient(115deg,rgba(255,90,90,.45),rgba(255,220,90,.45) 25%,rgba(90,255,170,.45) 50%,rgba(90,170,255,.45) 75%,rgba(220,90,255,.45));animation:holo 5s linear infinite}
+@keyframes holo{to{filter:hue-rotate(360deg)}}
 /* passives: a tab sitting on top of the stats plaque (icon + name of each passive); hover or tap it and the cards drop up like a drawer */
 .slots{position:absolute;left:12px;bottom:100%;z-index:6;cursor:pointer}
 .pdtab{display:flex;align-items:center;gap:8px;padding:5px 12px 4px;border-radius:10px 10px 0 0;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:var(--ink2);white-space:nowrap;background:linear-gradient(180deg,var(--plq1),var(--plq2) 70%);border:1px solid rgba(0,0,0,.6);border-bottom:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(220,178,91,.22),0 -4px 14px rgba(0,0,0,.3)}
@@ -515,3 +526,48 @@ table.stats td{border-bottom:1px dotted rgba(255,255,255,.25)}
 .shopcards.all .card{flex-basis:124px;width:124px;height:186px}
 .upwrap{position:relative} .upwrap .nxt{position:absolute;inset:0;z-index:3;opacity:0;transition:opacity .22s} .upwrap:hover .nxt,.upwrap .nxt:has(.kbf){opacity:1}   /* above the current card's plaques, so hover and the tooltip always belong to the upgraded card */
 .upwrap.poor{opacity:.5}
+/* ---- decks (every nature type is a deck, js/data/decks.js): combo pills, the fight chips, the Types rows ---- */
+.card .cx.combo{background:rgba(30,50,90,.14);box-shadow:inset 0 0 0 max(1px,.25cqw) rgba(30,50,90,.5)} .card .cx i.cb{font-size:4.4cqw;opacity:.8}
+.st.deckst{border-color:color-mix(in srgb,var(--deck) 75%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 8px color-mix(in srgb,var(--deck) 35%,transparent)}
+.typegrid.decks .deckrow{border-left:3px solid var(--deck)} .decklist{color:var(--ink2);line-height:1.45;margin-top:2px}
+.tip .deckline{margin:2px 0}
+
+/* ===== HUD as objects (September 2026): fewer boxes and strokes, bigger isolated icons; a stat or buff shows only once it is on =====
+   An object is an icon with its number tucked into the bottom-right corner (no box): .st (statuses), .stat (your stats), .boost (blessings). */
+.hud{background:linear-gradient(180deg,rgba(0,0,0,.42),rgba(0,0,0,.18) 70%,transparent);border:0;box-shadow:none;border-radius:0;padding:6px 14px 8px;gap:8px 18px}
+.hud .gold{font-size:1.05rem} .hud .gold::before{content:'🪙 ';font-size:1.3rem;vertical-align:-2px}
+.st,.stat,.boost{position:relative;display:inline-flex;align-items:center;justify-content:center;width:2.2rem;height:2.2rem;padding:0;margin:0 .6rem .2rem 0;border:0;background:none;box-shadow:none;cursor:help;line-height:1;font-size:1rem}
+.st i,.stat i,.boost i{font-style:normal;font-size:1.75rem;line-height:1;margin:0;color:inherit;filter:drop-shadow(0 2px 3px rgba(0,0,0,.75))}
+.st b,.stat b,.boost b{position:absolute;right:-.4rem;bottom:-.28rem;margin:0;font-size:.9rem;font-weight:900;line-height:1;color:#fff;white-space:nowrap;text-shadow:0 0 3px #000,0 0 3px #000,0 1px 2px #000,1px 0 1px #000,-1px 0 1px #000,0 -1px 1px #000}
+.stat small{display:none} .stat+.stat{border-left:0}
+.st.burn b{color:#ffab7a}.st.poison b{color:#d7ff6a}.st.chill b,.st.frozen b{color:#bff6ff}.st.shock b{color:#fff08a}.st.wet b{color:#8fd2ff}.st.weak b{color:#f0c4a8}.st.vuln b{color:#ff9aa4}.st.str b{color:#ffbd8a}.st.regen b{color:#9ff5c6}.st.block b{color:#cfe4ff}.st.thorns b{color:#9cf0a8}.st.armor b{color:#e6d8c4}
+.st.deckst{box-shadow:none} .st.deckst b{color:color-mix(in srgb,var(--deck) 70%,#fff)} .st.deckst i{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--deck) 80%,transparent)) drop-shadow(0 2px 3px rgba(0,0,0,.75))}
+.boosts{gap:6px} .boost b{color:var(--teal)}
+.statuses{gap:6px 4px;min-height:0;align-items:center}
+.hud .tools{gap:2px;align-items:flex-end}
+.tool{display:inline-flex;flex-direction:column;align-items:center;gap:2px;padding:2px 8px;border:0;background:none;box-shadow:none;color:var(--ink2);cursor:pointer;font-family:var(--body);font-weight:800;font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;text-shadow:0 1px 0 rgba(0,0,0,.6);transition:transform .12s,filter .2s,color .2s}
+.tool i{font-style:normal;font-size:1.75rem;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.75))} .tool b{color:var(--gold)}
+.tool:hover,.tool:focus-visible{transform:translateY(-2px);filter:brightness(1.15);color:var(--gold)} .tool:active{transform:translateY(0)}
+.epassives{gap:10px} .epc{padding:0;border:0;background:none;box-shadow:none;display:inline-flex;flex-direction:column;align-items:center;gap:1px;cursor:help}
+.epc i{font-style:normal;font-size:1.5rem;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.75))} .epc small{font-size:.5rem;letter-spacing:.06em;text-transform:uppercase;font-weight:800;color:var(--ink2)}
+/* the same objects inside an enemy card, in card units */
+.card.enemy .st{width:8.4cqw;height:8.4cqw;margin:0 1.6cqw .8cqw 0;font-size:4cqw;padding:0;background:none;box-shadow:none} .card.enemy .st i{font-size:7.2cqw} .card.enemy .st b{font-size:4.4cqw;right:-1.8cqw;bottom:-1.1cqw;color:#fff}
+.card.enemy .statuses{gap:1.4cqw 1.8cqw;padding-top:.8cqw}
+.card.enemy .epc{padding:0;background:none;box-shadow:none;flex-direction:row;gap:1cqw;align-items:center} .card.enemy .epc i{font-size:6.2cqw} .card.enemy .epc small{font-size:3.2cqw;color:rgba(0,0,0,.7)}
+.card.enemy .intent span:first-child{font-size:8cqw;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+/* the player's row: Mana orb, bars with the Block shield, active stats, buffs; End Turn at the end */
+.player{flex-direction:row;align-items:center;gap:16px;padding:10px 14px 12px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.28) 30%,rgba(0,0,0,.42));border:0;box-shadow:none;border-radius:0}
+.pmid{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:8px}
+.prow{align-items:center;gap:8px 18px}
+.pbars{flex:1 1 260px;align-items:center;gap:8px} .pbars .bar{height:20px} .pbars .bar.hp{flex:1.6}
+.blk{position:relative;z-index:2;display:inline-flex;align-items:center;justify-content:center;width:2.3rem;height:2.3rem;margin-right:-16px;cursor:help} .blk i{font-style:normal;font-size:2.15rem;line-height:1;filter:drop-shadow(0 0 8px rgba(120,190,255,.6)) drop-shadow(0 2px 3px rgba(0,0,0,.8))} .blk b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-bottom:2px;font-size:.92rem;font-weight:900;color:#fff;text-shadow:0 1px 2px #000,0 0 4px #000,0 0 2px #000}
+.pstats{flex:0 1 auto;gap:2px;align-items:center}
+.orb{flex:none;position:relative;width:66px;height:66px;border-radius:50%;display:flex;align-items:baseline;justify-content:center;cursor:help;color:#eaf6ff;font-family:var(--display);font-weight:900;background:radial-gradient(circle at 38% 32%,#dff3ff 0,#5fb8ff 22%,#1e63b8 58%,#0c2f66 100%);box-shadow:0 0 0 3px rgba(8,20,40,.9),0 0 0 4px rgba(120,190,255,.45),0 0 26px rgba(79,182,255,.55),inset 0 -8px 16px rgba(0,0,0,.45),inset 0 6px 10px rgba(255,255,255,.35)}
+.orb b{font-size:1.75rem;line-height:66px;text-shadow:0 2px 3px rgba(0,0,0,.7)} .orb small{font-size:.7rem;color:#b9dcff;margin-left:1px;text-shadow:0 1px 2px #000;align-self:center;padding-top:14px}
+.orb::after{content:'';position:absolute;inset:6px;border-radius:50%;border:1px solid rgba(255,255,255,.18);pointer-events:none}
+.player .endbtn{flex:none;margin:0;padding:12px 30px;font-size:1rem;letter-spacing:.06em;border-radius:12px}
+.slots{left:14px} .pdtab{background:none;border:0;box-shadow:none;padding:4px 6px 2px;gap:10px;align-items:flex-end}
+.pdtab .pdi{padding:0;border:0;background:none;display:inline-flex;flex-direction:column;align-items:center;gap:1px;line-height:1} .pdtab .pdi i{font-style:normal;font-size:1.6rem;line-height:1;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--el,#889) 70%,transparent)) drop-shadow(0 2px 3px rgba(0,0,0,.75))} .pdtab .pdi small{font-size:.5rem;letter-spacing:.06em;text-transform:uppercase;font-weight:800;color:var(--ink2)}
+.pdtab>span:first-child{padding-bottom:5px} .pdtab b{padding-bottom:5px}
+.log{background:linear-gradient(180deg,rgba(6,12,16,.62),rgba(6,12,16,.4));border:0;box-shadow:none;backdrop-filter:blur(5px);font-size:.76rem}
+.piles{gap:16px;font-size:.84rem;color:var(--ink2);align-items:center} .piles span{display:inline-flex;align-items:center;gap:5px} .piles i{font-style:normal;font-size:1.25rem;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.7))} .piles b{color:var(--ink);font-weight:900}

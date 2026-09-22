@@ -16,7 +16,7 @@ const FX=(()=>{
   function burst(x,y,color,n,opts){ if(reduced) return; for(let i=0;i<(n||18);i++){ const a=Math.random()*Math.PI*2, sp=((opts&&opts.speed)||1)*(2+Math.random()*4); parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:1,decay:0.02+Math.random()*0.03,r:2+Math.random()*3,c:color,g:0.15}); } }
   // ---- element particles ----
   const TAU=Math.PI*2; const rnd=(a,b)=>a+Math.random()*(b-a); const pk=a=>a[Math.floor(Math.random()*a.length)];
-  const PAL={phys:['#ffffff','#cfd3dc','#8c96a8'], beast:['#f5dfc0','#d8b48a','#8a5a3a'], fire:['#ffd166','#ff7b3d','#ff3d1f'], water:['#d6f0ff','#47b6ff','#1f6fd0'], ice:['#ffffff','#9ff0ff','#5fc8e8'], light:['#fff7b0','#ffe14d','#ffb300'], grass:['#c8ff9a','#55d66b','#2c9a44'], poison:['#e6ff8a','#c6f542','#8a3fc0'], earth:['#f0d0a0','#d9a066','#8a5a2a'], shadow:['#d9c8ff','#9d8bff','#3a1f6b'], holy:['#ffffff','#fff1a8','#f2c069']};
+  const PAL={phys:['#ffffff','#cfd3dc','#8c96a8'], beast:['#f5dfc0','#d8b48a','#8a5a3a'], fire:['#ffd166','#ff7b3d','#ff3d1f'], water:['#d6f0ff','#47b6ff','#1f6fd0'], ice:['#ffffff','#9ff0ff','#5fc8e8'], light:['#fff7b0','#ffe14d','#ffb300'], grass:['#c8ff9a','#55d66b','#2c9a44'], poison:['#e6ff8a','#c6f542','#8a3fc0'], earth:['#f0d0a0','#d9a066','#8a5a2a'], shadow:['#d9c8ff','#9d8bff','#3a1f6b'], holy:['#ffffff','#fff1a8','#f2c069'], dragon:['#ffd1d6','#ff4f5e','#a8121f'], psychic:['#ffd6fb','#f562e8','#8e2a9e'], flying:['#e8fffb','#5fd9c9','#2a8f83'], fighting:['#f5d9c0','#c2703a','#6e3a14']};
   const ST_EL={burn:'fire',poison:'poison',chill:'ice',frozen:'ice',shock:'light',wet:'water',weak:'shadow',vuln:'shadow'};
   function spawn(p){ fparts.push(Object.assign({x:0,y:0,vx:0,vy:0,ax:0,ay:0,drag:1,life:1,decay:0.03,size:3,grow:0,rot:0,spin:0,shape:'dot',color:'#fff',alpha:1,glow:0,wobble:0,t:0,lw:2},p)); }
   function radial(x,y,cols,o){ o=o||{}; const n=o.n||24; for(let i=0;i<n;i++){ const a=o.spread!=null?(o.a0||0)+rnd(-o.spread,o.spread):rnd(0,TAU); const sp=rnd(o.s0==null?2:o.s0,o.s1==null?6:o.s1); spawn({x:x+rnd(-(o.jit||0),o.jit||0),y:y+rnd(-(o.jit||0),o.jit||0),vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-(o.up||0),ay:o.g||0,drag:o.drag||0.96,decay:rnd(o.d0||0.02,o.d1||0.04),size:rnd(o.z0||2,o.z1||4),shape:o.shape||'dot',color:pk(cols),spin:rnd(-0.3,0.3),rot:rnd(0,TAU),glow:o.glow||0,grow:o.grow||0,alpha:o.alpha||1}); } }
@@ -63,6 +63,18 @@ const FX=(()=>{
     holy:[ (x,y,c)=>{ rays(x,y,c,{n:14,grow:8}); ring(x,y,c[2],{grow:4,decay:.05,lw:2,glow:.8,alpha:.7}); },
            (x,y,c)=>{ radial(x,y,c,{n:26,shape:'star',s0:1,s1:4,g:-.02,z0:2,z1:5,glow:1,d0:.015,d1:.03,alpha:.95}); },
            (x,y,c)=>{ ring(x,y,'#fff1a8',{r0:8,grow:5,decay:.04,lw:4,glow:1.2}); ring(x,y,'#ffffff',{r0:2,grow:4,decay:.05,lw:2,glow:1,alpha:.8}); radial(x,y,c,{n:14,s0:1,s1:3,g:-.03,glow:1,d0:.02,d1:.03}); } ],
+    dragon:[ (x,y,c)=>{ radial(x,y,c,{n:26,shape:'tri',s0:2,s1:7,g:.15,z0:3,z1:7,glow:.8,d0:.02,d1:.035}); rise(x,y,['#ffd166','#ff4f5e'],{n:10,s0:1,s1:2.5,glow:.8}); },
+             (x,y,c)=>{ column(x,y,c); ring(x,y,c[1],{grow:6,decay:.05,lw:3,glow:.9}); },
+             (x,y,c)=>{ streaks(x,y,c,{n:3,ang:-0.5,len:90,gap:14}); radial(x,y,c,{n:16,s0:3,s1:8,glow:.7,d0:.03,d1:.05}); } ],
+    psychic:[ (x,y,c)=>{ spiral(x,y,c,{n:30,dir:0.2,glow:.7}); ring(x,y,c[1],{grow:4,decay:.05,lw:2,glow:.8,alpha:.7}); },
+              (x,y,c)=>{ rays(x,y,c,{n:10,grow:6}); ring(x,y,c[0],{r0:40,grow:-2,decay:.04,lw:2,alpha:.7,glow:.6}); },
+              (x,y,c)=>{ radial(x,y,c,{n:24,shape:'star',s0:1,s1:4,g:-.01,z0:2,z1:5,glow:.9,d0:.015,d1:.03}); } ],
+    flying:[ (x,y,c)=>{ sweep(x,y,c,{n:28,dir:1,shape:'leaf'}); sweep(x,y-10,c,{n:12,dir:1}); },
+             (x,y,c)=>{ radial(x,y,c,{n:20,shape:'leaf',s0:3,s1:8,g:.02,z0:3,z1:6,d0:.02,d1:.035,up:1.5}); ring(x,y,c[0],{grow:5,decay:.06,lw:2,alpha:.6}); },
+             (x,y,c)=>{ streaks(x,y,c,{n:4,ang:-0.2,len:110,gap:12}); radial(x,y,c,{n:10,shape:'streak',s0:4,s1:9,d0:.05,d1:.08}); } ],
+    fighting:[ (x,y,c)=>{ ring(x,y,c[1],{grow:7,decay:.06,lw:4}); radial(x,y,c,{n:20,s0:3,s1:8,g:.15,d0:.03,d1:.05,glow:.3}); },
+               (x,y,c)=>{ streaks(x,y,c,{n:2,ang:-1.1,len:80,gap:18}); radial(x,y,c,{n:14,shape:'streak',s0:3,s1:7,d0:.04,d1:.07}); },
+               (x,y,c)=>{ radial(x,y,['#ffffff','#f5d9c0'],{n:12,shape:'star',s0:2,s1:6,g:.1,z0:2,z1:4,glow:.5,d0:.03,d1:.05}); ring(x,y,c[2],{r0:6,grow:5,decay:.05,lw:3,alpha:.8}); } ],
   };
   function elementFx(el,x,y,v){ if(reduced) return; const cols=PAL[el]||PAL.phys; const list=VAR[el]||VAR.phys; const fn=list[v!=null?((v%list.length)+list.length)%list.length:Math.floor(Math.random()*list.length)]; fn(x,y,cols); }
   function stepFg(){ for(let i=fparts.length-1;i>=0;i--){ const p=fparts[i]; p.t++; if(p.orbit){ p.ang+=p.spin; p.r-=p.rs; p.x=p.cx+Math.cos(p.ang)*p.r; p.y=p.cy+Math.sin(p.ang)*p.r; if(p.r<=2) p.life=0; } else { p.vx+=p.ax; p.vy+=p.ay; if(p.wobble) p.vx+=Math.sin(p.t*0.35+p.rot)*p.wobble*0.12; p.vx*=p.drag; p.vy*=p.drag; p.x+=p.vx; p.y+=p.vy; } p.rot+=p.spin; p.size+=p.grow; p.life-=p.decay; if(p.life<=0||p.size<=0) fparts.splice(i,1); } }
