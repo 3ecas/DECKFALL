@@ -5,18 +5,16 @@ sessions of work; edit it freely. What is built already is marked in the stages 
 
 ## The pitch
 
-A hero with a deck descends through randomly generated hex dungeons. Each dungeon is fogged: rooms joined by corridors,
-dead ends, and an exit you have to find. Every room you enter raises the danger for the rest of that dungeon, so you
-choose between looting deeper and leaving while you still can. Creatures live in the rooms; you see them before they see
-you, and you choose your fights. Between dungeons the keeper heals you, forges, sells and buys. What you play persists:
-your hand, your piles, your Mana and the machines, summons and traps you have in play carry from fight to fight, so a
-run is one long game where the build grows. Fights use the battle view; every other moment is the dungeon map.
-The reference feeling is PokeRogue's climb (persistence, evolution, attrition, a shop and people between fights) in a
-dungeon crawl, without a Pokemon-style party and without a Slay the Spire route.
+A hero with a deck climbs down through themed dungeons: a straight run of fights, an elite in the middle, a boss at the
+bottom of every third, something that happens by itself after every fight, and the keeper between dungeons. What you
+play persists: your hand, your piles, your Mana and the machines, summons and traps you have in play carry from fight
+to fight, so a run is one long game where the build grows. The hero has almost no stats: Health and Armor, and
+everything else comes from cards. The reference feeling is PokeRogue's climb (persistence, evolution, attrition, a shop
+and people between fights) with Slay the Spire's table, without a party and without a map.
 
 ## Pillars
 
-1. **Exploration over fighting.** The dungeon is the game. Fights are chosen, guarded rewards, or the price of carelessness.
+1. **The climb is the game.** Every step is a fight or its reward; the only choices between fights are the ones a find or a person asks.
 2. **One long game.** Nothing resets between fights except Block, statuses and "this fight" buffs.
 3. **Composition.** The board (today's passive slots) is where the run's identity lives: tribes, traits, placement. Decks
    (built, September 2026) are the first step: named groups of cards that read how many deck-mates were played before them.
@@ -24,32 +22,24 @@ dungeon crawl, without a Pokemon-style party and without a Slay the Spire route.
 
 ## The dungeon
 
-- **A hex maze that grows.** Pointy-top hexes. The first dungeon has five or six rooms and fits the screen; every
-  dungeon adds two rooms (up to 30) and the grid grows with them. Hexes never shrink below 44px: a dungeon bigger than
-  the screen slides under the view, which follows you when you come near its edge and can be dragged to look around.
-  Rooms are blobs of 7 to 19 hexes, joined by corridors in a spanning tree plus a loop or two. Walls are solid;
-  sight (3 hexes) does not pass through them, so a room reveals itself when you step in.
-- **Click a hex to walk there;** the path shows while you hover. Q E A D Z C step one hex. Space acts on your hex.
-  The walk stops at the edge of a known creature's sense range unless you clicked inside it on purpose.
-- **Find the exit.** The exit is placed in the room farthest, by walking, from where you come in. It is hidden until
-  you see it (a whispering well can show it to you). Stepping on it takes you to the keeper.
-- **Danger by rooms and dungeons.** Danger = 1 + 2 x (dungeon - 1) + rooms entered - 1. Everything that used to read
-  "round" reads that instead, so scaling, rewards and tiers all follow it. Dungeon 1 runs from danger 1 to about 8.
+- **A plan, not a maze.** Dungeon n is `min(10, 6 + n)` fights in a row (`dungeonLen`): common creatures rolled up
+  front with no repeats (an off-theme stranger before a repeat), an elite in the middle of every second dungeon, the
+  boss last, always. The descent screen shows the plan; the HUD keeps it as a strip of icons.
+- **The round is the fight count.** Everything scales by it: enemies (`hpMult`, `atkMult`, tuned for a long fight against
+  the final boss at round 100 and a curve that keeps climbing past it), rewards, prices, card tiers (ultimate offers become the norm around round 64). A boss fights at its step (`BOSS_RAMP` is 0; bosses have twice a creature's base HP). Side fights do not count as rounds.
+- **The final boss.** The Deckfall waits at round `FINAL_ROUND` (100); the dungeon that reaches it is cut to end there.
+  Past it the climb goes on: the high score is the deepest round, and the title screen counts final bosses slain.
+- **After every fight something comes by itself** (`afterFight`): a chest, a blessing, a shrine, a forge, a trap, an
+  idol, an ambush or a person on the road (the events), weighted in `INTERLUDES`; every fourth fight a campfire; an
+  elite leaves a chest; a boss its treasury. An ambush or a road fight is unplanned: it does not advance the plan.
 - **Themes.** Rat Warrens (beast, poison), Sunken Grotto (water, lightning), Ember Forge (fire, earth), Frost Halls
   (ice, physical), Bone Crypt (shadow, holy), Fungal Garden (grass, poison), Storm Spire (lightning, earth), Ash Pits
-  (earth, fire), Drowned Sanctum (holy, water), Hydra Marsh (poison, water), Dragon Roost (dragon, fire), Mind Vault (psychic, shadow),
-  Windswept Peaks (flying, light), Fighting Pits (fighting, phys). A theme decides the creatures, the boss
-  and, later, the cards and events. Consecutive dungeons never repeat a theme.
-- **Rooms hold things.** Guards (one or two creatures, sometimes with a chest behind them), a nest (an elite and a
-  chest), a find (chest, shrine, forge, campfire, blessing, idol), an event (a gambler, a blood altar, a wounded
-  wanderer, a whispering well, a cutpurse, bandits, a traveler, a peddler), or nothing. Corridors hide the odd lurker
-  or someone on the road. Traps were removed: they paid too much gold for too little decision.
-- **Sense ranges.** Beasts and shadow creatures notice you from 2 hexes, most others from 1, plants and stone from 0.
-  Sight is 3, so a creature is always seen a step before it can sense you. Zones show tinted on the map. In the first
-  dungeon the rooms near the entrance are timid (no sense). Once a creature has you, there is no fleeing.
-- **A boss every third dungeon,** standing on the exit. It fights at its dungeon's base danger plus five, however deep
-  its room, so the room ramp never makes a boss unfair. Beat it for its card, the treasury and one more passive slot.
-- **Endless.** Dungeons keep coming, each starting two danger above the last. Score is the deepest dungeon and room.
+  (earth, fire), Drowned Sanctum (holy, water), Hydra Marsh (poison, water), Dragon Roost (dragon, fire), Mind Vault
+  (psychic, shadow), Windswept Peaks (flying, light), Fighting Pits (fighting, phys). A theme decides the creatures, the
+  boss and the backdrop (`img/bg/<theme>.svg`). Consecutive dungeons never repeat a theme.
+- **Endless.** Dungeons keep coming. Score is the deepest round.
+- **The hex maze** (fog, rooms, corridors, sense ranges, walking) was built in September 2026 and cut the same month:
+  walking was not fun for this game. Its code stays in git history (0.2.1 to 0.2.4).
 
 ## The keeper
 
@@ -99,6 +89,12 @@ tribe for each element.
 
 ## Balance method
 
+The curve (September 2026, immortal bot to round 1000): enemy HP and attack grow with the square of the round up to the final
+boss at 100; past it HP grows linearly (an ultimate deck can still finish a fight) and attack with the square of the round, so
+the endless climb kills rather than stalls. Card tiers reach ultimate around round 64. Max HP comes from levels (+8) and
+campfires (a flat gain by round; the old +10% compounded to billions by round 900). The bot is a floor: it dies at the first
+bosses about a quarter of the time and cannot beat the final boss in fewer than 20 turns; humans do better.
+
 Every stage is measured with the bot in `tools/balance-sim.js` (whole runs through the real engine, hundreds in
 seconds) before numbers are tuned. Bot win rates are a floor; humans do better. The linear-run tuning of the first boss
 (about 40% bot win rate at danger 10) is the reference for what "a fair boss" looks like; every boss now sits on the
@@ -106,9 +102,10 @@ same proportions.
 
 ## Stages
 
-1. **Dungeons** (built): hex mazes with rooms and corridors, fog with line of sight, click and key movement on a
-   fixed screen, the exit, danger by rooms and dungeons, themes, guards, nests, finds, four events, sense ranges,
-   bosses every third dungeon, the keeper, persistent hand, piles, passives and Mana, the deck cap and the pack.
+1. **The climb** (built): dungeon plans, danger by fights and dungeons, themes and backdrops, finds and road events
+   after every fight, bosses every third dungeon, the keeper, persistent hand, piles, passives and Mana, the deck cap
+   and the pack. The hero keeps Health and Armor; powers come from cards. Health, Mana and Level are three orbs. A run opens with
+   five basics of one element.
    **Decks** (built): every nature type is a deck, synergy cards for all fourteen, creature abilities in decks, element-leaning
    offers; the four newer natures (Dragon, Psychic, Flying, Fighting) with their cards, creatures, bosses and themes.
 2. **Board**: positions, unit HP, tribes and traits, enemy boards, between-fight hand discard, theme field effects.
@@ -118,8 +115,8 @@ same proportions.
 
 ## Decisions taken
 
-Hero and deck, no party. Hex grid, whole dungeon on one screen. Sight 3, sense at most 2. Creatures visible and
-avoidable, forced fights only by sense. No time clock: danger comes from rooms and dungeons. Units die (stage two).
+Hero and deck, no party. A straight climb, no map (the hex maze was cut). No time clock: danger comes from fights and
+dungeons. Few stats: Health and Armor on the hero, everything else from cards. Units die (stage two).
 Six tribes at launch. Enemy dispel disables rather than destroys. One deck of 20, swaps only at the keeper.
 Legendary cards live outside the tier ladder's offer pools: a flag on the card, a per-offer chance (`LEGEND_CHANCE`), no
 new tier. The first one is a joke card, Dick, and the system is generic so the next one costs one line.

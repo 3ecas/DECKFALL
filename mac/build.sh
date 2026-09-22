@@ -9,7 +9,7 @@ mkdir -p "$OUT"
 rm -rf "$OUT/$APP"
 mkdir -p "$OUT/$APP/Contents/MacOS" "$OUT/$APP/Contents/Resources/game"
 cp mac/Info.plist "$OUT/$APP/Contents/Info.plist"
-cp -R index.html css js "$OUT/$APP/Contents/Resources/game/"
+cp -R index.html css js img "$OUT/$APP/Contents/Resources/game/"
 [ -f mac/AppIcon.icns ] && cp mac/AppIcon.icns "$OUT/$APP/Contents/Resources/AppIcon.icns"
 swiftc -O -framework Cocoa -framework WebKit mac/main.swift -o "$OUT/$APP/Contents/MacOS/DeckfallEndless"
 codesign --force --sign - "$OUT/$APP" >/dev/null 2>&1 || true

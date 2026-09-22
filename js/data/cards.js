@@ -3,7 +3,7 @@
 // c(id, name, type, element, cost, tier 0-8, icon, values, effects, options)
 // types: attack (free, +Attack) spell (Mana, +Spell Power) shield skill potion (free) mecha trap (free, passive slot) summon (Mana, passive slot) curse
 // effects: ['dmg',key,{hits,aoe,pierce,ls,bv:status}] ['block',key] ['armor',key] ['se',status,key,{aoe}] ['ss',status,key] ['heal',key] ['healPct',key]
-//   ['draw',key] ['energy',key] ['maxEnergy',key] ['selfDmg',key] ['cleanse'] ['stat',stat,key] ['passive',id]
+//   ['draw',key] ['energy',key] ['maxEnergy',key] ['selfDmg',key] ['cleanse'] ['stat',maxHp|armor,key] (the only permanent stats) ['passive',id]
 //   ['special',name,{...}]  execute{pct} stDmg{s,m,consume,aoe} doubleSt{s,aoe} spread blockDmg{m} playedDmg{m} elBoost{el,v} retaliation{m} snipe parry redraw{n} sabotage emp pilfer pilferAll mimic
 // Basic tier cards do exactly one plain thing. Extras start at common.
 const CARDS = [];
@@ -314,10 +314,10 @@ c('potion_vigor','Potion of Vigor','potion','light',0,2,'🧪',{e:2},[['energy',
 c('potion_haste','Potion of Haste','potion','holy',0,2,'🧪',{d:2,e:1},[['draw','d'],['energy','e']],{exhaust:true});
 c('elixir','Elixir','potion','water',0,2,'⚗️',{h:8},[['cleanse'],['heal','h']],{exhaust:true});
 c('potion_giant','Potion of the Giant','potion','earth',0,4,'🍶',{v:6},[['stat','maxHp','v']],{consume:true});
-c('potion_might','Potion of Might','potion','fire',0,4,'🍶',{v:1},[['stat','attack','v']],{consume:true});
-c('potion_wisdom','Potion of Wisdom','potion','ice',0,4,'🍶',{v:1},[['stat','spell','v']],{consume:true});
-c('potion_fortune','Potion of Fortune','potion','holy',0,4,'🍀',{v:2},[['stat','luck','v']],{consume:true});
-c('omnipotion','Omnipotion','potion','holy',0,7,'🏺',{v:1,k:1,h:5},[['stat','attack','v'],['stat','spell','k'],['stat','maxHp','h']],{consume:true});
+c('potion_might','Potion of Might','potion','fire',0,4,'🍶',{v:3},[['ss','str','v']]);
+c('potion_wisdom','Potion of Wisdom','potion','ice',0,4,'🍶',{v:3},[['ss','spellT','v']]);
+c('potion_fortune','Potion of Fortune','potion','holy',0,4,'🍀',{d:2,e:1},[['draw','d'],['energy','e']]);
+c('omnipotion','Omnipotion','potion','holy',0,7,'🏺',{h:8,k:1},[['stat','maxHp','h'],['stat','armor','k']],{consume:true});
 // ---------- CURSES ----------
 c('wound','Wound','curse','shadow',0,0,'🩹',{},[],{unplayable:true});
 c('doom','Doom','curse','shadow',0,0,'💀',{},[],{unplayable:true,endTurnDmg:3});
@@ -395,25 +395,17 @@ c('unbreakable','Unbreakable','shield','fighting',0,5,'🗿',{b:12,a:2},[['block
 c('ki_burst','Ki Burst','spell','fighting',2,6,'💥',{dmg:20,k:2},[['dmg','dmg'],['se','vuln','k']]);
 c('master_stance','Master Stance','skill','fighting',0,7,'🥋',{v:4,k:10},[['ss','str','v'],['ss','counterNext',null],['ss','dodgeT','k']]);
 c('final_strike','Final Strike','attack','fighting',0,8,'☄️',{dmg:34,k:3},[['dmg','dmg'],['se','vuln','k']]);
+// ---------- BASIC ATTACKS for the natures that had none: every element can open a run (startingDeck in state.js) ----------
+c('claw','Claw','attack','beast',0,0,'🐾',{dmg:3},[['dmg','dmg']]);
+c('howl','Howl','skill','beast',0,0,'🐺',{v:1},[['ss','str','v']]);
+c('thick_hide','Thick Hide','shield','beast',0,0,'🦔',{b:4},[['block','b']]);
+c('tide_slap','Tide Slap','attack','water',0,0,'🌊',{dmg:3},[['dmg','dmg']]);
+c('frost_jab','Frost Jab','attack','ice',0,0,'❄️',{dmg:3},[['dmg','dmg']]);
+c('shock_fist','Shock Fist','attack','light',0,0,'⚡',{dmg:3},[['dmg','dmg']]);
+c('thorn_whip','Thorn Whip','attack','grass',0,0,'🌿',{dmg:3},[['dmg','dmg']]);
+c('stone_fist','Stone Fist','attack','earth',0,0,'🪨',{dmg:3},[['dmg','dmg']]);
+c('radiant_blow','Radiant Blow','attack','holy',0,0,'✨',{dmg:3},[['dmg','dmg']]);
 // ---------- LEGENDARY: one of a kind. Never in a normal pool; an offer slips one in now and then (LEGEND_CHANCE in state.js) ----------
 // {legendary:1} marks it (gold frame, ★ on the tier tag, 2.5× price at the keeper); `quip` is what it says when played.
 c('dick','Dick','attack','phys',0,6,'🍆',{dmg:44,s:3},[['dmg','dmg',{pierce:1}],['selfDmg','s']],{legendary:1,exhaust:1,quip:'It is what it is.'});
 const CARD = Object.fromEntries(CARDS.map(x=>[x.id,x]));
-
-// ===================== SHOP ATTRIBUTE UPGRADES =====================
-const UPG = [
-  {k:'maxHp', v:10, p:60, d:'More room for mistakes. Also heals 10.'},
-  {k:'attack', v:2, p:80, d:'Every attack card, summon and machine hits harder.'},
-  {k:'spell', v:2, p:80, d:'Every spell hits harder.'},
-  {k:'armor', v:1, p:90, d:'Flat damage reduction on every hit you take.'},
-  {k:'dodge', v:3, p:90, max:60, d:'Chance to avoid an attack entirely.'},
-  {k:'counter', v:5, p:80, max:100, d:'Chance to strike back when attacked.'},
-  {k:'crit', v:4, p:80, max:100, d:'Chance to deal 50% bonus damage.'},
-  {k:'lifesteal', v:3, p:100, max:100, d:'Heal a share of every attack you land.'},
-  {k:'thorns', v:2, p:70, d:'Attackers take damage when they hit you.'},
-  {k:'luck', v:2, p:70, max:30, d:'Better odds at the coin and higher-tier cards everywhere.'},
-  {k:'regen', v:1, p:110, d:'Heal at the start of every turn.'},
-  {k:'slots', v:1, p:300, max:5, d:'One more passive slot for machines, summons and traps.'},
-  {k:'energyMax', v:1, p:420, max:6, d:'One more Mana every turn.'},
-  {k:'handSize', v:1, p:260, max:8, d:'Draw one more card every turn.'},
-];

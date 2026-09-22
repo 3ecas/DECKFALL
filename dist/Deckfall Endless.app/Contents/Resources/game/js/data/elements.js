@@ -40,13 +40,13 @@ const TIERS=['basic','common','uncommon','medium','good','great','rare','perfect
 const TIER={
   basic:    {c:'#9aa3b5', mult:1,    price:28,  min:1},
   common:   {c:'#a9c9a0', mult:1.25, price:45,  min:1},
-  uncommon: {c:'#5fc98e', mult:1.5,  price:65,  min:2},
-  medium:   {c:'#4fc9d6', mult:1.8,  price:90,  min:4},
-  good:     {c:'#4f8ef7', mult:2.15, price:125, min:7},
-  great:    {c:'#a86cff', mult:2.55, price:170, min:11},
-  rare:     {c:'#ff8a3d', mult:3,    price:230, min:15},
-  perfect:  {c:'#ff5fa8', mult:3.5,  price:320, min:22},
-  ultimate: {c:'#ffd166', mult:4.2,  price:450, min:30},
+  uncommon: {c:'#5fc98e', mult:1.5,  price:65,  min:3},
+  medium:   {c:'#4fc9d6', mult:1.8,  price:90,  min:6},
+  good:     {c:'#4f8ef7', mult:2.15, price:125, min:11},
+  great:    {c:'#a86cff', mult:2.55, price:170, min:18},
+  rare:     {c:'#ff8a3d', mult:3,    price:230, min:24},
+  perfect:  {c:'#ff5fa8', mult:3.5,  price:320, min:35},
+  ultimate: {c:'#ffd166', mult:4.2,  price:450, min:48},
 };
 const SCALE_KEYS=['dmg','b','a','h','v','k','t','u','r','w','m'];   // values that grow with the tier multiplier; Mana/draw/redraw grow +1 per tier, hits +1 per two tiers, self-damage stays (cardVals in state.js)
 const ST = {
@@ -68,7 +68,7 @@ const ST = {
   counterNext:{n:'Riposte', i:'🗡️', d:'Counters the next attack that lands.'},
   block: {n:'Block', i:'🛡️', d:'Absorbs damage until your next turn.'},
 };
-const STATNAMES = {maxHp:'Max HP', attack:'Attack', spell:'Spell Power', armor:'Armor', dodge:'Dodge %', counter:'Counter %', crit:'Crit %', lifesteal:'Life Steal %', thorns:'Thorns', luck:'Luck', energyMax:'Mana', handSize:'Opening Hand', regen:'Regen', slots:'Passive Slots'};
+const STATNAMES = {mana:'Mana per turn', maxHp:'Max HP', attack:'Attack', spell:'Spell Power', armor:'Armor', dodge:'Dodge %', counter:'Counter %', crit:'Crit %', lifesteal:'Life Steal %', thorns:'Thorns', luck:'Luck', energyMax:'Mana', handSize:'Opening Hand', regen:'Regen', slots:'Passive Slots'};
 const TYPES = {attack:'Attack', spell:'Spell', shield:'Shield', skill:'Skill', potion:'Potion', mecha:'Mecha', summon:'Summon', trap:'Trap', curse:'Curse'};
 const TYPE_ICON = {attack:'⚔', spell:'✦', shield:'⛨', skill:'◈', potion:'⚗', mecha:'⚙', summon:'☗', trap:'⚠', curse:'☠'};
-const TYPE_DESC = {attack:'Free to play. Scales with Attack.', spell:'Costs Mana. Scales with Spell Power.', shield:'Free. Block, armor, thorns.', skill:'Free. Mana, draws, buffs.', potion:'Free. One use per fight; some are consumed for permanent gains.', mecha:'Free. Goes into a passive slot and works every turn.', summon:'Costs Mana. A creature takes a passive slot and acts every turn.', trap:'Free. Tricks, thefts, and armed traps that spring on the next enemy attack.', curse:'Unplayable. Remove it at a merchant.'};
+const TYPE_DESC = {attack:'Free to play. Strength adds to it.', spell:'Costs Mana. Focus adds to it.', shield:'Free. Block, armor, thorns.', skill:'Free. Mana, draws, buffs.', potion:'Free. One use per fight; some are consumed for permanent gains.', mecha:'Free. Goes into a passive slot and works every turn.', summon:'Costs Mana. A creature takes a passive slot and acts every turn.', trap:'Free. Tricks, thefts, and armed traps that spring on the next enemy attack.', curse:'Unplayable. Remove it at a merchant.'};

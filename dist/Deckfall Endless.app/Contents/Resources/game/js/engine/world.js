@@ -1,7 +1,9 @@
 'use strict';
-// ===================== DUNGEONS: hex mazes with fog, an exit to find, danger that rises with every room, the keeper between them =====================
-// A dungeon is an odd-r offset grid of pointy-top hexes: rooms (blobs) joined by corridors, everything else wall. G.round mirrors
-// the current danger (dungeon number and rooms entered), so every formula that used to read the round still works.
+// ===================== THE CLIMB: dungeons as a straight run of fights, the keeper between them =====================
+// A dungeon is a plan of encounters: common fights, an elite in the middle of every second dungeon, and the boss last, always.
+// Its creatures are rolled when the dungeon is made: never the same one twice in a row, an off-theme creature before a repeat.
+// After every fight an interlude comes by itself (a find, a blessing, a person on the road, a campfire every fourth fight);
+// after the last one the keeper. The round is the fight number of the run (G.round mirrors it; unplanned fights do not count): everything scales by it.
 const THEMES={
   warrens: {n:'Rat Warrens',     i:'🐀', els:['beast','poison'],  c:'#4a3a2a', boss:'chaos_beast'},
   grotto:  {n:'Sunken Grotto',   i:'🌊', els:['water','light'],   c:'#1e4f70', boss:'leviathan'},
@@ -19,106 +21,60 @@ const THEMES={
   arena:   {n:'Fighting Pits',   i:'🥊', els:['fighting','phys'], c:'#5a3a22', boss:'grandmaster'},
 };
 // Offers inside a theme lean a little toward its elements (deckLean in state.js): every nature type is a deck (js/data/decks.js).
-const VISION=3, DUNGEON_STEP=2, BOSS_EVERY=3, BOSS_RAMP=5;   // sight in hexes, danger added per dungeon, boss cadence, a boss fights at its dungeon base danger + BOSS_RAMP however deep its room
-// Dungeons start small and grow: 5 or 6 rooms in the first, two more with every dungeon (up to 30), on a grid of about 39 hexes per room.
-// Past what fits the screen the view no longer shrinks the hexes: it follows you, and you can drag it (map.js).
-function dungeonSize(n){ const rooms=Math.min(30,5+2*(n-1)+rnd(0,1)); const cells=rooms*46; const w=Math.max(16,Math.min(64,Math.round(Math.sqrt(cells*1.42)))); const h=Math.max(12,Math.min(46,Math.round(cells/w))); return {w,h,rooms}; }
-const TILE_ICON={chest:'📦',shrine:'⛩️',forge:'⚒️',camp:'🔥',trap:'❓',idol:'🗿',boost:'✨',exit:'🚪',entry:'🕳️',event:'❔',lair:'👑'};
-const SENSE={beast:2,shadow:2,dragon:2,psychic:2,flying:2,phys:1,light:1,fire:1,ice:1,water:1,poison:1,holy:1,fighting:1,grass:0,earth:0};   // how far a creature notices you (sight is 3)
-// ---- hex math: odd-r offset coordinates, pointy tops. Directions in order E, NE, NW, W, SW, SE ----
-const HEX_DIRS=[[[1,0],[0,-1],[-1,-1],[-1,0],[-1,1],[0,1]],[[1,0],[1,-1],[0,-1],[-1,0],[0,1],[1,1]]];
-function hexNeighbors(c,r){ return HEX_DIRS[r&1].map(([dc,dr])=>[c+dc,r+dr]); }
-function hexCube(c,r){ const x=c-((r-(r&1))>>1); return [x,-x-r,r]; }
-function cubeRound(x,y,z){ let rx=Math.round(x),ry=Math.round(y),rz=Math.round(z); const dx=Math.abs(rx-x),dy=Math.abs(ry-y),dz=Math.abs(rz-z); if(dx>dy&&dx>dz) rx=-ry-rz; else if(dy>dz) ry=-rx-rz; else rz=-rx-ry; return [rx,ry,rz]; }
-function cubeToOffset(x,y,z){ return [x+((z-(z&1))>>1),z]; }
-function hexDist(c1,r1,c2,r2){ const a=hexCube(c1,r1), b=hexCube(c2,r2); return Math.max(Math.abs(a[0]-b[0]),Math.abs(a[1]-b[1]),Math.abs(a[2]-b[2])); }
-function hexLine(c1,r1,c2,r2){ const a=hexCube(c1,r1), b=hexCube(c2,r2); const N=hexDist(c1,r1,c2,r2); const out=[]; for(let i=0;i<=N;i++){ const k=N?i/N:0; out.push(cubeToOffset(...cubeRound(a[0]+(b[0]-a[0])*k+1e-6,a[1]+(b[1]-a[1])*k+1e-6,a[2]+(b[2]-a[2])*k-2e-6))); } return out; }
-function tileAt(c,r){ const D=G&&G.dungeon; if(!D||c<0||r<0||c>=D.w||r>=D.h) return null; return D.t[r*D.w+c]; }
-function hereTile(){ return tileAt(G.pos.x,G.pos.y); }
+// A theme's backdrop is img/bg/<theme>.svg; to use a picture instead, put it in img/bg and name it on the theme: art:'forge.png'.
+const BOSS_RAMP=0, ELITE_EVERY=2, FINAL_ROUND=100, FINAL_BOSS='deckfall';   // a boss fights BOSS_RAMP rounds above its step; an elite in the middle of every ELITE_EVERY-th dungeon; the final boss waits at round FINAL_ROUND, after which the climb is for the high score
+function dungeonLen(n){ return Math.min(10,6+n); }   // fights per dungeon: seven in the first, one more with every dungeon, ten at most (bosses at rounds 7, 15, 24, 34, ... and the final one at 100)
+const PLAN_ICON={fight:'⚔️',elite:'⭐',boss:'👑'};
 function themeNow(){ return THEMES[G.dungeon?G.dungeon.theme:'warrens']; }
-function dangerNow(){ const D=G.dungeon; return 1+DUNGEON_STEP*(D.n-1)+Math.max(0,D.entered-1); }
-function isVisible(c,r){ return hexDist(c,r,G.pos.x,G.pos.y)<=VISION; }
-function pickEnemyFor(T,d){ const ok=x=>!x.special&&x.min<=d+1; let pool=ENEMIES.filter(x=>ok(x)&&T.els.includes(x.el)); if(pool.length<2) pool=ENEMIES.filter(x=>ok(x)&&x.min>=d-14); if(!pool.length) pool=ENEMIES.filter(ok); return pick(pool).id; }
-function bfsDist(D,c0,r0){ const dist=new Map(); const q=[[c0,r0]]; dist.set(r0*D.w+c0,0); while(q.length){ const [c,r]=q.shift(); const d=dist.get(r*D.w+c); for(const [nc,nr] of hexNeighbors(c,r)){ if(nc<0||nr<0||nc>=D.w||nr>=D.h) continue; const k=nr*D.w+nc; if(D.t[k].wall||dist.has(k)) continue; dist.set(k,d+1); q.push([nc,nr]); } } return dist; }
-// ---- generation: room blobs, corridors along a spanning tree, an exit far from the entrance, contents by room ----
+function roundNow(){ const D=G.dungeon; return D?D.first+D.step:1; }
+function dangerNow(){ return roundNow(); }   // danger is the round
+function planCreature(T,danger,avoid){
+  const ok=x=>!x.special&&x.min<=danger&&x.min>=Math.min(danger,24)-14;   // the earliest species retire; from round 24 on every later one stays in the pool
+  let pool=ENEMIES.filter(x=>ok(x)&&T.els.includes(x.el)&&!avoid.includes(x.id));   // the theme's creatures, minus the recent ones
+  if(!pool.length) pool=ENEMIES.filter(x=>ok(x)&&!avoid.includes(x.id));             // a stranger rather than a repeat
+  if(!pool.length) pool=ENEMIES.filter(x=>!x.special&&x.min<=danger);
+  return pick(pool).id;
+}
 function genDungeon(n){
-  const {w,h,rooms:want}=dungeonSize(n); const prev=G.dungeon?G.dungeon.theme:null; const theme=pick(Object.keys(THEMES).filter(k=>k!==prev)); const T=THEMES[theme];
-  const t=[]; for(let r=0;r<h;r++) for(let c=0;c<w;c++) t.push({x:c,y:r,wall:1,k:null,seen:0,room:-1});
-  const D={w,h,t}; const at=(c,r)=>(c>=0&&r>=0&&c<w&&r<h)?t[r*w+c]:null;
-  const rooms=[]; let tries=0;
-  while(rooms.length<want&&tries++<1500){ const c=rnd(2,w-3), r=rnd(2,h-3); const rad=Math.random()<0.4?2:1; if(rooms.some(q=>hexDist(q.c,q.r,c,r)<rad+q.rad+2)) continue; rooms.push({id:rooms.length,c,r,rad,tiles:[]}); }
-  for(const R of rooms) for(let r=R.r-R.rad;r<=R.r+R.rad;r++) for(let c=R.c-R.rad-1;c<=R.c+R.rad+1;c++){ const q=at(c,r); if(q&&hexDist(c,r,R.c,R.r)<=R.rad){ q.wall=0; q.room=R.id; R.tiles.push(q); } }
-  const carve=(a,b)=>{ let c=a.c,r=a.r,guard=0; while((c!==b.c||r!==b.r)&&guard++<300){ const ns=hexNeighbors(c,r).filter(([x,y])=>at(x,y)); ns.sort((p,q)=>hexDist(p[0],p[1],b.c,b.r)-hexDist(q[0],q[1],b.c,b.r)); [c,r]=ns[0]; const q=at(c,r); if(q.wall){ q.wall=0; q.corr=1; } } };
-  const linked=[rooms[0]]; const rest=rooms.slice(1);
-  while(rest.length){ let bi=0,bj=0,bd=1e9; rest.forEach((R,i)=>linked.forEach((L,j)=>{ const d=hexDist(R.c,R.r,L.c,L.r); if(d<bd){ bd=d; bi=i; bj=j; } })); carve(linked[bj],rest[bi]); linked.push(rest.splice(bi,1)[0]); }
-  for(let i=0;i<2&&rooms.length>3;i++){ const a=pick(rooms), b=pick(rooms); if(a!==b) carve(a,b); }   // a loop or two
-  const entry=pick(rooms); const dist=bfsDist(D,entry.c,entry.r); let exitRoom=entry, far=-1; for(const R of rooms){ const d=dist.get(R.r*w+R.c); if(d!=null&&d>far){ far=d; exitRoom=R; } }
-  at(entry.c,entry.r).k='entry'; const ex=at(exitRoom.c,exitRoom.r); ex.k='exit'; ex.exit=1;
-  const boss=(n%BOSS_EVERY===0)?T.boss:null; if(boss){ ex.k='lair'; ex.boss=boss; ex.s=0; }
-  for(const R of rooms){ if(R===entry) continue; const roomDist=dist.get(R.r*w+R.c)||1; const dng=1+DUNGEON_STEP*(n-1)+Math.min(4,Math.ceil(roomDist/5)); /* deeper rooms draw tougher species */ const cells=shuffle(R.tiles.filter(q=>!q.k)); const roll=Math.random();
-    const place=(kind,extra)=>{ const q=cells.pop(); if(!q) return null; q.k=kind; Object.assign(q,extra||{}); return q; };
-    const creature=elite=>{ const q=place(elite?'nest':'creature'); if(!q) return; q.e=pickEnemyFor(T,dng+(elite?2:0)); q.s=(n===1&&roomDist<=6)?0:(elite?1:(SENSE[ENEMY[q.e].el]||0)); };
-    if(R===exitRoom){ if(!boss&&Math.random()<0.6) creature(false); continue; }
-    if(roll<0.42){ creature(false); if(Math.random()<0.35) creature(false); if(Math.random()<0.4) place(pick(['chest','chest','boost','shrine'])); }
-    else if(roll<0.55){ creature(true); place('chest'); }
-    else if(roll<0.75){ place(pick(['chest','shrine','forge','camp','boost','idol'])); if(Math.random()<0.3) creature(false); }
-    else if(roll<0.92){ place('event',{ev:pick(Object.keys(EVENTS))}); }
-  }
-  for(const q of t){ if(q.wall||q.k||!q.corr) continue; const r=Math.random(); if(r<0.05){ q.k='creature'; q.e=pickEnemyFor(T,1+DUNGEON_STEP*(n-1)+2); q.s=1; } else if(r<0.075){ q.k='event'; q.ev=pick(['thief','bandits','traveler','peddler']); } }   // lurkers and people in the corridors
-  let minX=w,maxX=0,minY=h,maxY=0; for(const q of t){ if(q.wall) continue; if(q.x<minX) minX=q.x; if(q.x>maxX) maxX=q.x; if(q.y<minY) minY=q.y; if(q.y>maxY) maxY=q.y; }   // the board is drawn cropped to the floor, one hex of rock around it
-  G.dungeon={n,theme,w,h,t,entered:1,visited:[entry.id],rooms:rooms.length,bounds:{minX:Math.max(0,minX-1),maxX:Math.min(w-1,maxX+1),minY:Math.max(0,minY-1),maxY:Math.min(h-1,maxY+1)}}; G.pos={x:entry.c,y:entry.r}; G.round=dangerNow(); G.depth=Math.max(G.depth||0,n); reveal(); UI.mapKey=(UI.mapKey||0)+1; UI.walk=null;
+  const prev=G.dungeon?G.dungeon.theme:null; const theme=pick(Object.keys(THEMES).filter(k=>k!==prev)); const T=THEMES[theme]; let len=dungeonLen(n);
+  const first=(G.rounds||0)+1; let final=false; if(!G.won&&first<=FINAL_ROUND&&first+len-1>=FINAL_ROUND){ len=FINAL_ROUND-first+1; final=true; }   // the dungeon that reaches round FINAL_ROUND ends there, on the final boss
+  const plan=Array.from({length:len},()=>'fight'); if(n%ELITE_EVERY===0&&len>2) plan[Math.floor((len-1)/2)]='elite'; plan[len-1]='boss';
+  const foes=[];
+  for(let i=0;i<len;i++) foes.push(plan[i]==='boss'?(final?FINAL_BOSS:T.boss):planCreature(T,first+i+(plan[i]==='elite'?1:0),foes.slice(-3)));
+  G.dungeon={n,theme,len,first,step:0,plan,foes,final}; G.round=dangerNow(); G.depth=Math.max(G.depth||0,n);
 }
-// ---- fog: sight of 3 hexes that does not pass through walls; what you have seen stays on the map ----
-function reveal(){ const {x:cx,y:cy}=G.pos; for(const t of G.dungeon.t){ if(hexDist(t.x,t.y,cx,cy)>VISION) continue; const line=hexLine(cx,cy,t.x,t.y); let ok=true; for(let i=1;i<line.length-1;i++){ const q=tileAt(line[i][0],line[i][1]); if(!q||q.wall){ ok=false; break; } } if(ok) t.seen=1; } }
-function passable(t){ return !!t&&!t.wall; }
-function blocks(t){ return !!t.k&&t.k!=='entry'; }   // anything on a hex stops a walk there; the entrance does not
-function hotTiles(){ const hot=new Set(); const D=G.dungeon; for(const t of D.t){ if(!t.seen||(t.k!=='creature'&&t.k!=='nest')||!(t.s>0)) continue; for(const q of D.t){ if(!q.wall&&hexDist(q.x,q.y,t.x,t.y)<=t.s) hot.add(q.y*D.w+q.x); } } return hot; }
-// ---- walking: click a known hex, the hero walks step by step through known floor, around anything that would stop it ----
-function findPath(from,to,safe){
-  const D=G.dungeon; const key=(x,y)=>y*D.w+x; const hot=safe?hotTiles():null; const prev=new Map(); const q=[[from.x,from.y]]; prev.set(key(from.x,from.y),null); let found=false;
-  while(q.length){ const [x,y]=q.shift(); if(x===to.x&&y===to.y){ found=true; break; }
-    for(const [nx,ny] of hexNeighbors(x,y)){ const t=tileAt(nx,ny); if(!passable(t)||!t.seen) continue; const dest=nx===to.x&&ny===to.y; if(blocks(t)&&!dest) continue; const k=key(nx,ny); if(prev.has(k)) continue; if(hot&&hot.has(k)&&!dest) continue; prev.set(k,key(x,y)); q.push([nx,ny]); } }
-  if(!found) return null; const path=[]; let k=key(to.x,to.y); while(k!=null){ path.push({x:k%D.w,y:Math.floor(k/D.w)}); k=prev.get(k); } return path.reverse();
+function openDescent(){ G.phase='descent'; G.inter=null; G.spoils=null; G.fight=null; G.shop=null; G.keeper=null; render(); save(); sfx('start'); }
+function descentEnter(){ if(!G||G.phase!=='descent') return; startEncounter(); }
+// the next planned encounter: the creature rolled for this step, the elite, or the boss at the bottom (fighting BOSS_RAMP above its step)
+function startEncounter(){
+  const D=G.dungeon; const kind=D.plan[D.step]||'fight'; G.round=dangerNow(); const id=D.foes&&D.foes[D.step];
+  if(kind==='boss') startFight({boss:true,bossId:id||THEMES[D.theme].boss,dangerBonus:BOSS_RAMP,planned:true,final:!!D.final});
+  else startFight({elite:kind==='elite',enemyId:id,planned:true});
 }
-function walkTo(x,y){ if(!G||G.phase!=='map'||UI.busy) return; clearTimeout(UI.walkTimer); const t=tileAt(x,y); if(!passable(t)||!t.seen) return; if(x===G.pos.x&&y===G.pos.y){ if(blocks(t)) resolveTile(t); return; } const safe=findPath(G.pos,{x,y},true); const path=safe||findPath(G.pos,{x,y},false); if(!path){ toast('No known way there'); return; } UI.walkKnownHot=hotTiles().has(y*G.dungeon.w+x); UI.walk=path.slice(1); stepWalk(); }
-function stepWalk(){ clearTimeout(UI.walkTimer); if(!G||G.phase!=='map'||!UI.walk||!UI.walk.length){ UI.walk=null; save(); return; } const n=UI.walk.shift(); if(!UI.walkKnownHot&&hotTiles().has(n.y*G.dungeon.w+n.x)){ UI.walk=null; toast('Something ahead has you in its sights. You stop.'); save(); return; } const stopped=moveTo(n.x,n.y); if(stopped||!UI.walk||!UI.walk.length){ UI.walk=null; save(); return; } UI.walkTimer=setTimeout(stepWalk,170); }
-function moveStep(dir){ if(!G||G.phase!=='map'||UI.busy) return; clearTimeout(UI.walkTimer); UI.walk=null; const [dc,dr]=HEX_DIRS[G.pos.y&1][dir]; const t=tileAt(G.pos.x+dc,G.pos.y+dr); if(!passable(t)) return; moveTo(t.x,t.y); save(); }
-// One step: the fog moves, a new room raises the danger, then whatever notices you or waits on the hex takes over. Returns true when the walk must stop.
-function moveTo(x,y){
-  G.pos={x,y}; G.time=(G.time||0)+1; const D=G.dungeon; const t=tileAt(x,y);
-  if(t.room>=0&&!D.visited.includes(t.room)){ D.visited.push(t.room); D.entered++; G.round=dangerNow(); toast(`Room ${D.entered} of ${D.rooms}`); }
-  reveal(); render();
-  const hunter=detect(); if(hunter){ startCreatureFight(hunter,true); return true; }
-  if(blocks(t)){ resolveTile(t); return true; }
-  return false;
+// after the spoils: a planned fight advances the plan; then the treasury (boss), the keeper (bottom), an interlude, or straight on after an unplanned fight
+function afterFight(){
+  const D=G.dungeon; const o=(G.fight&&G.fight.o)||{}; G.time=(G.time||0)+1;
+  if(o.planned){ D.step++; G.rounds=(G.rounds||0)+1; } G.round=dangerNow(); G.fight=null; G.spoils=null;
+  if(o.boss){ openInterlude('treasury'); return; }
+  if(D.step>=D.len){ openKeeper(); return; }
+  if(!o.planned){ startEncounter(); return; }
+  if(o.elite){ openInterlude('chest'); return; }   // a nest: the elite guarded a chest
+  openInterlude(G.fights%4===0?'camp':pickInterlude());
 }
-function detect(){ const {x:cx,y:cy}=G.pos; let best=null, bd=9; for(const t of G.dungeon.t){ if(t.k!=='creature'&&t.k!=='nest') continue; const d=hexDist(t.x,t.y,cx,cy); if(d>0&&(t.s||0)>=d&&d<bd){ bd=d; best=t; } } return best; }
-function resolveTile(t){
-  clearTimeout(UI.walkTimer); UI.walk=null;
-  if(t.k==='creature'||t.k==='nest'||t.k==='lair') return startCreatureFight(t,false);
-  if(t.k==='exit') return openKeeper();
-  if(t.k==='event') return openEvent(t);
-  if(t.k==='entry'||!t.k) return;
-  const kind=t.k; t.k=null; t.done=true;   // finds are one-time
-  openInterlude(kind);
-}
-function startCreatureFight(t,forced){ const o={tile:{x:t.x,y:t.y},forced:!!forced}; if(t.k==='lair'){ o.boss=true; o.bossId=t.boss; o.dangerBonus=(1+DUNGEON_STEP*(G.dungeon.n-1)+BOSS_RAMP)-G.round; } else { o.enemyId=t.e; if(t.k==='nest') o.elite=true; } startFight(o); }
-function clearTile(pos){ const t=pos&&tileAt(pos.x,pos.y); if(!t) return; delete t.e; delete t.s; delete t.boss; t.k=t.exit?'exit':null; t.done=true; }   // a beaten boss leaves the exit open
-function backToMap(){ clearTimeout(UI.timer); if(!G) return; G.phase='map'; G.inter=null; G.spoils=null; G.fight=null; G.shop=null; G.keeper=null; if(G.dungeon) G.round=dangerNow(); render(); save(); }
 // ---- events: a room with a person or a thing that asks you something ----
 const EVENTS={
   gambler:  {icon:'🎲', title:'A hooded gambler', text:'"Twenty gold says the next card I draw beats anything in your deck."', choices:[
     {t:'Take the bet · 20 gold', f(){ if(G.p.gold<20) return 'You cannot cover the bet.'; G.p.gold-=20; if(Math.random()<0.5){ const id=randomCardId('elite'); const res=addCard(id); return `You win: ${CARD[id].name}${res==='packed'?' goes into your pack':res==='evolved'?' evolves':''}.`; } return 'You lose. The gambler smiles and is gone.'; }},
     {t:'Walk on', f(){ return 'You keep your gold.'; }}]},
   altar:    {icon:'🩸', title:'A blood altar', text:'Old blood, older promises. It asks for a little of yours.', choices:[
-    {t:'Offer blood · -10% Max HP, +1 Attack for good', f(){ const v=Math.max(1,Math.round(G.p.maxHp*0.1)); G.p.maxHp-=v; G.p.hp=Math.min(G.p.hp,G.p.maxHp); G.p.attack+=1; return `-${v} Max HP, +1 Attack.`; }},
-    {t:'Offer blood · -10% Max HP, +1 Spell Power for good', f(){ const v=Math.max(1,Math.round(G.p.maxHp*0.1)); G.p.maxHp-=v; G.p.hp=Math.min(G.p.hp,G.p.maxHp); G.p.spell+=1; return `-${v} Max HP, +1 Spell Power.`; }},
+    {t:'Offer blood · -10% Max HP, +1 Armor for good', f(){ const v=Math.max(1,Math.round(G.p.maxHp*0.1)); G.p.maxHp-=v; G.p.hp=Math.min(G.p.hp,G.p.maxHp); G.p.armor+=1; return `-${v} Max HP, +1 Armor.`; }},
+    {t:'Offer blood · -10% Max HP, a card evolves', f(){ const v=Math.max(1,Math.round(G.p.maxHp*0.1)); G.p.maxHp-=v; G.p.hp=Math.min(G.p.hp,G.p.maxHp); const id=forgeRandom(); return id?`-${v} Max HP. ${CARD[id].name} evolves to ${TIERS[curTier(id)]}.`:`-${v} Max HP. Nothing left to evolve; the altar keeps the blood.`; }},
     {t:'Leave it be', f(){ return 'The altar goes quiet.'; }}]},
   wanderer: {icon:'🧑‍🌾', title:'A wounded wanderer', text:'"Share a meal? I know a few tricks worth a story."', choices:[
     {t:'Share a meal · heal 30%', f(){ const h=heal(Math.round(G.p.maxHp*0.3)); return `You eat together. +${h} HP.`; }},
     {t:'Rob them · +gold, -5 Max HP', f(){ const g=goldReward()*2; G.p.gold+=g; G.p.maxHp=Math.max(5,G.p.maxHp-5); G.p.hp=Math.min(G.p.hp,G.p.maxHp); return `+${g} gold. Something in you is smaller now: -5 Max HP.`; }}]},
   well:     {icon:'🪣', title:'A whispering well', text:'Drop a coin, hear a secret.', choices:[
-    {t:'Drop 10 gold', f(){ if(G.p.gold<10) return 'No coin to drop.'; G.p.gold-=10; const ex=G.dungeon.t.find(q=>q.exit); if(ex) ex.seen=1; return 'The well shows you the way out.'; }},
+    {t:'Drop 10 gold', f(){ if(G.p.gold<10) return 'No coin to drop.'; G.p.gold-=10; const h=heal(Math.round(G.p.maxHp*0.2)); const g=rnd(15,40); G.p.gold+=g; return `The water is sweet: +${h} HP. Something glints at the bottom: +${g} gold.`; }},
     {t:'Leave', f(){ return 'Silence.'; }}]},
   // people on the road: a choice may end in a fight ({msg, fight}) instead of a line
   thief:    {icon:'🪙', title:'A cutpurse', text:'A shape brushes past you in the dark. Your purse is lighter.', choices:[
@@ -136,18 +92,18 @@ const EVENTS={
     {t:'A potion · 15 gold', f(){ if(G.p.gold<15) return 'Not enough gold.'; G.p.gold-=15; const id=pick(CARDS.filter(x=>x.type==='potion'&&!x.drop)).id; const res=addCard(id); return `${CARD[id].name}${res==='evolved'?' evolves':res==='packed'?' goes into your pack':' joins your deck'}.`; }},
     {t:'Walk on', f(){ return 'The cart rattles away.'; }}]},
 };
-function openEvent(t){ clearTimeout(UI.walkTimer); UI.walk=null; const ev=t.ev||pick(Object.keys(EVENTS)); t.k=null; t.done=true; G.inter={t:'event',ev,lines:[],cards:null,picked:false,boost:null,auto:false}; G.phase='interlude'; render(); save(); sfx('shrine'); }
-function eventChoose(i){ const I=G.inter; if(!I||I.t!=='event'||I.picked) return; const ch=EVENTS[I.ev].choices[i]; if(!ch) return; const r=ch.f(); const msg=typeof r==='string'?r:r.msg; I.picked=true; I.lines.push(msg); sfx('pick'); render(); save(); if(r&&r.fight) UI.timer=setTimeout(()=>startFight(r.fight),1400); else UI.timer=setTimeout(backToMap,2000); }
+function openEvent(ev){ ev=ev||pick(Object.keys(EVENTS)); G.lastInter='event'; G.inter={t:'event',ev,lines:[],cards:null,picked:false,boost:null,auto:false}; G.phase='interlude'; render(); save(); sfx('shrine'); }
+function eventChoose(i){ const I=G.inter; if(!I||I.t!=='event'||I.picked) return; const ch=EVENTS[I.ev].choices[i]; if(!ch) return; const r=ch.f(); const msg=typeof r==='string'?r:r.msg; I.picked=true; I.lines.push(msg); sfx('pick'); render(); save(); if(r&&r.fight) UI.timer=setTimeout(()=>startFight(r.fight),1400); else UI.timer=setTimeout(nextRound,2000); }
 // ---- the keeper: between dungeons, one visit, each service once ----
 function restCost(){ return 10+G.round*3; }
 function removeCost(){ return 20+G.round*4; }
 function cardPrice(id){ return Math.round(TIER[CARD[id].tier].price*0.6*(1+0.03*G.round)*(CARD[id].legendary?2.5:1)); }   // a legendary costs 2.5×
-function openKeeper(){ clearTimeout(UI.walkTimer); UI.walk=null; const purse=goldReward()*2; G.p.gold+=purse; G.keeper={n:G.dungeon.n,purse,used:{},offers:offerPool('shop',3),view:null,msg:null}; G.phase='keeper'; render(); save(); sfx('shop'); }
+function openKeeper(){ clearTimeout(UI.timer); const purse=goldReward()*2; G.p.gold+=purse; G.keeper={n:G.dungeon.n,purse,used:{},offers:offerPool('shop',3),view:null,msg:null}; G.phase='keeper'; render(); save(); sfx('shop'); }
 function keeperRest(){ const K=G.keeper; const p=G.p; if(!K||K.used.rest) return; if(p.hp>=p.maxHp){ toast('You are already rested'); return; } const c=restCost(); if(p.gold<c){ toast('Not enough gold'); return; } p.gold-=c; const h=heal(p.maxHp); K.used.rest=true; K.msg=`You sleep by the keeper's fire and wake with ${h} HP back.`; sfx('heal'); render(); save(); }
 function keeperSmith(){ const K=G.keeper; if(!K||K.used.smith) return; openShop(); }
 function keeperBuy(id){ const K=G.keeper; if(!K||K.used.buy||!K.offers.includes(id)) return; const c=cardPrice(id); if(G.p.gold<c){ toast('Not enough gold'); return; } G.p.gold-=c; const res=addCard(id); K.used.buy=true; K.msg=res==='evolved'?`${CARD[id].name} evolves to ${TIERS[curTier(id)]}.`:res==='packed'?`${CARD[id].name} goes into your pack: the deck is full.`:`${CARD[id].name} joins your deck.`; sfx('buy'); render(); save(); }
 function keeperRemove(){ const K=G.keeper; if(!K||K.used.remove) return; if(G.p.deck.length<=DECK_MIN){ toast(`Keep at least ${DECK_MIN} cards`); return; } pickDeckCard(`Let a card go · the keeper pays ${removeCost()} gold`,id=>{ if(!kitRemove(id)){ toast('That card is in play as a passive'); render(); return; } removeCard(id); G.p.gold+=removeCost(); K.used.remove=true; K.msg=`${CARD[id].name} stays with the keeper. +${removeCost()} gold.`; sfx('coins'); render(); save(); }); }
-function keeperDescend(){ if(!G.keeper) return; G.keeper=null; G.shop=null; genDungeon(G.dungeon.n+1); G.phase='map'; render(); save(); sfx('start'); }
+function keeperDescend(){ if(!G.keeper) return; G.keeper=null; G.shop=null; genDungeon(G.dungeon.n+1); openDescent(); }
 // ---- the kit: hand, piles, passives and Mana live on the run and carry from fight to fight ----
 function newKit(){ return {hand:[],draw:[],discard:[],exhaust:[],passives:[],energy:0}; }
 function kitInit(){ const K=G.p.kit=newKit(); K.draw=shuffle(G.p.deck.map(id=>({uid:UI.uid++,id}))); kitTopUp(); }

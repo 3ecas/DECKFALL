@@ -32,7 +32,7 @@ e('sprout_fiend','Sprout Fiend','🌱','grass',20,4,1,null);
 e('venom_spider','Venom Spider','🕷️','poison',20,4,1,null);
 e('fire_imp','Fire Imp','👹','fire',18,5,2,null);
 e('water_sprite','Water Sprite','🧚','water',20,5,2,null);
-e('rock_beetle','Rock Beetle','🪲','earth',30,4,2,null);
+e('rock_beetle','Rock Beetle','🪲','earth',30,4,3,null);
 e('slime','Toxic Slime','🟢','poison',26,3,2,null);
 e('vampire_bat','Vampire Bat','🦇','shadow',17,4,2,null,{ls:true});
 e('frost_wisp','Frost Wisp','💠','ice',18,5,3,null);
@@ -112,4 +112,5 @@ const BOSSES = [
   {id:'archmind', name:'Archmind', icon:'🧠', el:'psychic', hp:52, atk:7, pat:[S('weak',2),A(1.3),X(),S('vuln',2),A(.5,4),B(3)]},
   {id:'roc', name:'Great Roc', icon:'🦅', el:'flying', hp:56, atk:7, pat:[A(1.5),D(12),A(.6,3),S('vuln',2),A(1.3)]},
   {id:'grandmaster', name:'Grandmaster', icon:'🥋', el:'fighting', hp:58, atk:7, pat:[A(.6,3),B(3),A(1.5),D(14),A(1.2)]},
+  {id:'deckfall', name:'The Deckfall', icon:'🃏', el:'shadow', hp:72, atk:9, pat:[A(1.2),D(16),A(.7,3),S('vuln',2),A(1.6)], ls:true, final:true},   // the final boss, round FINAL_ROUND (world.js); never a theme's boss
 ];

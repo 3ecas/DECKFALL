@@ -27,7 +27,7 @@ function handle(act,t){
     case 'shop-confirm': case 'shop-upgrade': shopUpgrade(t.dataset.id); break;
     case 'shop-back': shopBack(); break;
     case 'shop-leave': if(G.keeper){ G.shop=null; G.phase='keeper'; render(); save(); } else nextRound(); break;
-    case 'hex': if(UI.dragSuppress&&Date.now()-UI.dragSuppress<250) break; walkTo(+t.dataset.x,+t.dataset.y); break;
+    case 'enter': descentEnter(); break;
     case 'keeper-rest': keeperRest(); break;
     case 'keeper-smith': keeperSmith(); break;
     case 'keeper-buy': keeperBuy(t.dataset.id); break;
@@ -57,8 +57,6 @@ function handle(act,t){
   }
 }
 document.addEventListener('click',e=>{ const t=e.target.closest('[data-act]'); if(!t) return; if(t.tagName==='BUTTON'&&t.disabled) return; if(t.tagName==='BUTTON'&&!['end','ult','sound','bet','double','cashout'].includes(t.dataset.act)) sfx('click'); handle(t.dataset.act,t); });
-document.addEventListener('mouseover',e=>{ const h=e.target.closest&&e.target.closest('.hex.floor'); if(h&&G&&G.phase==='map') previewPath(+h.dataset.x,+h.dataset.y); });   // the path you would walk
-document.addEventListener('mouseout',e=>{ const b=e.target.closest&&e.target.closest('.board'); if(b&&!(e.relatedTarget&&b.contains(e.relatedTarget))) clearPreview(); });
 document.addEventListener('input',e=>{ if(e.target&&e.target.id==='dkq'){ dkState().q=e.target.value; const g=document.querySelector('.dkall'); if(g) g.innerHTML=dkGridHTML(); return; } if(e.target&&e.target.id==='libq'){ UI.lib.q=e.target.value; const g=document.querySelector('.libgrid'); if(g) g.innerHTML=libraryGridHTML(); const c=document.getElementById('libcount'); if(c) c.textContent='· '+libCountText(); } });
 // ---- keyboard focus for everything outside a fight: menus, spoils, road events, merchant, pick windows ----
 function kbFoes(){ const F=G&&G.fight; if(!F) return; const t=F.enemies[F.target]; document.querySelectorAll('.card.enemy').forEach(c=>c.classList.toggle('kbf',UI.kbRow==='foes'&&!!t&&c.dataset.uid===String(t.uid))); }
@@ -93,14 +91,9 @@ document.addEventListener('keydown',e=>{
     else if(k==='e'){ const d=document.querySelector('.slots'); if(d) d.classList.toggle('open'); }
     return;
   }
-  if(G&&G.phase==='map'&&!UI.modal){   // on the map W A S D step, Space acts on the tile you stand on
-    const dir={d:0,e:1,q:2,a:3,z:4,c:5,arrowright:0,arrowleft:3}[k];   // E, NE, NW, W, SW, SE
-    if(dir!=null){ e.preventDefault(); moveStep(dir); return; }
-    if(isSpace||e.key==='Enter'){ e.preventDefault(); const t=hereTile(); if(t&&blocks(t)) resolveTile(t); return; }
-  }
   const dirs={a:'a',d:'d',w:'w',s:'s',arrowleft:'a',arrowright:'d',arrowup:'w',arrowdown:'s'};
   if(dirs[k]){ e.preventDefault(); kbMove(dirs[k]); return; }
-  if(isSpace||e.key==='Enter'){ e.preventDefault(); const els=kbTargets(); if(UI.kbi!=null&&els[UI.kbi]){ els[UI.kbi].click(); return; } if(!G) return; if(G.phase==='interlude') interludeContinue(); else if(G.phase==='spoils'&&spoilsDone(G.spoils)) spoilsContinue(); }
+  if(isSpace||e.key==='Enter'){ e.preventDefault(); const els=kbTargets(); if(UI.kbi!=null&&els[UI.kbi]){ els[UI.kbi].click(); return; } if(!G) return; if(G.phase==='interlude') interludeContinue(); else if(G.phase==='spoils'&&spoilsDone(G.spoils)) spoilsContinue(); else if(G.phase==='descent') descentEnter(); }
 });
 function afterRender(){
   { const key=kbKey(); if(UI.kbKey!==key){ UI.kbKey=key; UI.kbi=null; } kbApply(); }

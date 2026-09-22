@@ -8,6 +8,7 @@
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.35;overflow:hidden;background:var(--bg0);background-image:radial-gradient(1200px 600px at 20% -10%,rgba(93,224,210,.14),transparent 60%),radial-gradient(900px 500px at 90% 110%,rgba(242,192,105,.12),transparent 60%),linear-gradient(180deg,var(--bg0),var(--bg1))}
+#scene{position:fixed;inset:0;z-index:0;background:center/cover no-repeat;opacity:0;transition:opacity .9s ease;pointer-events:none}   /* the dungeon's backdrop (img/bg/<theme>.svg), set by render() */
 #bg{position:fixed;inset:0;z-index:0;pointer-events:none}
 #app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;padding-inline:12px;padding-block:8px;gap:8px;max-width:1200px;margin:0 auto}
 #fx{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden}
@@ -390,54 +391,14 @@ table.stats td{border-bottom:1px dotted rgba(255,255,255,.25)}
 .card.back .cbox{border-color:rgba(0,0,0,.45)} .card.back .cmain{color:rgba(0,0,0,.6)}
 @media (max-width:760px){ .libbody{flex-direction:column} .libside{flex:none;max-height:40%} }
 
-/* ===================== THE WORLD MAP ===================== */
-.mapwrap{position:fixed;inset:0;z-index:0}   /* the dungeon takes the whole screen; title, tools and status float over it */
-.mapview{position:absolute;inset:0;overflow:hidden}
-.maptitle{position:absolute;left:50%;top:16px;transform:translateX(-50%);text-align:center;pointer-events:none;z-index:5;white-space:nowrap}
-.maptitle .mtn{font-family:var(--display);font-weight:900;font-size:2rem;line-height:1.1;letter-spacing:.04em;color:var(--gold);text-shadow:0 2px 0 rgba(0,0,0,.6),0 0 28px rgba(242,192,105,.3)}
-.maptitle .mts{margin-top:5px;font-family:var(--body);font-weight:800;font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink2);text-shadow:0 1px 0 rgba(0,0,0,.6)}
-.maptools{position:absolute;right:18px;top:16px;display:flex;gap:6px;z-index:5}
-.mapstatus{position:absolute;left:18px;bottom:16px;display:flex;align-items:center;gap:14px;z-index:5}
-.mapstatus .bars{display:flex;gap:8px} .mapstatus .bar{width:180px}
-.mapstatus .gold{color:var(--gold);font-weight:800;white-space:nowrap;text-shadow:0 1px 0 rgba(0,0,0,.6)} .mapstatus .gold::before{content:'🪙 '}
-.mapview.pan{cursor:grab} .mapview.panning{cursor:grabbing} .mapview.panning .hex{pointer-events:none}
-.map{display:grid;grid-template-columns:repeat(var(--cols),var(--ts));grid-auto-rows:var(--ts);gap:2px;--ts:44px}
-.tile{position:relative;width:var(--ts);height:var(--ts);border-radius:6px;background:var(--bc);display:flex;align-items:center;justify-content:center;font-size:calc(var(--ts)*.55);line-height:1;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.35);transition:filter .2s;user-select:none}
-.tile.unk{background:rgba(255,255,255,.025);cursor:default;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}
-.tile.mem{filter:brightness(.45) saturate(.5)}
-.tile.vis:hover{filter:brightness(1.25);box-shadow:inset 0 0 0 2px var(--gold)}
-.tile .ti{filter:drop-shadow(0 2px 3px rgba(0,0,0,.7));pointer-events:none}
-.tile.here{box-shadow:inset 0 0 0 2px var(--gold),0 0 14px rgba(242,192,105,.6);z-index:2}
-.tile .hero{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:calc(var(--ts)*.6);animation:bob 2s ease-in-out infinite;pointer-events:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.8))}
-.tile.here .ti{opacity:.35}
-.tile.creature .ti,.tile.nest .ti,.tile.lair .ti{animation:bob 3s ease-in-out infinite}
-.tile.nest::after,.tile.lair::after{content:'';position:absolute;inset:2px;border-radius:5px;border:1px dashed rgba(255,209,102,.75);pointer-events:none}
-.tile.lair::after{border-color:rgba(255,90,106,.85)}
-.tile.city{box-shadow:inset 0 0 0 2px rgba(93,224,210,.75)}
-.maphint{font-size:.8rem;color:var(--ink3);display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between;padding:0 4px}
 .kit{display:flex;gap:10px;align-items:stretch;padding:8px 10px;border-radius:12px;background:var(--glass);border:1px solid var(--line)}
 .kithand{display:flex;gap:6px;overflow-x:auto;flex:1;padding:2px;align-items:center}
 .kit .card{flex:0 0 96px;width:96px;height:144px;cursor:default}
 .kitside{display:flex;flex-direction:column;gap:5px;justify-content:center;min-width:170px;font-size:.85rem;color:var(--ink2)} .kitside b{color:var(--ink)}
 .kitside .pd{display:flex;flex-wrap:wrap;gap:4px} .kitside .pdi{font-size:.75rem;padding:2px 6px;border-radius:6px;background:rgba(0,0,0,.35);border:1px solid var(--line)}
 .choice:disabled{opacity:.5;cursor:not-allowed} .choice:disabled:hover{border-color:var(--line2);border-style:dotted}
-@media (max-width:640px){ .map{--ts:34px} .kit .card{flex-basis:80px;width:80px;height:120px} .kitside{min-width:120px;font-size:.78rem} .maphint span:last-child{display:none} }
-.tile.hot::before{content:'';position:absolute;inset:0;border-radius:6px;background:rgba(255,70,90,.22);box-shadow:inset 0 0 0 1px rgba(255,90,106,.45);pointer-events:none}
-.tile.hot.here::before{display:none}
+@media (max-width:640px){ .kit .card{flex-basis:80px;width:80px;height:120px} .kitside{min-width:120px;font-size:.78rem} .maphint span:last-child{display:none} }
 
-/* ===================== DUNGEON HEXES ===================== */
-.board{position:absolute;left:0;top:0;margin:0;transition:transform .38s cubic-bezier(.2,.7,.2,1);will-change:transform} .board.nocam{transition:none}
-.hex{position:absolute;width:var(--hw);height:var(--hh);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);display:flex;align-items:center;justify-content:center;font-size:calc(var(--hw)*.52);line-height:1;background:var(--bc);cursor:pointer;user-select:none;transition:filter .15s}
-.hex.corr{filter:brightness(.8)}
-.hex.wall{background:#181c2c;cursor:default}
-.hex.mem{filter:brightness(.62) saturate(.6)} .hex.mem.corr{filter:brightness(.5) saturate(.6)}
-.hex.floor.vis:hover{filter:brightness(1.3)}
-.hex .ti{pointer-events:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.7))}
-.hex.creature.vis .ti,.hex.nest.vis .ti,.hex.lair .ti{animation:bob 3s ease-in-out infinite}
-.hex.hot::before{content:'';position:absolute;inset:0;background:rgba(255,70,90,.26);pointer-events:none}
-.hex.path::after{content:'';position:absolute;left:38%;top:38%;width:24%;height:24%;border-radius:50%;background:rgba(242,192,105,.85);box-shadow:0 0 8px rgba(242,192,105,.8);pointer-events:none}
-.hex.exit{background:#1f6b5a} .hex.lair{background:#7a2a3a} .hex.nest{background:#6a4a26} .hex.entry{filter:brightness(.9)}
-.hero{position:absolute;width:var(--hw);height:var(--hh);display:flex;align-items:center;justify-content:center;font-size:calc(var(--hw)*.62);pointer-events:none;z-index:3;transition:left .16s linear,top .16s linear;filter:drop-shadow(0 3px 5px rgba(0,0,0,.85))}
 .scene.keeper{width:min(100%,860px)} .krow{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
 .scene.keeper .shopcards,.scene.pack .shopcards{flex:0 1 auto}
 
@@ -562,12 +523,35 @@ table.stats td{border-bottom:1px dotted rgba(255,255,255,.25)}
 .pbars{flex:1 1 260px;align-items:center;gap:8px} .pbars .bar{height:20px} .pbars .bar.hp{flex:1.6}
 .blk{position:relative;z-index:2;display:inline-flex;align-items:center;justify-content:center;width:2.3rem;height:2.3rem;margin-right:-16px;cursor:help} .blk i{font-style:normal;font-size:2.15rem;line-height:1;filter:drop-shadow(0 0 8px rgba(120,190,255,.6)) drop-shadow(0 2px 3px rgba(0,0,0,.8))} .blk b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-bottom:2px;font-size:.92rem;font-weight:900;color:#fff;text-shadow:0 1px 2px #000,0 0 4px #000,0 0 2px #000}
 .pstats{flex:0 1 auto;gap:2px;align-items:center}
-.orb{flex:none;position:relative;width:66px;height:66px;border-radius:50%;display:flex;align-items:baseline;justify-content:center;cursor:help;color:#eaf6ff;font-family:var(--display);font-weight:900;background:radial-gradient(circle at 38% 32%,#dff3ff 0,#5fb8ff 22%,#1e63b8 58%,#0c2f66 100%);box-shadow:0 0 0 3px rgba(8,20,40,.9),0 0 0 4px rgba(120,190,255,.45),0 0 26px rgba(79,182,255,.55),inset 0 -8px 16px rgba(0,0,0,.45),inset 0 6px 10px rgba(255,255,255,.35)}
-.orb b{font-size:1.75rem;line-height:66px;text-shadow:0 2px 3px rgba(0,0,0,.7)} .orb small{font-size:.7rem;color:#b9dcff;margin-left:1px;text-shadow:0 1px 2px #000;align-self:center;padding-top:14px}
-.orb::after{content:'';position:absolute;inset:6px;border-radius:50%;border:1px solid rgba(255,255,255,.18);pointer-events:none}
 .player .endbtn{flex:none;margin:0;padding:12px 30px;font-size:1rem;letter-spacing:.06em;border-radius:12px}
 .slots{left:14px} .pdtab{background:none;border:0;box-shadow:none;padding:4px 6px 2px;gap:10px;align-items:flex-end}
 .pdtab .pdi{padding:0;border:0;background:none;display:inline-flex;flex-direction:column;align-items:center;gap:1px;line-height:1} .pdtab .pdi i{font-style:normal;font-size:1.6rem;line-height:1;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--el,#889) 70%,transparent)) drop-shadow(0 2px 3px rgba(0,0,0,.75))} .pdtab .pdi small{font-size:.5rem;letter-spacing:.06em;text-transform:uppercase;font-weight:800;color:var(--ink2)}
 .pdtab>span:first-child{padding-bottom:5px} .pdtab b{padding-bottom:5px}
 .log{background:linear-gradient(180deg,rgba(6,12,16,.62),rgba(6,12,16,.4));border:0;box-shadow:none;backdrop-filter:blur(5px);font-size:.76rem}
 .piles{gap:16px;font-size:.84rem;color:var(--ink2);align-items:center} .piles span{display:inline-flex;align-items:center;gap:5px} .piles i{font-style:normal;font-size:1.25rem;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,.7))} .piles b{color:var(--ink);font-weight:900}
+
+/* ===== the descent: the top of a dungeon, and the plan strip in the HUD ===== */
+.plan{display:inline-flex;align-items:center;gap:3px;margin-left:12px;vertical-align:middle;cursor:help}
+.plan i{font-style:normal;font-size:1rem;line-height:1;opacity:.32;filter:grayscale(.6);transition:transform .2s,opacity .2s}
+.plan i.done{opacity:.55} .plan i.now{opacity:1;filter:none;transform:scale(1.35);text-shadow:0 0 8px rgba(242,192,105,.7)} .plan i.boss{font-size:1.1rem}
+.plan.big{margin:6px 0 10px;gap:12px} .plan.big i{font-size:1.9rem} .plan.big i.now{transform:scale(1.4)} .plan.big i.boss{font-size:2.2rem}
+.scene.descent .iart{--el:var(--th)} .scene.descent .itext{max-width:52ch}
+
+/* ===== the three vessels: Health, Mana and Level as liquid orbs (orbsHTML). A wave rides the surface; the number sits in the glass. ===== */
+.orbs{display:flex;align-items:center;gap:12px;flex:none}
+.orbwrap{position:relative;flex:none}
+.orb{--sz:66px;--c1:#7fc6ff;--liq:#3a98e8;--liq2:#12457f;--glow:rgba(79,182,255,.55);flex:none;position:relative;width:var(--sz);height:var(--sz);border-radius:50%;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:help;font-family:var(--display);font-weight:900;color:#fff;line-height:1;background:radial-gradient(circle at 50% 45%,#101c2a,#04080d 72%);box-shadow:0 0 0 3px rgba(6,12,20,.95),0 0 0 4.5px color-mix(in srgb,var(--c1) 55%,transparent),0 0 26px var(--glow),inset 0 0 22px rgba(0,0,0,.85)}
+.orb .liq{position:absolute;left:-10%;right:-10%;bottom:0;height:var(--fill);background:linear-gradient(180deg,var(--liq),var(--liq2));transition:height .7s cubic-bezier(.2,.7,.3,1)}
+.orb .liq::before,.orb .liq::after{content:'';position:absolute;left:0;top:-7px;width:400%;height:14px;background:radial-gradient(ellipse at 50% 100%,var(--liq) 0 58%,transparent 60%);background-size:12.5% 100%;animation:wave 3s linear infinite}
+.orb .liq::after{top:-10px;opacity:.55;background:radial-gradient(ellipse at 50% 100%,color-mix(in srgb,var(--liq) 70%,#fff) 0 52%,transparent 54%);background-size:16.6% 100%;animation-duration:4.4s;animation-direction:reverse}
+@keyframes wave{to{transform:translateX(-25%)}}
+.orb::after{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 34% 26%,rgba(255,255,255,.5),rgba(255,255,255,.08) 24%,transparent 42%),radial-gradient(circle at 50% 118%,rgba(255,255,255,.14),transparent 50%),linear-gradient(180deg,transparent 55%,rgba(0,0,0,.42));pointer-events:none}
+.orb b,.orb small{position:relative;z-index:2;text-shadow:0 2px 3px rgba(0,0,0,.85),0 0 6px rgba(0,0,0,.6)}
+.orb b{font-size:calc(var(--sz)*.36)} .orb small{margin-top:calc(var(--sz)*.05);font-family:var(--body);font-weight:800;font-size:calc(var(--sz)*.15);letter-spacing:.06em;text-transform:uppercase;opacity:.9}
+.orb.hp{--c1:#ff8a98;--liq:#e0334c;--liq2:#6e1020;--glow:rgba(255,77,106,.55)}
+.orb.mana{--c1:#7fc6ff;--liq:#3a98e8;--liq2:#12457f;--glow:rgba(79,182,255,.55)}
+.orb.xp{--c1:#c3b4ff;--liq:#7f6cf0;--liq2:#33267a;--glow:rgba(139,123,255,.5)}
+.orbs.compact{gap:8px}
+.blk{position:absolute;right:-14px;bottom:-6px;z-index:3;margin:0}
+.bars{flex:0 0 auto;min-width:0}
+.player{gap:20px} .player .statuses{flex:1 1 auto}

@@ -1,19 +1,21 @@
 'use strict';
 // ===================== SCREENS =====================
+// The backdrop of a theme: its `art` file in img/bg if the theme names one (THEMES in world.js), else the vector scene img/bg/<theme>.svg.
+function sceneFile(theme){ const T=THEMES[theme]||{}; return 'img/bg/'+(T.art||theme+'.svg'); }
 function render(){
   const app=document.getElementById('app'); if(!app) return; if(typeof hideTip==='function') hideTip();
+  { const sc=document.getElementById('scene'); if(sc){ const show=G&&G.dungeon&&G.phase!=='gameover'&&!UI.screen; const url=show?`url(${sceneFile(G.dungeon.theme)})`:''; if(sc.dataset.url!==url){ sc.dataset.url=url; if(url) sc.style.backgroundImage=url; sc.style.opacity=url?'1':'0'; } } }   // the dungeon's own backdrop behind everything while a run is on
   if(UI.screen==='library'){ app.innerHTML=libraryHTML()+modalHTML(); return; }
   if(UI.screen==='deck'&&G){ app.innerHTML=deckHTML()+modalHTML(); if(typeof afterRender==="function") afterRender(); return; }
   if(!G){ app.innerHTML=titleHTML()+modalHTML(); return; }
   if(G.phase==='battle'&&G.fight){ const cur=app.querySelector('#battle'); if(cur&&cur.dataset.key==String(G.fight.key)){ patchBattle(); const mm=app.querySelector('.modal'); if(mm) mm.remove(); app.insertAdjacentHTML('beforeend',modalHTML()); return; } }
-  if(G.phase==='map'&&G.dungeon&&typeof patchMap==='function'&&patchMap()){ const mm=app.querySelector('.modal'); if(mm) mm.remove(); app.insertAdjacentHTML('beforeend',modalHTML()); if(typeof afterRender==="function") afterRender(); return; }   // the dungeon updates in place so nothing flickers
   let html='';
   switch(G.phase){
     case 'battle': html=battleHTML(); break;
     case 'spoils': html=hudHTML()+spoilsHTML(); break;
     case 'interlude': html=hudHTML()+interludeHTML(); break;
     case 'shop': html=hudHTML()+shopHTML(); break;
-    case 'map': html=dungeonHTML(); break;   // the dungeon fills the screen and carries its own title, tools and status
+    case 'descent': html=hudHTML()+descentHTML(); break;
     case 'keeper': html=hudHTML()+keeperHTML(); break;
     case 'gameover': html=gameoverHTML(); break;
     default: html=hudHTML();
@@ -46,7 +48,7 @@ function titleHTML(){
           <button class="btn big" data-act="library">📚 Card Library <span class="mcount">${known.length} / ${total}</span></button>
           <button class="btn big ghost" data-act="modal" data-m="help">How to play</button>
         </div>
-        ${best&&best.depth?`<div class="kv"><span>Deepest dungeon <b>${best.depth}</b></span><span>Lairs <b>${best.lairs||0}</b></span><span>Level <b>${best.level}</b></span><span>Steps <b>${best.time||0}</b></span><span>Runs <b>${best.runs}</b></span></div>`:''}
+        ${best&&best.depth?`<div class="kv"><span>Deepest round <b>${best.round||0}</b></span><span>Dungeon <b>${best.depth}</b></span><span>Bosses <b>${best.lairs||0}</b></span><span>Level <b>${best.level}</b></span><span>Runs <b>${best.runs}</b></span>${best.won?`<span class="good">Final boss slain <b>${best.won}×</b></span>`:''}</div>`:''}
       </div>
       <div class="menu-r"><div class="fan3">${fan.map(id=>cardHTML(id,{mode:'static',tier:tierIdx(id),big:true,data:'data-fan="1"'})).join('')}</div></div>
     </div>
@@ -99,9 +101,51 @@ function battleHTML(){
     ${playerHTML()}
   </div>`;
 }
+// The top of a dungeon: its name, what lives there, the plan of the climb, and the way in.
+function planStripHTML(D,big){ return `<span class="plan${big?' big':''}" title="The climb: ${D.len} fights${D.plan.includes('elite')?', an elite in the middle':''}, the boss at the bottom">${D.plan.map((k,i)=>`<i class="${i<D.step?'done':i===D.step?'now':''} ${k}" title="${k==='boss'?'Boss':k==='elite'?'Elite':'Fight'} ${i+1}">${PLAN_ICON[k]}</i>`).join('')}</span>`; }
+function descentHTML(){
+  const D=G.dungeon; const T=THEMES[D.theme]; const elite=D.plan.includes('elite'); const bossName=(BOSSES.find(b=>b.id===T.boss)||{}).name||'the boss'; const els=T.els.map(k=>EL[k].i+' '+EL[k].n).join(' and ');
+  return `<div class="center scene descent k-${D.theme}" style="--th:${T.c}">
+    <div class="eyebrow">Dungeon ${D.n} · rounds ${D.first} to ${D.first+D.len-1}</div>
+    <div class="iart"><span class="ii">${T.i}</span></div>
+    <h2 class="stitle pop">${esc(T.n)}</h2>
+    <p class="itext">${D.len} fight${D.len>1?'s':''} down${elite?', an elite in the middle':''}, and ${esc(bossName)} at the bottom. Creatures of ${els}.</p>${D.final?`<p class="msg bad">The final boss waits at round ${FINAL_ROUND}. Past it, the climb is for the high score.</p>`:''}
+    ${planStripHTML(D,true)}
+    <div class="row center"><button class="btn primary big" data-act="enter">Enter →</button></div>
+  </div>`;
+}
+function kitHTML(){
+  const K=G.p.kit||newKit();
+  const hand=K.hand.map(c=>cardHTML(c.id,{mode:'static'})).join('')||'<div class="muted small emptyhand">Your hand is empty. It refills when a fight starts.</div>';
+  const pas=K.passives.map(p=>`<span class="pdi" style="--el:${EL[p.el].c}">${p.icon} ${esc(p.name)}</span>`).join('')||'<span class="muted small">none in play</span>';
+  return `<div class="kit"><div class="kithand">${hand}</div><div class="kitside"><div><b>Hand</b> ${K.hand.length} · draw ${K.draw.length} · discard ${K.discard.length}</div><div><b>Mana</b> ${K.energy||0} / ${MANA_CAP}</div><div><b>Passives</b> ${K.passives.length} / ${PS('slots')}</div><div class="pd">${pas}</div></div></div>`;
+}
+// The keeper's hall: the keeper at his candle, four services as small cards (art tile, name plaque, dotted box), then the cards for sale.
+function keeperHTML(){
+  const K=G.keeper; if(!K) return '';
+  const p=G.p; const T=themeNow(); const next=G.dungeon.n+1; const eliteNext=next%ELITE_EVERY===0;
+  const owned=id=>p.deck.includes(id)||(p.stash||[]).includes(id);
+  const offers=K.offers.map(id=>cardHTML(id,{act:K.used.buy?null:'keeper-buy',data:`data-id="${id}"`,price:cardPrice(id),tag:owned(id)?(canEvolve(id)?`Owned · evolve to ${TIERS[curTier(id)+1]}`:'Owned · copy'):null,dim:K.used.buy||p.gold<cardPrice(id)})).join('');
+  const svc=(act,cls,icon,name,price,desc,used,disabled)=>`<button class="svc ${cls} ${used?'used':''}" data-act="${act}" ${disabled?'disabled':''}><span class="svart"><span>${icon}</span></span><span class="svname">${name}</span>${price?`<span class="svprice">${price}</span>`:''}<span class="svdesc">${desc}</span></button>`;
+  return `<div class="scene keeper">
+    <div class="eyebrow">After the ${esc(T.n)} · dungeon ${G.dungeon.n} · ${p.gold} gold</div>
+    <div class="kart"><span>🕯️</span></div>
+    <h2 class="stitle">The Keeper</h2>
+    <p class="itext">${K.msg?esc(K.msg):`"You found the way out. Sit. Trade. Then down again." The keeper pays ${K.purse} gold for what you carried down.`}</p>
+    <div class="ksvc">
+      ${svc('keeper-rest','rest','🛏️','Rest',`${restCost()} gold`,K.used.rest?'Done for this visit.':p.hp>=p.maxHp?'You are already rested.':'Sleep by the fire and heal to full.',K.used.rest,K.used.rest||p.hp>=p.maxHp)}
+      ${svc('keeper-smith','smith','⚒️','Blacksmith','',K.used.smith?'Done for this visit.':'Evolve one card one tier higher, for gold.',K.used.smith,K.used.smith)}
+      ${svc('keeper-remove','remove','🕊️','Let a card go',`+${removeCost()} gold`,K.used.remove?'Done for this visit.':'The keeper takes one card off your hands.',K.used.remove,K.used.remove)}
+      ${svc('keeper-pack','pack','📦','Pack',`${p.deck.length} / ${DECK_MAX} carried`,`${(p.stash||[]).length} in the pack. Swap cards between deck and pack.`,false,false)}
+    </div>
+    <div class="eyebrow">${K.used.buy?'Bought for this visit':'Buy one card'}</div>
+    <div class="shopcards">${offers}</div>
+    <button class="btn primary kdesc" data-act="keeper-descend">Descend to dungeon ${next} · ${dungeonLen(next)} fights${eliteNext?', an elite in the middle':''}, the boss at the bottom →</button>
+  </div>`;
+}
 function spoilsHTML(){
   const r=G.spoils; const p=G.p; const done=spoilsDone(r);
-  const title=r.kind==='boss'?'Boss slain':r.kind==='elite'?'Elite slain':'Victory';
+  const title=r.final?'The bottom of the world':r.kind==='boss'?'Boss slain':r.kind==='elite'?'Elite slain':'Victory';
   const msgs=(r.msgs||(r.cardMsg?[r.cardMsg]:[])).map((m,i)=>`<p class="line" style="--i:${i}">${esc(m)}</p>`).join('');
   const levelPicks=(r.picks||0)-(r.bossPick?1:0); const lvlOfPick=p.level-levelPicks+1;
   return `<div class="center scene spoils k-${r.kind}">
@@ -121,7 +165,7 @@ function interludeHTML(){
   const waiting=(I.cards||((I.t==='forge'||I.t==='camp'||I.t==='event')&&!I.auto))&&!I.picked;
   const kind=isEv?I.ev:I.t; const icon=b?b.icon:T.icon; const title=b?b.name:T.title;
   return `<div class="center scene inter ${I.t} k-${kind}">
-    <div class="eyebrow">${esc(themeNow().n)} · dungeon ${G.dungeon.n} · room ${G.dungeon.entered} of ${G.dungeon.rooms}</div>
+    <div class="eyebrow">${esc(themeNow().n)} · dungeon ${G.dungeon.n} · after fight ${Math.min(G.dungeon.len,G.dungeon.step)} of ${G.dungeon.len}</div>
     <div class="iart ${I.t==='chest'?'chest':''}"><span class="ii">${icon}</span></div>
     <h2 class="stitle pop">${esc(title)}</h2>
     ${T.text&&!b?`<p class="itext">${esc(T.text)}</p>`:''}
@@ -130,7 +174,7 @@ function interludeHTML(){
     ${I.t==='forge'&&!I.auto&&!I.picked?(I.pick?`${upgradePairHTML(I.pick)}<div class="row center"><button class="btn primary" data-act="forge-confirm">⚒️ Reforge it</button><button class="btn ghost" data-act="forge-back">Choose another</button></div>`:`<div class="row center"><button class="btn primary" data-act="forge-pick">Choose a card to reforge</button><button class="btn ghost" data-act="inter-next">Leave the forge</button></div>`):''}
     ${I.t==='forge'&&I.picked&&I.pick?`<div class="pair"><div class="pc"><span class="plabel">Reforged · ${TIERS[curTier(I.pick)]}</span>${cardHTML(I.pick,{big:true,mode:'static'})}</div></div>`:''}
     ${isEv&&!I.picked?`<div class="choices">${EVENTS[I.ev].choices.map((c,i)=>`<button class="choice" data-act="event-choice" data-i="${i}">${esc(c.t)}</button>`).join('')}</div>`:''}
-    ${I.t==='camp'&&!I.auto&&!I.picked?`<div class="choices two"><button class="choice" data-act="camp-rest">🛏️ Rest<small>Heal ${CAMP.healPct}% of your Max HP.</small></button><button class="choice" data-act="camp-tough">💪 Train<small>+${CAMP.toughPct}% Max HP, for good.</small></button></div>`:''}
+    ${I.t==='camp'&&!I.auto&&!I.picked?`<div class="choices two"><button class="choice" data-act="camp-rest">🛏️ Rest<small>Heal ${CAMP.healPct}% of your Max HP.</small></button><button class="choice" data-act="camp-tough">💪 Train<small>+${campTough()} Max HP, for good.</small></button></div>`:''}
     ${I.t==='ambush'?`<p class="msg bad">Prepare yourself.</p>`:waiting?'':`<div class="autobar ${I.picked?'fast':''}"><i></i></div><button class="btn sm ghost" data-act="inter-next">Continue now</button>`}
   </div>`;
 }
@@ -155,9 +199,9 @@ function gameoverHTML(){
   return `<div class="center scene">
     <div class="sicon"><span>💀</span></div>
     <h1 class="pop">You died</h1>
-    <p class="muted">Dungeon ${G.dungeon?G.dungeon.n:1} · room ${G.dungeon?G.dungeon.entered:1} · ${G.time||0} steps · Level ${G.p.level} · ${G.kills} enemies slain · ${G.bossesSlain} lairs · ${G.p.deck.length} cards · ${G.evolves} evolutions</p>
+    <p class="muted">Round ${G.rounds||0}${G.won?' · the final boss slain':''} · Dungeon ${G.dungeon?G.dungeon.n:1} · ${G.fights||0} fights won · Level ${G.p.level} · ${G.kills} enemies slain · ${G.bossesSlain} lairs · ${G.p.deck.length} cards · ${G.evolves} evolutions</p>
     <p class="muted small">${G.fight&&G.fight.enemies?`Slain by ${esc(G.fight.enemies.filter(e=>e.alive).map(e=>e.name).join(' and ')||'your own recklessness')}.`:''} Permadeath: this run is gone.</p>
-    ${b.depth?`<div class="kv"><span>Deepest dungeon <b>${b.depth}</b></span><span>Runs <b>${b.runs}</b></span></div>`:''}
+    ${b.round||b.depth?`<div class="kv"><span>Deepest round <b>${b.round||0}</b></span><span>Dungeon <b>${b.depth}</b></span><span>Runs <b>${b.runs}</b></span>${b.won?`<span class="good">Final boss slain <b>${b.won}×</b></span>`:''}</div>`:''}
     <div class="row center"><button class="btn primary big" data-act="new">Start over</button><button class="btn ghost" data-act="title">Title screen</button></div>
   </div>`;
 }

@@ -10,15 +10,71 @@
 		</data>
 		<key>Resources/game/css/style.css</key>
 		<data>
-		tBa6b3pYKTXFeY9lpTM69j7u/KE=
+		FQFVeeYsyALS5T0ExClEwN7qYi0=
+		</data>
+		<key>Resources/game/img/bg/arena.svg</key>
+		<data>
+		P7AyJduErPnMIrWM5ZPlK4cgwKs=
+		</data>
+		<key>Resources/game/img/bg/crypt.svg</key>
+		<data>
+		qRIUYVl55fOBJ0+4IDsFNR76XHw=
+		</data>
+		<key>Resources/game/img/bg/forge.svg</key>
+		<data>
+		P3QviE7tsfECieSBFTCVtCfgD3Q=
+		</data>
+		<key>Resources/game/img/bg/garden.svg</key>
+		<data>
+		LspzAXWe7uvcQDhtpVZTkvv83Ok=
+		</data>
+		<key>Resources/game/img/bg/grotto.svg</key>
+		<data>
+		xe6wIYmzmpLSg3ljp4XPUNKpliU=
+		</data>
+		<key>Resources/game/img/bg/halls.svg</key>
+		<data>
+		bbJzxyJllwJYIy0OFTDNC5vj+Ys=
+		</data>
+		<key>Resources/game/img/bg/marsh.svg</key>
+		<data>
+		EhM1yRitvToWPAyq9YglyIuWnic=
+		</data>
+		<key>Resources/game/img/bg/peaks.svg</key>
+		<data>
+		YV0Jy+XEic3txMMBjoxkuDTlATs=
+		</data>
+		<key>Resources/game/img/bg/pits.svg</key>
+		<data>
+		p/V3e8PSJNnNwvjqMKEgS5m8buk=
+		</data>
+		<key>Resources/game/img/bg/roost.svg</key>
+		<data>
+		RTntG7G4Qv7+jXBQW4m3w874cJw=
+		</data>
+		<key>Resources/game/img/bg/sanctum.svg</key>
+		<data>
+		ak6oP6ksp+CNzgO16Kk4PxNhbmA=
+		</data>
+		<key>Resources/game/img/bg/spire.svg</key>
+		<data>
+		1rokmm/qLJGzZtXoohdPBC2lxTM=
+		</data>
+		<key>Resources/game/img/bg/vault.svg</key>
+		<data>
+		vkpF/UGbid0XHu52lq6TKIHyY24=
+		</data>
+		<key>Resources/game/img/bg/warrens.svg</key>
+		<data>
+		GkhIdqai6y6QbcYoI1pZchP9AJ8=
 		</data>
 		<key>Resources/game/index.html</key>
 		<data>
-		sbPjvLmK7KHscdvJ7Y8oGeUPwkM=
+		ktGFMA4k37shVPrQgSbEpedrcjQ=
 		</data>
 		<key>Resources/game/js/data/cards.js</key>
 		<data>
-		q6vlXrFSP1jlc05jLy1zG8cUld4=
+		F2DTzltJGH0A9uUzEW6NnNvKpH4=
 		</data>
 		<key>Resources/game/js/data/decks.js</key>
 		<data>
@@ -26,19 +82,19 @@
 		</data>
 		<key>Resources/game/js/data/elements.js</key>
 		<data>
-		TBhRkZjlSEhehlyRKx5wo1NJDrg=
+		xQzdvlxFrE/A5DbrX9ZMbs4hqzg=
 		</data>
 		<key>Resources/game/js/data/enemies.js</key>
 		<data>
-		Qw0CjGUczOZWyOcuffARxzQtEds=
+		hyAw7uGllbGHxx8Ajt7LfJ6UbU4=
 		</data>
 		<key>Resources/game/js/data/foecards.js</key>
 		<data>
-		Uzn07MR0rBMVxCUcVNVfQHrdebo=
+		TY7Eh2d76hTX19X2c08fUVOACBs=
 		</data>
 		<key>Resources/game/js/data/interludes.js</key>
 		<data>
-		3IRWzjBId+OhBn5FzGDpFpI1PRc=
+		Gmtz4d8zPnE7O6aH3Dj6WOMr45U=
 		</data>
 		<key>Resources/game/js/data/passives.js</key>
 		<data>
@@ -46,23 +102,23 @@
 		</data>
 		<key>Resources/game/js/engine/combat.js</key>
 		<data>
-		/2XTqnOdDzEYdu9Rh3AWjyzlDm4=
+		Cr0ennxjiDXwzlxpdOXqJAsoZ2w=
 		</data>
 		<key>Resources/game/js/engine/state.js</key>
 		<data>
-		iMJzlfYWtdbZFbHk+Vl8A3hJhkg=
+		0NokldU46kXLVbRCePkDDNLteN0=
 		</data>
 		<key>Resources/game/js/engine/world.js</key>
 		<data>
-		j/KLL2QX4SSqqSBOV3QktY9oDF4=
+		7jOf3JLB3s6n1zVepp5T6EXJt5o=
 		</data>
 		<key>Resources/game/js/main.js</key>
 		<data>
-		ZUaNOTAzkRsntsi7fY+BdZJRX5U=
+		9rckDTCbCFuYhrtEdKCYoFmF7Zw=
 		</data>
 		<key>Resources/game/js/ui/components.js</key>
 		<data>
-		MoWC3zsvxSfFbXmgtZqbhKxayHA=
+		9SC4wxSwA3XaXovUJ7NrMIv8VfA=
 		</data>
 		<key>Resources/game/js/ui/deck.js</key>
 		<data>
@@ -72,13 +128,9 @@
 		<data>
 		hv0+L1eWWFVvmUzED24HlQ0+jro=
 		</data>
-		<key>Resources/game/js/ui/map.js</key>
-		<data>
-		0QoAaB5bNaVBrjQIFvaEzR3QeWg=
-		</data>
 		<key>Resources/game/js/ui/screens.js</key>
 		<data>
-		CWjNepZaJEetvefGcId0nWke76U=
+		XVP0kZ1U2nearyNHaX15bDRXP6Q=
 		</data>
 		<key>Resources/game/js/ui/sound.js</key>
 		<data>
@@ -102,21 +154,119 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			asyKtACvItmfWnBspOqWkar9xtFHcjtQH7b6Ysybtvs=
+			h6PJ3KDL5MXbzVBZbWC+rGbW2sCMmTTfi5OjyscsbDg=
+			</data>
+		</dict>
+		<key>Resources/game/img/bg/arena.svg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			YUeXi2kJ09AzOTKxu13w3hTvjeAAtAsI4+M3yLEh7cE=
+			</data>
+		</dict>
+		<key>Resources/game/img/bg/crypt.svg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			5IiDBgB9cq9aaWxxkFG4BOF8zUg7v702GJhxri6i4k8=
+			</data>
+		</dict>
+		<key>Resources/game/img/bg/forge.svg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			dgR/M3YqI5MxmgS5FYrMEvcTn0ss/Vtuha+uCO9K4Wg=
+			</data>
+		</dict>
+		<key>Resources/game/img/bg/garden.svg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			iF7PpidRQ0P4aw36J1WxcGJT50GL7hcMPBkvkS3MTg0=
+			</data>
+		</dict>
+		<key>Resources/game/img/bg/grotto.svg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			ouMQ9BeMfGuUEMOWEynaT7j9zUa8w6V17BKB0fXr74Q=
+			</data>
+		</dict>
+		<key>Resources/game/img/bg/halls.svg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			qcF8vd0WnF9qxuP7hGMqEpFtJMP2UUfkp+qHsfkiXVg=
+			</data>
+		</dict>
+		<key>Resources/game/img/bg/marsh.svg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			FlXLk+CVxpoZ9f/0qFL9SMdUYt/+vHoLXeYHvcjDRYE=
+			</data>
+		</dict>
+		<key>Resources/game/img/bg/peaks.svg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			QZnt3R07m1qdLsSSYckpUcBeGJ3Zcmwa+usKZz/3qsE=
+			</data>
+		</dict>
+		<key>Resources/game/img/bg/pits.svg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			tJIFgWuDcU4bc4yJsfjwhOHN6mDuMF4DcNyJH/U2eyo=
+			</data>
+		</dict>
+		<key>Resources/game/img/bg/roost.svg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			rzV0GdvFUEHogzSrhdNln0ftRb3SHyLulQJjINEjfig=
+			</data>
+		</dict>
+		<key>Resources/game/img/bg/sanctum.svg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			9vmXXjEMI2MwcNbWQbCo5h15gaqlmW4xBNn15ImTZPA=
+			</data>
+		</dict>
+		<key>Resources/game/img/bg/spire.svg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			+VFybKw8G5OsrxC9qO7RK+zDoMq6bJ/r0DEtBX1OBp0=
+			</data>
+		</dict>
+		<key>Resources/game/img/bg/vault.svg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			56Q20AKj2rcCBVPLA8nysvwk79k3xuTpyAQl7S2l6E8=
+			</data>
+		</dict>
+		<key>Resources/game/img/bg/warrens.svg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			6dij2nkR2HfbJyOQ641/DpVzWWW4gwo8Qro5hvqXdpU=
 			</data>
 		</dict>
 		<key>Resources/game/index.html</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			ZD7kadGpYHdszBv/cVB84zX9yTHDIEjNR011OrmdCtk=
+			bPUNNgOCbNm2uHr7sxM9eF+dl5bt9IsxjM/oSpYpuKA=
 			</data>
 		</dict>
 		<key>Resources/game/js/data/cards.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			7XzBHgrUvlC2oiJ1YvYhmaheCz6sVSMMnulM4gfczCw=
+			hSXkGtOGYknZIJ8BKE7e53MT64C9dgjfaxN124DOBdA=
 			</data>
 		</dict>
 		<key>Resources/game/js/data/decks.js</key>
@@ -130,28 +280,28 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			SNH7ff/UJADGR4eqsoV576E/O8TeNxi2NU4gM9t4pXI=
+			3pkYiFuuccEUFfRTuxykhsAtteYFsoNV1ewZtteVuN4=
 			</data>
 		</dict>
 		<key>Resources/game/js/data/enemies.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			6S73ThurxPMIzD0KBofM8a4Fk+251kEmQq6OblJtwcE=
+			BRGlQQnDFJadtip4nAAZdGZ1y1SyJ8+zt11KuWOTwuk=
 			</data>
 		</dict>
 		<key>Resources/game/js/data/foecards.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			9IScHR4jxk5OXvrj6fn+VsyPqVhNCBJ0c9Ps79A7HrM=
+			EzvjXbIHYbtUUkuWXAb9rYXgkUpbJAmwN0gFe78cBlU=
 			</data>
 		</dict>
 		<key>Resources/game/js/data/interludes.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			4/zWUjVuzN5zei+M8wjVnjEHM4+Ne9gbtSoIxfl7qcA=
+			FJcycqCtz1/KsxMbxOn4L+lLr1vm3g2p7W1Fzx09/N4=
 			</data>
 		</dict>
 		<key>Resources/game/js/data/passives.js</key>
@@ -165,35 +315,35 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			4ucLB49Ixq2tpUUlbYlNBjsbN7aY/UM8YM6jFFR+ZLo=
+			2iVZQt13F+6/wt8Qsb+giqoGPf97WyqQJcGTEUNzIuw=
 			</data>
 		</dict>
 		<key>Resources/game/js/engine/state.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			fR57Or2rHZQUkiSeiNTMEUwnBDH0WQn5NxK2+pi97gk=
+			92p8o6mgmpQB5Ik0K1jHpD40AHLdJKivobMsXpDTiFk=
 			</data>
 		</dict>
 		<key>Resources/game/js/engine/world.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			CkblnXIpzHBtVgherembNwR8Y+vQvNB3nlozp9Nze+M=
+			1PxPSq0X1GFDsbNG94M9LCbVgVIWepM7b3kWV0+v5j0=
 			</data>
 		</dict>
 		<key>Resources/game/js/main.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			u+b0pNhs8/X3zWvRMWDV/csvcDiWRYGpzQPysBYKbiY=
+			uOR7dSqPvyWXCKTrL9l4DLAUyzwjsxWPhzHTuWpQX5I=
 			</data>
 		</dict>
 		<key>Resources/game/js/ui/components.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			4cgrgYRtc7+uI/2K+hBdDOGHRf8xffj4qpKb9nO5zZo=
+			8a3LrF7EFnOdliTKKJPbRBtrEhL9dUBiCtWNWpQFa/k=
 			</data>
 		</dict>
 		<key>Resources/game/js/ui/deck.js</key>
@@ -210,18 +360,11 @@
 			opg3FYjupFecOUIm4c2sEfp5zm2REHI1xT3rOYUlRBg=
 			</data>
 		</dict>
-		<key>Resources/game/js/ui/map.js</key>
-		<dict>
-			<key>hash2</key>
-			<data>
-			+58pCurfI1N0OBnTJPft3/wXRZjMLuWBO+zVRZvXKqk=
-			</data>
-		</dict>
 		<key>Resources/game/js/ui/screens.js</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			W3g0TXGikLfb0zV4DjlRhJboiaBHMSac8FI/vGWb05Q=
+			LxYczNU3ujFvVWIeANdVspoLJMIQAzNQ24W2LLampGA=
 			</data>
 		</dict>
 		<key>Resources/game/js/ui/sound.js</key>

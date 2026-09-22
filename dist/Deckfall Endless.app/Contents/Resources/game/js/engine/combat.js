@@ -17,9 +17,9 @@ function stealPassive(e,p){ const F=G.fight; const i=e.passives.indexOf(p); if(i
 function mkEnemy(def,o){
   const s=G.round; const hm=hpMult(s)*(o.scale||1)*(o.elite?1.6:1); const am=atkMult(s)*(o.elite?1.25:1);
   const hp=Math.round(def.hp*hm), atk=Math.round(def.atk*am);
-  const e={uid:UI.uid++, id:def.id, name:(o.elite?'Elite ':'')+def.name, icon:def.icon, el:def.el, lvl:s+(o.boss?5:o.elite?2:0), hp, maxHp:hp, atk, block:0, armor:Math.floor(s/10)+(o.boss?1:0), thorns:def.thorns?Math.round(def.thorns*am*0.6):0, st:{}, pat:def.pat||[A(1)], pi:0, regen:0, elite:!!o.elite, boss:!!o.boss, ls:!!def.ls, atkScale:am, alive:true, passives:[]};
+  const e={uid:UI.uid++, id:def.id, name:(o.elite?'Elite ':'')+def.name, icon:def.icon, el:def.el, lvl:s+(o.boss?5:o.elite?2:0), hp, maxHp:hp, atk, block:0, armor:Math.floor(s/16)+(o.boss?1:0)+(o.final?1:0), thorns:def.thorns?Math.round(def.thorns*am*0.6):0, st:{}, pat:def.pat||[A(1)], pi:0, regen:0, elite:!!o.elite, boss:!!o.boss, ls:!!def.ls, atkScale:am, alive:true, passives:[]};
   const mv=(def.moves||FOE_MOVES[def.id]||[]); if(mv.length){ const M=id=>({t:'move',id}); e.pat=o.boss?[M(mv[0]),A(1.2),M(mv[1]||mv[0]),A(1.2),M(mv[2]||mv[0])]:[A(1),M(mv[0]),A(1),M(mv[1]||mv[0])].concat(mv[2]?[M(mv[2])]:[]); }   // basic attacks between its own abilities
-  if(e.el==='earth') e.armor+=1+Math.floor(s/6);           // Stoneskin
+  if(e.el==='earth') e.armor+=1+Math.floor(s/12);           // Stoneskin
   if(e.el==='shadow'){ e.ls=true; e.evade=15; }             // Drain
   if(e.el==='phys') e.crit=20;                              // Precision
   if(e.el==='beast') e.enrage=1.4;                          // Frenzy
@@ -33,31 +33,31 @@ function pickEnemies(o){
   if(o.boss){ const b=(o.bossId&&BOSSES.find(x=>x.id===o.bossId))||BOSSES[(Math.round(s/10)-1+BOSSES.length)%BOSSES.length]; return [mkEnemy(b,{boss:true})]; }
   if(o.mimic) return [mkEnemy(ENEMY.mimic,{elite:true})];
   const B=G.dungeon?themeNow():null;   // companions come from the dungeon's theme
-  let pool=ENEMIES.filter(x=>!x.special&&x.min<=s&&x.min>=s-14&&(!B||B.els.includes(x.el))); if(pool.length<4) pool=ENEMIES.filter(x=>!x.special&&x.min<=s&&x.min>=s-14); if(pool.length<4) pool=ENEMIES.filter(x=>!x.special&&x.min<=s);
+  let pool=ENEMIES.filter(x=>!x.special&&x.min<=s&&x.min>=Math.min(s,24)-14&&(!B||B.els.includes(x.el))); if(pool.length<2) pool=ENEMIES.filter(x=>!x.special&&x.min<=s&&x.min>=Math.min(s,24)-14); if(pool.length<2) pool=ENEMIES.filter(x=>!x.special&&x.min<=s);
   let count=1; const r=Math.random();
   if(!o.elite){ if(s>=20&&r<0.08) count=3; else if(s>=8&&r<0.16) count=2; }   // fewer, stronger foes: a second creature is rare, a third rarer
-  const list=[]; for(let i=0;i<count;i++){ const def=(i===0&&o.enemyId&&ENEMY[o.enemyId])?ENEMY[o.enemyId]:pick(pool); list.push(mkEnemy(def,{elite:o.elite,scale:count===1?1:count===2?0.66:0.52})); }
+  const list=[]; for(let i=0;i<count;i++){ const fresh=pool.filter(x=>!list.some(y=>y.id===x.id)); const def=(i===0&&o.enemyId&&ENEMY[o.enemyId])?ENEMY[o.enemyId]:pick(fresh.length?fresh:pool); list.push(mkEnemy(def,{elite:o.elite,scale:count===1?1:count===2?0.66:0.52})); }
   return list;
 }
 function startFight(o){
-  clearTimeout(UI.timer); clearTimeout(UI.autoTimer); clearTimeout(UI.walkTimer); UI.walk=null;
-  if(o.dangerBonus) G.round+=o.dangerBonus;   // lairs fight a little above their ground
+  clearTimeout(UI.timer); clearTimeout(UI.autoTimer);
+  if(o.dangerBonus) G.round+=o.dangerBonus;   // a boss fights at its dungeon's base danger plus BOSS_RAMP, whatever the climb says
   const enemies=pickEnemies(o);
   // the kit persists: the fight works on the run's hand, piles and passives, and hands them back when it ends
   const K=G.p.kit||(G.p.kit=newKit()); if(!K.draw.length&&!K.hand.length&&!K.discard.length) K.draw=shuffle(G.p.deck.map(id=>({uid:UI.uid++,id})));
   G.fight={key:UI.fightKey++, enemies, turn:0, energy:K.energy||0, energyBonus:0, hand:K.hand, draw:K.draw, discard:K.discard, exhaust:K.exhaust, passives:K.passives, block:0, st:{}, str:0, spellT:0, thornsT:0, critT:0, armorT:0, regen:0, dodgeT:0, elBoost:{}, deckTurn:{}, deckFight:{}, deckBuff:{}, dodgeNext:false, counterNext:false, parry:false, retain:false, target:0, played:0, turnAttacks:0, o, over:false};
-  G.log=[]; log(o.boss?`BOSS: ${enemies[0].name} guards its lair!`:o.forced?`${enemies[0].name} has caught your scent. There is no running.`:o.elite?`An elite ${enemies[0].name} appears!`:`${enemies.map(e=>e.name).join(' and ')} appear${enemies.length>1?'':'s'}!`, (o.boss||o.forced)?'bad':'');
+  G.log=[]; log(o.final?`THE FINAL BOSS: ${enemies[0].name} waits at the bottom of the world.`:o.boss?`BOSS: ${enemies[0].name} guards its lair!`:o.forced?`${enemies[0].name} has caught your scent. There is no running.`:o.elite?`An elite ${enemies[0].name} appears!`:`${enemies.map(e=>e.name).join(' and ')} appear${enemies.length>1?'':'s'}!`, (o.boss||o.forced)?'bad':'');
   G.phase='battle'; G.spoils=null; G.inter=null; G.shop=null; UI.handUids=[]; UI.sel=null; UI.kbRow='hand'; save();
   UI.intro=true; clearTimeout(UI.introTimer); UI.introTimer=setTimeout(()=>{ UI.intro=false; const a=document.querySelector('.arena'); if(a) a.classList.remove('intro'); },1500);   // the creature steps in first; its details are revealed when the fight starts
-  const f=fx(); if(f) setTimeout(()=>f.banner(o.boss?`Boss: ${enemies[0].name}`:o.forced?`Ambush! ${enemies[0].name}`:o.elite?`Elite: ${enemies[0].name}`:`${enemies[0].name}`, o.boss?'boss':(o.elite||o.forced)?'elite':''),50); sfx(o.boss?'boss':o.forced?'ambush':o.elite?'elite':'battle');
+  const f=fx(); if(f) setTimeout(()=>f.banner(o.final?`The final boss: ${enemies[0].name}`:o.boss?`Boss: ${enemies[0].name}`:o.forced?`Ambush! ${enemies[0].name}`:o.elite?`Elite: ${enemies[0].name}`:`${enemies[0].name}`, o.boss?'boss':(o.elite||o.forced)?'elite':''),50); sfx(o.boss?'boss':o.forced?'ambush':o.elite?'elite':'battle');
   startPlayerTurn();
 }
 function startPlayerTurn(){
   const F=G.fight; if(F.over) return; F.turn++; G.turnsTotal++;
   // Mana: the first turn of every fight starts at 0; from the second turn on you gain 1 (plus any per-turn bonuses), up to MANA_CAP, and unspent Mana carries over.
-  if(F.turn>1){ const gain=1+F.energyBonus+pSum('manaPerTurn')+pSum('sMana'); if(F.st.chill){ delete F.st.chill; log('Chilled: no Mana gained this turn','bad'); } else F.energy=Math.min(MANA_CAP,F.energy+gain); } else if(F.st.chill) delete F.st.chill;
+  if(F.turn>1){ const gain=1+PS('mana')+F.energyBonus+pSum('manaPerTurn')+pSum('sMana'); if(F.st.chill){ delete F.st.chill; log('Chilled: no Mana gained this turn','bad'); } else F.energy=Math.min(MANA_CAP,F.energy+gain); } else if(F.st.chill) delete F.st.chill;
   F.played=0; F.turnAttacks=0; F.deckTurn={}; if(!F.retain) F.block=0; F.retain=false; F.dodgeNext=false; F.counterNext=false; F.parry=false;
-  const rg=PS('regen')+F.regen+pSum('healPerTurn')+pSum('sHeal'); if(rg>0){ const h=heal(rg); if(h) log(`Regen and allies heal ${h}`,'good'); }
+  const rg=F.regen+pSum('healPerTurn')+pSum('sHeal'); if(rg>0){ const h=heal(rg); if(h) log(`Regen and allies heal ${h}`,'good'); }
   if(F.st.poison){ dmgPlayerRaw(F.st.poison,'Poison'); F.st.poison--; if(F.st.poison<=0) delete F.st.poison; }
   if(F.st.burn&&G.p.hp>0){ dmgPlayerRaw(F.st.burn,'Burn'); F.st.burn=Math.floor(F.st.burn/2); if(F.st.burn<=0) delete F.st.burn; }
   if(checkDeath()) return;
@@ -126,7 +126,7 @@ async function special(name,p,d,v,target,kind){
   const F=G.fight; const alive=()=>F.enemies.filter(e=>e.alive); const m=p.m?v[p.m]:1; const o=(x)=>Object.assign({kind,el:d.el,src:d.name,deck:deckOf(d),isAttack:d.type==='attack',isSpell:d.type==='spell'},x||{}); const DK=DECKS[deckOf(d)]||{n:'deck',i:'🎴'};
   if(name==='execute'){ if(!target||!target.alive) return; const low=target.hp/target.maxHp<(p.pct||30)/100; hitEnemy(target,v.dmg*(low?2:1),o()); if(low) log('Execute! Double damage','se'); }
   else if(name==='snipe'){ if(target&&target.alive) hitEnemy(target,v.dmg,o({pierce:1,critBonus:50})); }
-  else if(name==='retaliation'){ if(target&&target.alive) hitEnemy(target,(PS('thorns')+F.thornsT+pSum('thorns'))*m,o({el:'phys'})); }
+  else if(name==='retaliation'){ if(target&&target.alive) hitEnemy(target,(F.thornsT+pSum('thorns'))*m,o({el:'phys'})); }
   else if(name==='stDmg'){ const ts=p.aoe?alive():[target].filter(e=>e&&e.alive); for(const e of ts){ const st=e.st[p.s]||0; if(!st){ log(`${e.name} has no ${ST[p.s].n}`); continue; } hitEnemy(e,st*m,o({kind:'spell'})); if(p.consume) delete e.st[p.s]; } }
   else if(name==='doubleSt'){ const ts=p.aoe?alive():[target].filter(e=>e&&e.alive); for(const e of ts) if(e.st[p.s]){ e.st[p.s]*=2; log(`${e.name}'s ${ST[p.s].n} doubles to ${e.st[p.s]}`,'se'); floatE(e,`${ST[p.s].i} ×2`,'se'); } }
   else if(name==='spread'){ if(!target||!target.alive) return; for(const e of alive()){ if(e===target) continue; for(const s of ['burn','poison','shock','chill','wet']) if(target.st[s]) e.st[s]=Math.max(e.st[s]||0,target.st[s]); } log(`${target.name}'s afflictions spread to every enemy`,'se'); }
@@ -155,7 +155,7 @@ async function special(name,p,d,v,target,kind){
 }
 function calcDmg(base,kind,el,e,o){
   o=o||{}; const F=G.fight;
-  let d=base+(o.noStat?0:(kind==='phys'?PS('attack')+F.str+pSum('atkBonus'):PS('spell')+F.spellT+pSum('spellBonus')));
+  let d=base+(o.noStat?0:(kind==='phys'?F.str+pSum('atkBonus'):F.spellT+pSum('spellBonus')));   // no base stats: Strength and Focus come from cards
   if(o.deck&&F.deckBuff&&F.deckBuff[o.deck]) d+=F.deckBuff[o.deck];   // the deck's standing bonus (Rat King, Hymn, Moonlit Hunt...)
   if(F.st.weak) d*=0.75;
   d*=1+(elBoostPct(el)+(F.elBoost[el]||0))/100;
@@ -166,7 +166,7 @@ function calcDmg(base,kind,el,e,o){
   if(e.st.vuln) mult*=1.5;
   if(o.bv&&e.st[o.bv]) mult*=(o.bvm||2);
   d*=mult;
-  const crit=Math.random()*100<(PS('crit')+F.critT+(o.critBonus||0)); if(crit) d*=1.5;
+  const crit=Math.random()*100<(F.critT+(o.critBonus||0)); if(crit) d*=1.5;
   return {d:Math.max(0,Math.round(d)),se,res,crit,combo:!!(o.bv&&e.st[o.bv])};
 }
 function hitEnemy(e,base,o){
@@ -177,7 +177,7 @@ function hitEnemy(e,base,o){
   if(e.el==='poison'&&o.isAttack&&!o.summon){ applyStatusPlayer('poison',1); }   // Toxic Blood
   const F=G.fight; const r=calcDmg(base,o.kind,o.el,e,o);
   const dealt=damageEnemy(e,r.d,{pierce:o.pierce,el:o.el}); sfx('hit',{el:o.el,se:r.se,crit:r.crit});
-  const ls=(o.ls||0)+PS('lifesteal')+(o.isAttack?pSum('lifesteal'):0); if(ls>0&&dealt>0){ const h=heal(Math.max(1,Math.round(dealt*ls/100))); if(h>0) floatP(`+${h}`,'heal'); }
+  const ls=(o.ls||0)+(o.isAttack?pSum('lifesteal'):0); if(ls>0&&dealt>0){ const h=heal(Math.max(1,Math.round(dealt*ls/100))); if(h>0) floatP(`+${h}`,'heal'); }
   if(o.kind==='phys'&&!o.summon&&e.thorns>0&&e.alive){ G.p.hp-=e.thorns; floatP(`-${e.thorns} thorns`,'dmg'); log(`${e.name}'s thorns deal ${e.thorns} to you`,'bad'); }
   if(e.alive){ for(const p of F.passives){ const s=o.isAttack?pv_(p,'attackStatus'):o.isSpell?pv_(p,'spellStatus'):null; if(s) applyStatusEnemy(e,s,pv_(p,'sv')||1); } }
   if(e.alive&&e.counterNext&&!o.summon){ e.counterNext=false; const c=Math.max(1,Math.round(e.atk*0.8)); dmgPlayerRaw(c,`${e.name}'s riposte`); }
@@ -246,19 +246,18 @@ function intentInfo(e){
 function enemyAtkBonus(e){ let t=0; for(const p of e.passives){ const x=pv_(p,'atkBonus'); if(x) t+=x; } return t; }
 async function passivesEndTurn(){
   const F=G.fight; const alive=()=>F.enemies.filter(e=>e.alive); const tgt=()=>(F.enemies[F.target]&&F.enemies[F.target].alive)?F.enemies[F.target]:alive()[0];
-  const half=Math.floor(PS('attack')/2);
   for(const p of F.passives.slice()){
     if(!alive().length) break;
     const o=(x)=>Object.assign({kind:'phys',el:p.el==='beast'?'phys':p.el,src:p.name,noStat:true,summon:true},x||{});
-    const sa=pv_(p,'sAttack'); if(sa){ const hits=pv_(p,'hits')||1; for(let h=0;h<hits;h++){ const e=pv_(p,'sRandom')?pick(alive()):tgt(); if(!e) break; hitEnemy(e,sa+half,o({pierce:pv_(p,'sPierce')})); } }
-    const sall=pv_(p,'sAll'); if(sall) for(const e of alive()) hitEnemy(e,sall+half,o());
+    const sa=pv_(p,'sAttack'); if(sa){ const hits=pv_(p,'hits')||1; for(let h=0;h<hits;h++){ const e=pv_(p,'sRandom')?pick(alive()):tgt(); if(!e) break; hitEnemy(e,sa,o({pierce:pv_(p,'sPierce')})); } }
+    const sall=pv_(p,'sAll'); if(sall) for(const e of alive()) hitEnemy(e,sall,o());
     const ss=pv_(p,'sStatus'); if(ss){ const e=tgt(); if(e) applyStatusEnemy(e,ss,pv_(p,'sv')||1); }
     const sb=pv_(p,'sBlock'); if(sb) addBlock(sb);
     const sth=pv_(p,'sThorns'); if(sth){ F.thornsT+=sth; log(`${p.name} grows ${sth} Thorns`,'good'); }
     const eb=pv_(p,'endBlockPerMecha'); if(eb) addBlock(eb*mechaCount(F.passives));
-    const ea=pv_(p,'endDmgPerAttack'); if(ea&&F.turnAttacks){ const e=tgt(); if(e) hitEnemy(e,ea*F.turnAttacks+half,o()); }
-    const er=pv_(p,'endDmgRandom'); if(er){ const e=pick(alive()); if(e) hitEnemy(e,er+half,o()); }
-    const eall=pv_(p,'endDmgAll'); if(eall) for(const e of alive()) hitEnemy(e,eall+half,o());
+    const ea=pv_(p,'endDmgPerAttack'); if(ea&&F.turnAttacks){ const e=tgt(); if(e) hitEnemy(e,ea*F.turnAttacks,o()); }
+    const er=pv_(p,'endDmgRandom'); if(er){ const e=pick(alive()); if(e) hitEnemy(e,er,o()); }
+    const eall=pv_(p,'endDmgAll'); if(eall) for(const e of alive()) hitEnemy(e,eall,o());
     render(); await sleep(160);
   }
 }
@@ -347,15 +346,15 @@ async function enemyHitPlayer(e,d,o){
   const F=G.fight; o=o||{}; if(F.st.vuln) d=Math.round(d*1.5);
   const trap=F.passives.find(p=>p.kind==='trap');
   if(trap){ removePassive(F.passives,trap,'sprung'); log(`${trap.name} springs!`,'se'); floatP(`${trap.icon} ${trap.name}!`,'se'); sfx('trap');
-    const td=pv_(trap,'tDmg'); if(td) damageEnemyRaw(e,td+Math.floor(PS('attack')/2),trap.el,trap.name);
-    const ta=pv_(trap,'tAll'); if(ta) for(const x of F.enemies.filter(z=>z.alive)) damageEnemyRaw(x,ta+Math.floor(PS('attack')/2),trap.el,trap.name);
+    const td=pv_(trap,'tDmg'); if(td) damageEnemyRaw(e,td,trap.el,trap.name);
+    const ta=pv_(trap,'tAll'); if(ta) for(const x of F.enemies.filter(z=>z.alive)) damageEnemyRaw(x,ta,trap.el,trap.name);
     if(pv_(trap,'tReflect')&&e.alive) damageEnemyRaw(e,d,'phys','Reflected damage');
     const ts=pv_(trap,'tStatus'); if(ts&&e.alive) applyStatusEnemy(e,ts,pv_(trap,'sv')||1);
     if(pv_(trap,'tFreeze')&&e.alive) applyStatusEnemy(e,'frozen',1);
     render(); await sleep(300);
     if(pv_(trap,'tNegate')){ log(`${o.src||e.name}'s attack is negated`,'good'); return false; }
   }
-  if(Math.random()*100<(F.dodgeNext?100:PS('dodge')+F.dodgeT)){ F.dodgeNext=false; log(`You dodge ${o.src||e.name}'s attack!`,'good'); floatP('Dodge!','miss'); sfx('dodge'); if(o.counter&&e.alive&&(F.counterNext||Math.random()*100<PS('counter')+30)) await counterAttack(e); return false; }
+  if(Math.random()*100<(F.dodgeNext?100:F.dodgeT)){ F.dodgeNext=false; log(`You dodge ${o.src||e.name}'s attack!`,'good'); floatP('Dodge!','miss'); sfx('dodge'); if(o.counter&&e.alive&&(F.counterNext||Math.random()*100<30)) await counterAttack(e); return false; }
   if(F.st.wet&&(e.el==='light'||e.el==='ice')) d=Math.round(d*1.5);   // Wet: lightning and ice bite harder
   if(F.st.shock){ d+=F.st.shock; log(`Shock adds ${F.st.shock} damage`,'bad'); F.st.shock--; if(F.st.shock<=0) delete F.st.shock; }
   let blocked=0; if(F.block>0&&!o.pierce){ const usable=o.radiant?Math.ceil(F.block/2):F.block; blocked=Math.min(usable,d); F.block-=blocked; d-=blocked; if(o.radiant&&blocked<d+blocked) log('Radiant: the blow passes part of your Block','bad'); } else if(o.pierce&&F.block>0) log('The blow pierces your Block','bad');
@@ -364,9 +363,9 @@ async function enemyHitPlayer(e,d,o){
   if(d>0&&e.el==='psychic'&&F.energy>0){ F.energy--; log(`${e.name} drains 1 Mana`,'bad'); floatP('-1 Mana','dmg'); }   // Mind Drain const f=fx(); if(f&&d>0){ f.playerHit(); if(o.el) f.player(o.el,0); }
   if(d>0){ floatP(`-${d}`,'dmg'); sfx('hurt'); } else { floatP('Blocked','block'); sfx('blocked'); }
   log(`${o.src||e.name} hits you for ${d}${blocked?` (${blocked} blocked)`:''}`,'bad');
-  const th=PS('thorns')+F.thornsT+pSum('thorns'); if(th>0&&e.alive) damageEnemyRaw(e,th,'phys','Thorns');
+  const th=F.thornsT+pSum('thorns'); if(th>0&&e.alive) damageEnemyRaw(e,th,'phys','Thorns');
   if(o.drain&&d>0&&e.alive){ const h=Math.round(d*0.5); e.hp=Math.min(e.maxHp,e.hp+h); log(`${e.name} drains ${h} HP`,'bad'); }
-  if(o.counter&&G.p.hp>0&&e.alive&&(F.counterNext||Math.random()*100<PS('counter'))) await counterAttack(e);
+  if(o.counter&&G.p.hp>0&&e.alive&&F.counterNext) await counterAttack(e);
   return true;
 }
 async function counterAttack(e){
@@ -378,17 +377,16 @@ function winFight(){
   const F=G.fight; if(!F||F.over) return; F.over=true; clearTimeout(UI.autoTimer); const o=F.o||{};
   const mult=(o.boss?4:o.elite?2:1)*(o.goldMult||1)*(F.enemies.some(x=>x.el==='dragon')?2:1);   // a dragon's hoard
   const gold=Math.round(goldReward()*mult*(0.85+Math.random()*0.3)); const xp=Math.round(xpReward()*(o.boss?4:o.elite?2:1));
-  G.p.gold+=gold; G.fights++; if(o.boss) G.bossesSlain++;
+  G.p.gold+=gold; G.fights++; if(o.boss) G.bossesSlain++; if(o.final){ G.won=true; G.wonRound=G.round; }
   const kind=o.boss?'boss':(o.elite||o.mimic)?'elite':'fight';
   const levelBefore=G.p.level; sfx('victory'); const ups=gainXp(xp);
   // a slain creature may drop one of its own ability cards: bosses always, elites often, the rest sometimes
   let drop=null; { const dead=F.enemies.filter(x=>!x.alive&&(FOE_MOVES[x.id]||[]).length); if(dead.length){ const x=dead.find(z=>z.boss)||dead.find(z=>z.elite)||pick(dead); const chance=x.boss?1:x.elite?0.6:0.3; if(Math.random()<chance){ const id=pick(FOE_MOVES[x.id]); drop={id,from:x.name}; markSeen(id); } } }
   const picks=(o.boss?1:0)+ups;   // one pick per level gained, plus the boss's own card
-  G.spoils={gold,xp,kind,levelBefore,picks,bossPick:!!o.boss,cards:picks?offerPool(o.boss?'boss':kind,3):null,cardTaken:picks===0,msgs:[],drop,dropTaken:!drop};
-  // the kit goes back to the run: exhausted cards return to the discard pile, conjured cards fade, the tile is cleared, a lair grants a slot
+  G.spoils={gold,xp,kind,final:!!o.final,levelBefore,picks,bossPick:!!o.boss,cards:picks?offerPool(o.boss?'boss':kind,3):null,cardTaken:picks===0,msgs:o.final?['The Deckfall is dead. The bottom of the world is yours, and the climb goes on: every round from here is high score.']:[],drop,dropTaken:!drop};
+  // the kit goes back to the run: exhausted cards return to the discard pile, conjured cards fade, a boss grants a slot
   F.discard.push(...F.exhaust); F.exhaust.length=0; F.hand=F.hand.filter(c=>!c.temp);
   G.p.kit={hand:F.hand,draw:F.draw,discard:F.discard,exhaust:F.exhaust,passives:F.passives,energy:F.energy};
-  clearTile(o.tile);
   if(o.boss&&G.p.slots<5){ G.p.slots++; G.spoils.msgs.push(`The lair falls silent. You feel room for one more passive: ${G.p.slots} slots.`); }
   G.phase='spoils'; render(); save(); spoilsMaybeContinue();   // nothing to pick or take? the road continues by itself
 }

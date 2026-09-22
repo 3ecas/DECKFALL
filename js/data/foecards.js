@@ -21,7 +21,7 @@ fc('fire_imp','f_imp_flame','Imp Flame','spell','fire',1,0,'🔥',{dmg:4,v:2},[[
 fc('fire_imp','f_fire_dance','Fire Dance','attack','fire',0,0,'💃',{dmg:2,hits:2,v:1},[['dmg','dmg',{hits:'hits'}],['se','burn','v']]);
 fc('water_sprite','f_water_whip','Water Whip','spell','water',1,0,'💦',{dmg:5,v:1},[['dmg','dmg'],['se','wet','v']]);
 fc('water_sprite','f_mist_heal','Mist Heal','spell','water',1,0,'🌫️',{h:6},[['heal','h']]);
-fc('rock_beetle','f_carapace','Carapace','shield','earth',0,0,'🪲',{b:7},[['block','b']]);
+fc('rock_beetle','f_carapace','Carapace','shield','earth',0,0,'🪲',{b:5},[['block','b']]);
 fc('rock_beetle','f_shell_bash','Shell Bash','attack','earth',0,0,'💥',{m:1},[['special','blockDmg',{m:'m'}]]);
 fc('slime','f_acid_splash','Acid Splash','spell','poison',1,0,'🧪',{dmg:3,v:2},[['dmg','dmg',{aoe:1}],['se','poison','v',{aoe:1}]]);
 fc('slime','f_engulf','Engulf','attack','poison',0,0,'🟢',{dmg:3,v:3},[['dmg','dmg'],['se','poison','v']]);
@@ -192,6 +192,10 @@ fc('roc','f_thermal','Thermal','skill','flying',0,7,'🌤️',{v:10},[['healPct'
 fc('grandmaster','f_flurry','Flurry','attack','fighting',0,7,'👊',{dmg:3,hits:4},[['dmg','dmg',{hits:'hits'}]]);
 fc('grandmaster','f_iron_stance','Iron Stance','shield','fighting',0,7,'🥋',{b:10},[['block','b'],['ss','counterNext',null]]);
 fc('grandmaster','f_rising_kick','Rising Kick','attack','fighting',0,7,'🦵',{dmg:12,v:2},[['dmg','dmg'],['se','vuln','v']]);
+// the final boss
+fc('deckfall','f_endless_hunger','Endless Hunger','attack','shadow',0,8,'🕳️',{dmg:12,hits:2},[['dmg','dmg',{hits:'hits',ls:50}]]);
+fc('deckfall','f_veil_of_cards','Veil of Cards','shield','shadow',0,8,'🃏',{b:18,v:3},[['block','b'],['ss','str','v']]);
+fc('deckfall','f_last_word','Last Word','attack','shadow',0,8,'💀',{dmg:26,v:2},[['dmg','dmg'],['se','vuln','v']]);
 for(const x of CARDS) if(!CARD[x.id]) CARD[x.id]=x;
 // owner id -> its ability ids, and the reverse lookup for the library
 const FOE_MOVES={}; for(const x of CARDS) if(x.drop){ (FOE_MOVES[x.drop]=FOE_MOVES[x.drop]||[]).push(x.id); }
