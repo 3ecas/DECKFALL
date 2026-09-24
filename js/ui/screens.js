@@ -26,7 +26,7 @@ function render(){
 function patchBattle(){
   const F=G.fight; const app=document.getElementById('app');
   const hud=app.querySelector('.hud'); if(hud) hud.outerHTML=hudHTML({bars:false});
-  F.enemies.forEach((e,i)=>{ const n=app.querySelector(`.enemy[data-uid="${e.uid}"]`); if(!n) return; n.classList.toggle('sel',F.target===i&&e.alive); n.classList.toggle('dead',!e.alive); const bar=n.querySelector('.ehp i'); if(bar) bar.style.width=(e.hp/e.maxHp*100)+'%'; const bt=n.querySelector('.ehp b'); if(bt) bt.textContent=`${e.hp} / ${e.maxHp}`; const st=n.querySelector('.statuses'); if(st) st.innerHTML=enemyStatusesHTML(e); const it=n.querySelector('.intent'); if(it) it.innerHTML=enemyIntentHTML(e); const ep=n.querySelector('.epassives'); if(ep) ep.innerHTML=enemyPassivesHTML(e); });
+  F.enemies.forEach((e,i)=>{ const n=app.querySelector(`.enemy[data-uid="${e.uid}"]`); if(!n) return; n.classList.toggle('sel',F.target===i&&e.alive); n.classList.toggle('dead',!e.alive); const bar=n.querySelector('.ehp i'); if(bar) bar.style.width=(e.hp/e.maxHp*100)+'%'; const bt=n.querySelector('.ehp b'); if(bt) bt.textContent=`${e.hp} / ${e.maxHp}`; const st=n.querySelector('.statuses'); if(st) st.innerHTML=enemyStatusesHTML(e); const it=n.querySelector('.intent'); if(it) it.innerHTML=enemyIntentHTML(e); const em=n.querySelector('.emana'); if(em) em.innerHTML=enemyManaHTML(e); const ep=n.querySelector('.epassives'); if(ep) ep.innerHTML=enemyPassivesHTML(e); });
   const sl=app.querySelector('.slots'); if(sl) sl.innerHTML=slotsHTML();
   const lg=app.querySelector('.log'); if(lg){ lg.outerHTML=logHTML(); const l2=app.querySelector('.log'); l2.scrollTop=l2.scrollHeight; }
   const pl=app.querySelector('.player'); if(pl) pl.outerHTML=playerHTML();
@@ -113,12 +113,6 @@ function descentHTML(){
     ${planStripHTML(D,true)}
     <div class="row center"><button class="btn primary big" data-act="enter">Enter →</button></div>
   </div>`;
-}
-function kitHTML(){
-  const K=G.p.kit||newKit();
-  const hand=K.hand.map(c=>cardHTML(c.id,{mode:'static'})).join('')||'<div class="muted small emptyhand">Your hand is empty. It refills when a fight starts.</div>';
-  const pas=K.passives.map(p=>`<span class="pdi" style="--el:${EL[p.el].c}">${p.icon} ${esc(p.name)}</span>`).join('')||'<span class="muted small">none in play</span>';
-  return `<div class="kit"><div class="kithand">${hand}</div><div class="kitside"><div><b>Hand</b> ${K.hand.length} · draw ${K.draw.length} · discard ${K.discard.length}</div><div><b>Mana</b> ${K.energy||0} / ${MANA_CAP}</div><div><b>Passives</b> ${K.passives.length} / ${PS('slots')}</div><div class="pd">${pas}</div></div></div>`;
 }
 // The keeper's hall: the keeper at his candle, four services as small cards (art tile, name plaque, dotted box), then the cards for sale.
 function keeperHTML(){

@@ -50,8 +50,8 @@ const TIER={
 };
 const SCALE_KEYS=['dmg','b','a','h','v','k','t','u','r','w','m'];   // values that grow with the tier multiplier; Mana/draw/redraw grow +1 per tier, hits +1 per two tiers, self-damage stays (cardVals in state.js)
 const ST = {
-  burn:  {n:'Burn', i:'🔥', d:'Takes X fire damage at the start of its turn, then the stacks halve.'},
-  poison:{n:'Poison', i:'☠️', d:'Takes X poison damage at the start of its turn, then loses 1 stack.'},
+  burn:  {n:'Burn', i:'🔥', d:'Takes X fire damage at the start of its turn, then the stacks halve. Ignores Block and Armor.'},
+  poison:{n:'Poison', i:'☠️', d:'Takes X poison damage at the start of its turn, then loses 1 stack. Ignores Block and Armor.'},
   chill: {n:'Chill', i:'❄️', d:'At 3 stacks (5 on bosses) the target is Frozen and skips its next turn.'},
   frozen:{n:'Frozen', i:'🧊', d:'Skips its next turn. Shatter cards deal double damage to it.'},
   shock: {n:'Shock', i:'⚡', d:'Every hit taken deals +X bonus damage, then loses 1 stack.'},
@@ -60,7 +60,7 @@ const ST = {
   vuln:  {n:'Vulnerable', i:'💔', d:'Takes 50% more damage. Fades 1 per turn.'},
   str:   {n:'Strength', i:'💪', d:'+X damage on every attack this fight.'},
   spellT:{n:'Focus', i:'🔮', d:'+X spell damage this fight.'},
-  thornsT:{n:'Thorns', i:'🌵', d:'Attackers take X damage when they hit you.'},
+  thornsT:{n:'Thorns', i:'🌵', d:'Attackers take X damage when they hit you, through Block and Armor.'},
   regen: {n:'Regen', i:'💚', d:'Heal X at the start of your turn.'},
   critT: {n:'Keen', i:'🎯', d:'+X% critical chance this fight.'},
   dodgeT:{n:'Shadowed', i:'🌫️', d:'+X% dodge this fight.'},

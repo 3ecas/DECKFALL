@@ -7,8 +7,8 @@ sessions of work; edit it freely. What is built already is marked in the stages 
 
 A hero with a deck climbs down through themed dungeons: a straight run of fights, an elite in the middle, a boss at the
 bottom of every third, something that happens by itself after every fight, and the keeper between dungeons. What you
-play persists: your hand, your piles, your Mana and the machines, summons and traps you have in play carry from fight
-to fight, so a run is one long game where the build grows. The hero has almost no stats: Health and Armor, and
+play persists: your Mana and the machines, summons and traps you have in play carry from fight to fight (every fight
+deals a fresh hand from a full shuffle), so a run is one long game where the build grows. The hero has almost no stats: Health and Armor, and
 everything else comes from cards. The reference feeling is PokeRogue's climb (persistence, evolution, attrition, a shop
 and people between fights) with Slay the Spire's table, without a party and without a map.
 
@@ -49,9 +49,11 @@ Reaching the exit also pays a purse of gold.
 
 ## Persistence
 
-Hand, draw pile, discard pile, exhaust pile, passives and Mana live on the run, not on the fight.
+The deck, the passives in play and Mana live on the run, not on the fight; the hand and the piles are reshuffled whenever a
+fight starts.
 
-- A fight starts by topping the hand up to hand size, not by dealing a fresh one.
+- A fight starts with a full shuffle of hand, piles and exhaust and a fresh hand of five (changed September 2026: the
+  carried hand was cut).
 - Exhausted cards come back to the discard pile at the end of a fight (potions are still once per fight).
 - A new card goes into your hand if there is room, else into the draw pile.
 - Installed passives leave the deck while in play. Enemy dispel and sabotage knock a passive out for that fight (the

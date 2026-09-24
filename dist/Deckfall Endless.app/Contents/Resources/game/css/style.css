@@ -555,3 +555,8 @@ table.stats td{border-bottom:1px dotted rgba(255,255,255,.25)}
 .blk{position:absolute;right:-14px;bottom:-6px;z-index:3;margin:0}
 .bars{flex:0 0 auto;min-width:0}
 .player{gap:20px} .player .statuses{flex:1 1 auto}
+
+/* ===== a creature's Mana bar (enemyManaHTML): pips that fill one a turn; full means an ability next ===== */
+.card.enemy .emana{display:flex;align-items:center;gap:1.8cqw;font-family:var(--body);font-weight:800;font-size:3.3cqw;letter-spacing:.04em;text-transform:uppercase;color:rgba(0,0,0,.62);min-height:3cqw}
+.card.enemy .emana .mcells{display:inline-flex;gap:1cqw} .card.enemy .emana i{display:block;width:5.2cqw;height:2.6cqw;border-radius:.7cqw;background:rgba(0,0,0,.22);box-shadow:inset 0 0 0 max(1px,.3cqw) rgba(0,0,0,.35)}
+.card.enemy .emana i.on{background:linear-gradient(180deg,#b6e6ff,#3a98e8 60%,#1d5fa8);box-shadow:0 0 4cqw rgba(79,182,255,.75),inset 0 max(1px,.3cqw) 0 rgba(255,255,255,.6)}
